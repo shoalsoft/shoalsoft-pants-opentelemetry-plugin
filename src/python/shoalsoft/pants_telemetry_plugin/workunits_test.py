@@ -100,14 +100,12 @@ def _assert_workunit_types(workunit: dict[Any, Any]) -> None:
 
 
 def test_workunits_are_output() -> None:
-    python_root = Path.cwd().parent.parent
     sources = {
         "pants.toml": textwrap.dedent(
             f"""\
             [GLOBAL]
             pants_version = "2.24.0"
             backend_packages.add = ["pants.backend.python", "shoalsoft.pants_telemetry_plugin"]
-            pythonpath = ["{python_root}"]
             """
         ),
         "BUILD": "python_sources(name='src')\n",
