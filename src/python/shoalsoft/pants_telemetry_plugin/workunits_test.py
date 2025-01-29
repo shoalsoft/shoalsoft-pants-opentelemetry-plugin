@@ -23,10 +23,10 @@ import pytest
 
 from pants.engine.rules import QueryRule
 from pants.engine.streaming_workunit_handler import WorkunitsCallbackFactory
-from pants.testutil.pants_integration_test import run_pants_with_workdir
 from pants.testutil.rule_runner import RuleRunner
 from pants.util.dirutil import safe_file_dump
 from shoalsoft.pants_telemetry_plugin import register
+from shoalsoft.pants_telemetry_plugin.pants_integration_testutil import run_pants_with_workdir
 from shoalsoft.pants_telemetry_plugin.register import TelemetryWorkunitsCallbackFactoryRequest
 from shoalsoft.pants_telemetry_plugin.workunits import TelemetryWorkunitsCallback
 
@@ -100,14 +100,12 @@ def _assert_workunit_types(workunit: dict[Any, Any]) -> None:
 
 
 def test_workunits_are_output() -> None:
-    python_root = Path.cwd().parent.parent
     sources = {
         "pants.toml": textwrap.dedent(
-            f"""\
+            """\
             [GLOBAL]
             pants_version = "2.24.0"
             backend_packages.add = ["pants.backend.python", "shoalsoft.pants_telemetry_plugin"]
-            pythonpath = ["{python_root}"]
             """
         ),
         "BUILD": "python_sources(name='src')\n",
@@ -117,7 +115,6 @@ def test_workunits_are_output() -> None:
         workdir = Path(buildroot) / ".pants.d" / "the-workdir"
         workdir.mkdir(parents=True)
         safe_write_files(buildroot, sources)
-        os.chdir(buildroot)
         result = run_pants_with_workdir(
             ["--shoalsoft-telemetry-enabled", "list", "::"],
             workdir=str(workdir),
@@ -125,6 +122,7 @@ def test_workunits_are_output() -> None:
                 "PANTS_BUILDROOT_OVERRIDE": str(buildroot),
             },
             hermetic=False,
+            cwd=buildroot,
         )
         result.assert_success()
         dist_dir = Path(buildroot) / "dist"
