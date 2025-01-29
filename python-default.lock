@@ -11,7 +11,8 @@
 //   "generated_with_requirements": [
 //     "pantsbuild.pants.testutil==2.24.0",
 //     "pantsbuild.pants==2.24.0",
-//     "pytest"
+//     "pytest",
+//     "toml==0.10.2"
 //   ],
 //   "manylinux": "manylinux2014",
 //   "requirement_constraints": [],
@@ -975,7 +976,8 @@
   "requirements": [
     "pantsbuild.pants.testutil==2.24.0",
     "pantsbuild.pants==2.24.0",
-    "pytest"
+    "pytest",
+    "toml==0.10.2"
   ],
   "requires_python": [
     "==3.9.*"
