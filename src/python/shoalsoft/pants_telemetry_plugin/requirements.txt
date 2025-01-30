@@ -1,7 +1,3 @@
 # OpenTelemetry dependencies
 opentelemetry-api==1.29.0
 opentelemetry-sdk==1.29.0
-
-# Test dependencies
-pytest
-toml==0.10.2

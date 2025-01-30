@@ -19,8 +19,8 @@ class TelemetrySubsystem(Subsystem):
     help = "Pants Telemetry plugin from Shoal Software"
 
     enabled = BoolOption("--enabled", default=False, help="Whether to enable telemetry.")
-    workunits_file = StrOption(
-        "--workunits-file",
-        default="dist/workunits.log",
-        help="Where to write the workunits to.",
+
+    otel_json_file = StrOption(
+        default="dist/otel-trace.jsonl",
+        help="Where to write the OTEL JSON workunits to.",
     )
