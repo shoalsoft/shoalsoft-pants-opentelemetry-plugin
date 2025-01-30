@@ -31,8 +31,8 @@ _UNIX_EPOCH = datetime.datetime(year=1970, month=1, day=1, tzinfo=datetime.timez
 def _datetime_to_otel_timestamp(d: datetime.datetime) -> int:
     """OTEL times are nanoseconds since the Unix epoch."""
     duration_since_epoch = d - _UNIX_EPOCH
-    nanoseconds = duration_since_epoch.days * 24 * 60 * 60 * 1000000
-    nanoseconds += duration_since_epoch.seconds * 1000000
+    nanoseconds = duration_since_epoch.days * 24 * 60 * 60 * 1000000000
+    nanoseconds += duration_since_epoch.seconds * 1000000000
     nanoseconds += duration_since_epoch.microseconds * 1000
     return nanoseconds
 
