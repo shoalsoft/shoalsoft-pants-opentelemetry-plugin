@@ -13,17 +13,32 @@
 from __future__ import annotations
 
 import datetime
+import logging
 import typing
-import uuid
-from typing import TextIO
+from pathlib import Path
+from typing import Iterable, TextIO
 
 from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+    OTLPSpanExporter as GrpcOTLPSpanExporter,
+)
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+    OTLPSpanExporter as HttpOTLPSpanExporter,
+)
+from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import TracerProvider, sampling
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanProcessor, SpanExporter, SpanExportResult, SimpleSpanProcessor
+from opentelemetry.sdk.trace.export import (
+    BatchSpanProcessor,
+    SpanExporter,
+    SpanExportResult,
+    SpanProcessor,
+)
 from opentelemetry.sdk.trace.id_generator import IdGenerator, RandomIdGenerator
-from opentelemetry.util import types
 
 from shoalsoft.pants_telemetry_plugin.processor import IncompleteWorkunit, Processor, Workunit
+from shoalsoft.pants_telemetry_plugin.subsystem import TracingExporterId
+
+logger = logging.getLogger(__name__)
 
 _UNIX_EPOCH = datetime.datetime(year=1970, month=1, day=1, tzinfo=datetime.timezone.utc)
 
@@ -41,9 +56,7 @@ class JsonFileSpanExporter(SpanExporter):
     def __init__(self, file: TextIO) -> None:
         self._file = file
 
-    def export(
-        self, spans: typing.Sequence[trace.ReadableSpan]
-    ) -> SpanExportResult:
+    def export(self, spans: typing.Sequence[trace.ReadableSpan]) -> SpanExportResult:
         for span in spans:
             self._file.write(span.to_json(indent=None) + "\n")
         return SpanExportResult.SUCCESS
@@ -55,73 +68,60 @@ class JsonFileSpanExporter(SpanExporter):
         self._file.flush()
 
 
-def get_otel_processor(otel_json_file_path: str) -> Processor:
-    trace.set_tracer_provider(TracerProvider(sampler=sampling.ALWAYS_ON))
+def _make_span_exporter(name: TracingExporterId) -> SpanExporter:
+    if name == TracingExporterId.OTLP_HTTP:
+        return HttpOTLPSpanExporter()
+    elif name == TracingExporterId.OTLP_GRPC:
+        return GrpcOTLPSpanExporter()
+    else:
+        raise AssertionError(f"Asked to construct an unknown span exporter: {name}")
+
+
+def get_otel_processor(
+    span_exporters: Iterable[TracingExporterId], otel_json_file_path: Path | None
+) -> Processor:
+    resource = Resource(
+        attributes={
+            SERVICE_NAME: "pantsbuild",
+        }
+    )
+    trace.set_tracer_provider(TracerProvider(sampler=sampling.ALWAYS_ON, resource=resource))
     tracer = trace.get_tracer(__name__)
-    otel_json_file = open(otel_json_file_path, "w")
-    span_exporter = JsonFileSpanExporter(otel_json_file)
-    # span_processor = BatchSpanProcessor(span_exporter)
-    span_processor = SimpleSpanProcessor(span_exporter)
-    trace.get_tracer_provider().add_span_processor(span_processor)
+
+    for span_exporter_name in span_exporters:
+        span_exporter: SpanExporter
+        if span_exporter_name == TracingExporterId.OTEL_JSON_FILE:
+            if not otel_json_file_path:
+                raise ValueError(
+                    f"`--shoalsoft-telemetry-exporters` includes `{TracingExporterId.OTEL_JSON_FILE}` but --shoalsoft-telemetry-json-file is not set."
+                )
+            otel_json_file_path.parent.mkdir(parents=True, exist_ok=True)
+            span_exporter = JsonFileSpanExporter(open(otel_json_file_path, "w"))
+            logger.debug(
+                f"Enabling OpenTelemetry JSON file span exporter: path={otel_json_file_path}"
+            )
+        elif span_exporter_name in {TracingExporterId.OTLP_HTTP, TracingExporterId.OTLP_GRPC}:
+            span_exporter = _make_span_exporter(span_exporter_name)
+        else:
+            raise AssertionError(
+                f"Asked to construct an unknown span exporter: {span_exporter_name}"
+            )
+
+        span_processor = BatchSpanProcessor(span_exporter)
+        trace.get_tracer_provider().add_span_processor(span_processor)
+
     return OpenTelemetryProcessor(tracer, span_processor)
 
 
-class DummySpan(trace.Span):
-    """A dummy Span used in the thread context so we can trick OpenTelemetry as to what the parent span ID is."""
+class DummySpan(trace.NonRecordingSpan):
+    """A dummy Span used in the thread context so we can trick OpenTelemetry as
+    to what the parent span ID is.
 
-    def __init__(self, context: "trace.SpanContext") -> None:
-        self._context = context
-
-    def get_span_context(self) -> "trace.SpanContext":
-        return self._context
+    Sets `is_recording` to True.
+    """
 
     def is_recording(self) -> bool:
         return True
-
-    def end(self, end_time: typing.Optional[int] = None) -> None:
-        pass
-
-    def set_attributes(
-        self, attributes: typing.Dict[str, types.AttributeValue]
-    ) -> None:
-        pass
-
-    def set_attribute(self, key: str, value: types.AttributeValue) -> None:
-        pass
-
-    def add_event(
-        self,
-        name: str,
-        attributes: types.Attributes = None,
-        timestamp: typing.Optional[int] = None,
-    ) -> None:
-        pass
-
-    def add_link(
-        self,
-        context: trace.SpanContext,
-        attributes: types.Attributes = None,
-    ) -> None:
-        pass
-
-    def update_name(self, name: str) -> None:
-        pass
-
-    def set_status(
-        self,
-        status,  #: typing.Union[Status, StatusCode],
-        description: typing.Optional[str] = None,
-    ) -> None:
-        pass
-
-    def record_exception(
-        self,
-        exception: BaseException,
-        attributes: types.Attributes = None,
-        timestamp: typing.Optional[int] = None,
-        escaped: bool = False,
-    ) -> None:
-        pass
 
     def __repr__(self) -> str:
         return f"DummySpan({self._context!r})"
@@ -149,7 +149,9 @@ class OpenTelemetryProcessor(Processor):
                 span_id=self._workunit_span_id_to_otel_span_id[workunit_parent_span_id],
                 is_remote=False,
             )
-            otel_context = trace.set_span_in_context(DummySpan(otel_parent_span_context), context=otel_context)
+            otel_context = trace.set_span_in_context(
+                DummySpan(otel_parent_span_context), context=otel_context
+            )
 
         otel_span = self._tracer.start_span(
             name=workunit.name,
@@ -160,7 +162,7 @@ class OpenTelemetryProcessor(Processor):
         )
 
         # TODO: Record any Pants-specific workunit attributes.
-        
+
         # Record the span ID chosen by the tracer for this span.
         otel_span_context = otel_span.get_span_context()
         otel_span_id = otel_span_context.span_id
@@ -181,4 +183,3 @@ class OpenTelemetryProcessor(Processor):
 
     def finish(self) -> None:
         self._span_processor.shutdown()
-        print(f"SPAN COUNT = {self._span_count}")

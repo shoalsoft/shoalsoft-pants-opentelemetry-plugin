@@ -10,9 +10,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
 import logging
+from pathlib import Path
+
 from pants.base.build_root import BuildRoot
-from pants.engine.internals.session import RunId
 from pants.engine.rules import collect_rules, rule
 from pants.engine.streaming_workunit_handler import (
     WorkunitsCallbackFactory,
@@ -21,11 +24,11 @@ from pants.engine.streaming_workunit_handler import (
 from pants.engine.unions import UnionRule
 from shoalsoft.pants_telemetry_plugin.opentelemetry import get_otel_processor
 from shoalsoft.pants_telemetry_plugin.processor import Processor
-from shoalsoft.pants_telemetry_plugin.stream_handler import TelemetryWorkunitsCallback
 from shoalsoft.pants_telemetry_plugin.subsystem import TelemetrySubsystem
-
+from shoalsoft.pants_telemetry_plugin.workunit_handler import TelemetryWorkunitsCallback
 
 logger = logging.getLogger(__name__)
+
 
 class TelemetryWorkunitsCallbackFactoryRequest(WorkunitsCallbackFactoryRequest):
     pass
@@ -33,15 +36,18 @@ class TelemetryWorkunitsCallbackFactoryRequest(WorkunitsCallbackFactoryRequest):
 
 @rule
 async def telemetry_workunits_callback_factory_request(
-    _: TelemetryWorkunitsCallbackFactoryRequest, telemetry: TelemetrySubsystem, build_root: BuildRoot, run_id: RunId
+    _: TelemetryWorkunitsCallbackFactoryRequest,
+    telemetry: TelemetrySubsystem,
+    build_root: BuildRoot,
 ) -> WorkunitsCallbackFactory:
     processor: Processor | None = None
-    if telemetry.enabled and telemetry.otel_json_file:
-        otel_json_file_path = build_root.pathlib_path / telemetry.otel_json_file
-        # otel_json_file_path = otel_json_file_path.with_name(f"{otel_json_file_path.name}-{run_id}")
-        otel_json_file_path.parent.mkdir(parents=True, exist_ok=True)
-        processor = get_otel_processor(str(otel_json_file_path))
-        logger.debug(f"Enabling OpenTelemetry file processor: path={otel_json_file_path}")
+    if telemetry.enabled and telemetry.exporters:
+        otel_json_file_path: Path | None = None
+        if telemetry.otel_json_file is not None:
+            otel_json_file_path = build_root.pathlib_path / telemetry.otel_json_file
+        processor = get_otel_processor(
+            span_exporters=telemetry.exporters, otel_json_file_path=otel_json_file_path
+        )
     return WorkunitsCallbackFactory(
         lambda: TelemetryWorkunitsCallback(processor) if processor is not None else None
     )

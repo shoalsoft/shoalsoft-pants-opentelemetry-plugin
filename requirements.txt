@@ -1,6 +1,7 @@
 # OpenTelemetry dependencies
 opentelemetry-api==1.29.0
 opentelemetry-sdk==1.29.0
+opentelemetry-exporter-otlp==1.29.0
 
 # Test dependencies
 pytest

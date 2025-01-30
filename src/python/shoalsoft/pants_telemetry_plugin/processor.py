@@ -20,7 +20,7 @@ from typing import Any, Protocol
 from pants.util.frozendict import FrozenDict
 
 
-class Level(enum.StrEnum):
+class Level(enum.Enum):
     DEBUG = "DEBUG"
     ERROR = "ERROR"
     INFO = "INFO"

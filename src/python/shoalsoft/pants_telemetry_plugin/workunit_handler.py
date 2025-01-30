@@ -13,11 +13,8 @@
 from __future__ import annotations
 
 import datetime
-import json
-from pathlib import Path
-from typing import Any, TextIO
+from typing import Any
 
-from pants.engine.fs import FileDigest, Snapshot
 from pants.engine.internals.scheduler import Workunit as RawWorkunit
 from pants.engine.streaming_workunit_handler import StreamingWorkunitContext, WorkunitsCallback
 from pants.util.frozendict import FrozenDict
@@ -55,7 +52,8 @@ class TelemetryWorkunitsCallback(WorkunitsCallback):
     def _convert_completed_workunit(self, raw_workunit: RawWorkunit) -> Workunit:
         start_time = self._convert_time(raw_workunit["start_secs"], raw_workunit["start_nanos"])
         end_time = start_time + datetime.timedelta(
-            seconds=raw_workunit["duration_secs"], microseconds=raw_workunit["duration_nanos"] // 1000
+            seconds=raw_workunit["duration_secs"],
+            microseconds=raw_workunit["duration_nanos"] // 1000,
         )
         return Workunit(
             name=raw_workunit["name"],

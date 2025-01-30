@@ -10,8 +10,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from pants.option.option_types import BoolOption, StrOption
+import enum
+
+from pants.option.option_types import BoolOption, EnumListOption, StrOption
 from pants.option.subsystem import Subsystem
+from pants.util.strutil import softwrap
+
+
+class TracingExporterId(enum.Enum):
+    OTLP_HTTP = "otlp-http"
+    OTLP_GRPC = "otlp-grpc"
+    OTEL_JSON_FILE = "otel-json-file"
 
 
 class TelemetrySubsystem(Subsystem):
@@ -20,7 +29,30 @@ class TelemetrySubsystem(Subsystem):
 
     enabled = BoolOption("--enabled", default=False, help="Whether to enable telemetry.")
 
+    exporters = EnumListOption(
+        enum_type=TracingExporterId,
+        default=[],
+        help=softwrap(
+            f"""
+            Set the exporters to use when exporting workunits to external tracing systems. Choices are
+            `{TracingExporterId.OTLP_HTTP}` (OpenTelemetry OTLP HTTP),
+            `{TracingExporterId.OTLP_GRPC}` (OpenTelemetry OTLP GRPC), and
+            `{TracingExporterId.OTEL_JSON_FILE}` (OpenTelemetry debug output to a file).
+            Default is not export spans at all.
+
+            Configure each OpenTelemetry exporter using the applicable OpenTelemetry environment variables.
+            TODO: Add link to OTEL docs for those environment variables here.
+            """
+        ),
+    )
+
     otel_json_file = StrOption(
-        default="dist/otel-trace.jsonl",
-        help="Where to write the OTEL JSON workunits to.",
+        default="dist/otel-json-trace.jsonl",
+        help=softwrap(
+            f"""
+            If set, Pants will write OpenTelemetry tracing spans to a local file for easier debugging. Each line
+            will be a tracing span in OpenTelemetry's JSON format. The filename is relative to the build root. Export
+            will only occur if the `--shoalsoft-telemetry-exporters` option includes `{TracingExporterId.OTEL_JSON_FILE}`.
+            """
+        ),
     )
