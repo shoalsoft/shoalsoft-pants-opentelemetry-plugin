@@ -41,6 +41,7 @@ async def telemetry_workunits_callback_factory_request(
     build_root: BuildRoot,
 ) -> WorkunitsCallbackFactory:
     processor: Processor | None = None
+    print(f"telemetry.enabled={telemetry.enabled}; telemetry.exporters={telemetry.exporters}")
     if telemetry.enabled and telemetry.exporters:
         otel_json_file_path: Path | None = None
         if telemetry.otel_json_file is not None:

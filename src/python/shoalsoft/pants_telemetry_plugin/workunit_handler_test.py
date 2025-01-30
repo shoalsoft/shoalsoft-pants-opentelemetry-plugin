@@ -34,13 +34,13 @@ def rule_runner() -> RuleRunner:
     rule_runner.set_options(
         [
             "--shoalsoft-telemetry-enabled",
-            f"--shoalsoft-exporters=['{TracingExporterId.OTEL_JSON_FILE.value}']",
+            f"--shoalsoft-telemetry-exporters=['{TracingExporterId.OTEL_JSON_FILE.value}']",
         ]
     )
     return rule_runner
 
 
-def test_workunit_callback_factory_setup(rule_runner):
+def test_workunit_callback_factory_setup(rule_runner: RuleRunner) -> None:
     callback_factory = rule_runner.request(
         WorkunitsCallbackFactory, [TelemetryWorkunitsCallbackFactoryRequest()]
     )

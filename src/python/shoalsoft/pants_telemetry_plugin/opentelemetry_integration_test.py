@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 import tempfile
 import textwrap
 from pathlib import Path
@@ -30,12 +31,17 @@ def _safe_write_files(base_path: str, files: Mapping[str, str | bytes]) -> None:
 
 
 def test_otel_json_file_exporter() -> None:
+    # python_path_str = ", ".join([f"'{p}'" for p in sys.path])
+    this_python_path = Path.cwd() / "src" / "python"
+    all_python_path = "[" + ", ".join([f"'{p}'" for p in ([this_python_path] + sys.path)]) + "]"
     sources = {
         "pants.toml": textwrap.dedent(
-            """\
+            f"""\
             [GLOBAL]
             pants_version = "2.24.0"
-            backend_packages.add = ["pants.backend.python", "shoalsoft.pants_telemetry_plugin"]
+            backend_packages = ["pants.backend.python", "shoalsoft.pants_telemetry_plugin"]
+            pythonpath = ['{this_python_path}']
+            print_stacktrace = true
             """
         ),
         "BUILD": "python_sources(name='src')\n",
@@ -52,7 +58,7 @@ def test_otel_json_file_exporter() -> None:
         result = run_pants_with_workdir(
             [
                 "--shoalsoft-telemetry-enabled",
-                f"--shoalsoft-exporters=['{TracingExporterId.OTEL_JSON_FILE.value}']",
+                f"--shoalsoft-telemetry-exporters=['{TracingExporterId.OTEL_JSON_FILE.value}']",
                 "list",
                 "::",
             ],
