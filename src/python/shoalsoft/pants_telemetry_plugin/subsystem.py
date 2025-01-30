@@ -31,7 +31,7 @@ class TelemetrySubsystem(Subsystem):
 
     exporters = EnumListOption(
         enum_type=TracingExporterId,
-        default=[],
+        default=lambda cls: cls.default,
         help=softwrap(
             f"""
             Set the exporters to use when exporting workunits to external tracing systems. Choices are

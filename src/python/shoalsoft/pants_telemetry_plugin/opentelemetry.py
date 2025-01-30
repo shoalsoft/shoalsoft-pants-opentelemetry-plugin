@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Iterable, TextIO
 
 from opentelemetry import trace
+from opentelemetry.context import Context
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
     OTLPSpanExporter as GrpcOTLPSpanExporter,
 )
@@ -26,14 +27,10 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
     OTLPSpanExporter as HttpOTLPSpanExporter,
 )
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
-from opentelemetry.sdk.trace import TracerProvider, sampling
-from opentelemetry.sdk.trace.export import (
-    BatchSpanProcessor,
-    SpanExporter,
-    SpanExportResult,
-    SpanProcessor,
-)
-from opentelemetry.sdk.trace.id_generator import IdGenerator, RandomIdGenerator
+from opentelemetry.sdk.trace import ReadableSpan, TracerProvider, sampling
+from opentelemetry.sdk.trace.export import SpanProcessor  # type: ignore[attr-defined]
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter, SpanExportResult
+from opentelemetry.trace.span import NonRecordingSpan, SpanContext
 
 from shoalsoft.pants_telemetry_plugin.processor import IncompleteWorkunit, Processor, Workunit
 from shoalsoft.pants_telemetry_plugin.subsystem import TracingExporterId
@@ -56,9 +53,9 @@ class JsonFileSpanExporter(SpanExporter):
     def __init__(self, file: TextIO) -> None:
         self._file = file
 
-    def export(self, spans: typing.Sequence[trace.ReadableSpan]) -> SpanExportResult:
+    def export(self, spans: typing.Sequence[ReadableSpan]) -> SpanExportResult:
         for span in spans:
-            self._file.write(span.to_json(indent=None) + "\n")
+            self._file.write(span.to_json(indent=0) + "\n")
         return SpanExportResult.SUCCESS
 
     def shutdown(self) -> None:
@@ -66,6 +63,7 @@ class JsonFileSpanExporter(SpanExporter):
 
     def force_flush(self, timeout_millis: int = 30000) -> bool:
         self._file.flush()
+        return True
 
 
 def _make_span_exporter(name: TracingExporterId) -> SpanExporter:
@@ -108,12 +106,12 @@ def get_otel_processor(
             )
 
         span_processor = BatchSpanProcessor(span_exporter)
-        trace.get_tracer_provider().add_span_processor(span_processor)
+        trace.get_tracer_provider().add_span_processor(span_processor)  # type: ignore[attr-defined]
 
     return OpenTelemetryProcessor(tracer, span_processor)
 
 
-class DummySpan(trace.NonRecordingSpan):
+class DummySpan(NonRecordingSpan):
     """A dummy Span used in the thread context so we can trick OpenTelemetry as
     to what the parent span ID is.
 
@@ -130,7 +128,6 @@ class DummySpan(trace.NonRecordingSpan):
 class OpenTelemetryProcessor(Processor):
     def __init__(self, tracer: trace.Tracer, span_processor: SpanProcessor) -> None:
         self._tracer = tracer
-        self._id_generator: IdGenerator = RandomIdGenerator()
         self._trace_id: int | None = None
         self._workunit_span_id_to_otel_span_id: dict[str, int] = {}
         self._otel_spans: dict[int, trace.Span] = {}
@@ -140,11 +137,11 @@ class OpenTelemetryProcessor(Processor):
     def start_workunit(self, workunit: IncompleteWorkunit) -> None:
         # Construct an OTEL `SpanContext` for the parent of this workunit (or else None for the root span).
         workunit_parent_span_id = workunit.primary_parent_id
-        otel_context = trace.Context()
+        otel_context = Context()
         if workunit_parent_span_id:
             # OpenTelemetry pulls the parent span ID from the span set as "current" in the context.
             assert self._trace_id is not None
-            otel_parent_span_context = trace.SpanContext(
+            otel_parent_span_context = SpanContext(
                 trace_id=self._trace_id,
                 span_id=self._workunit_span_id_to_otel_span_id[workunit_parent_span_id],
                 is_remote=False,
