@@ -52,7 +52,7 @@ def test_otel_json_file_exporter() -> None:
         result = run_pants_with_workdir(
             [
                 "--shoalsoft-telemetry-enabled",
-                f"--shoalsoft-exporters=['{TracingExporterId.OTEL_JSON_FILE}']",
+                f"--shoalsoft-exporters=['{TracingExporterId.OTEL_JSON_FILE.value}']",
                 "list",
                 "::",
             ],
