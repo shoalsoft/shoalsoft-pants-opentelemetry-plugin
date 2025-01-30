@@ -55,7 +55,7 @@ class JsonFileSpanExporter(SpanExporter):
 
     def export(self, spans: typing.Sequence[ReadableSpan]) -> SpanExportResult:
         for span in spans:
-            self._file.write(span.to_json(indent=0) + "\n")
+            self._file.write(span.to_json(indent=0).replace("\n", " ") + "\n")
         return SpanExportResult.SUCCESS
 
     def shutdown(self) -> None:

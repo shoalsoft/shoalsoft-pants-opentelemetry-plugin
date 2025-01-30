@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import json
 import os
-import sys
 import tempfile
 import textwrap
 from pathlib import Path
@@ -31,16 +30,18 @@ def _safe_write_files(base_path: str, files: Mapping[str, str | bytes]) -> None:
 
 
 def test_otel_json_file_exporter() -> None:
-    # python_path_str = ", ".join([f"'{p}'" for p in sys.path])
-    this_python_path = Path.cwd() / "src" / "python"
-    all_python_path = "[" + ", ".join([f"'{p}'" for p in ([this_python_path] + sys.path)]) + "]"
+    # Location of a copy of the plugin's source code. The BUILD file arranges for the files to materialized
+    # in the sandbox as a dependency.
+    plugin_python_path = Path.cwd() / "src" / "python"
+    assert (plugin_python_path / "shoalsoft" / "pants_telemetry_plugin" / "register.py").exists()
+
     sources = {
         "pants.toml": textwrap.dedent(
             f"""\
             [GLOBAL]
             pants_version = "2.24.0"
             backend_packages = ["pants.backend.python", "shoalsoft.pants_telemetry_plugin"]
-            pythonpath = ['{this_python_path}']
+            pythonpath = ['{plugin_python_path}']
             print_stacktrace = true
             """
         ),
@@ -71,7 +72,10 @@ def test_otel_json_file_exporter() -> None:
         )
         result.assert_success()
 
+        # Assert that tracing spans were output.
         traces_content = trace_file.read_text()
         for trace_line in traces_content.splitlines():
             trace_json = json.loads(trace_line)
-            assert "name" in trace_json
+            assert len(trace_json["context"]["trace_id"]) > 0
+            assert len(trace_json["context"]["span_id"]) > 0
+            assert trace_json["resource"]["attributes"]["service.name"] == "pantsbuild"
