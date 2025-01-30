@@ -39,7 +39,7 @@ class TelemetryWorkunitsCallback(WorkunitsCallback):
 
     def _convert_time(self, seconds: int, nanoseconds: int) -> datetime.datetime:
         t = datetime.datetime(year=1970, month=1, day=1, tzinfo=datetime.timezone.utc)
-        t += datetime.timedelta(seconds=seconds, microseconds=nanoseconds // 1000)
+        t = t + datetime.timedelta(seconds=seconds, microseconds=nanoseconds // 1000)
         return t
 
     def _convert_incomplete_workunit(self, raw_workunit: RawWorkunit) -> IncompleteWorkunit:

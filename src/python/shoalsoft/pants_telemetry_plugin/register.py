@@ -38,7 +38,7 @@ async def telemetry_workunits_callback_factory_request(
     processor: Processor | None = None
     if telemetry.enabled and telemetry.otel_json_file:
         otel_json_file_path = build_root.pathlib_path / telemetry.otel_json_file
-        otel_json_file_path = otel_json_file_path.with_name(f"{otel_json_file_path.name}-{run_id}")
+        # otel_json_file_path = otel_json_file_path.with_name(f"{otel_json_file_path.name}-{run_id}")
         otel_json_file_path.parent.mkdir(parents=True, exist_ok=True)
         processor = get_otel_processor(str(otel_json_file_path))
         logger.debug(f"Enabling OpenTelemetry file processor: path={otel_json_file_path}")

@@ -18,7 +18,7 @@ import uuid
 from typing import TextIO
 
 from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace import TracerProvider, sampling
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanProcessor, SpanExporter, SpanExportResult, SimpleSpanProcessor
 from opentelemetry.sdk.trace.id_generator import IdGenerator, RandomIdGenerator
 from opentelemetry.util import types
@@ -46,7 +46,6 @@ class JsonFileSpanExporter(SpanExporter):
     ) -> SpanExportResult:
         for span in spans:
             self._file.write(span.to_json(indent=None) + "\n")
-            print(span.to_json(indent=None))
         return SpanExportResult.SUCCESS
 
     def shutdown(self) -> None:
@@ -57,7 +56,7 @@ class JsonFileSpanExporter(SpanExporter):
 
 
 def get_otel_processor(otel_json_file_path: str) -> Processor:
-    trace.set_tracer_provider(TracerProvider())
+    trace.set_tracer_provider(TracerProvider(sampler=sampling.ALWAYS_ON))
     tracer = trace.get_tracer(__name__)
     otel_json_file = open(otel_json_file_path, "w")
     span_exporter = JsonFileSpanExporter(otel_json_file)
@@ -143,14 +142,14 @@ class OpenTelemetryProcessor(Processor):
         workunit_parent_span_id = workunit.primary_parent_id
         otel_context = trace.Context()
         if workunit_parent_span_id:
-            # OpenTelemetry pulls the parent span ID from the span set as current in the context.
+            # OpenTelemetry pulls the parent span ID from the span set as "current" in the context.
             assert self._trace_id is not None
             otel_parent_span_context = trace.SpanContext(
                 trace_id=self._trace_id,
                 span_id=self._workunit_span_id_to_otel_span_id[workunit_parent_span_id],
                 is_remote=False,
             )
-            trace.set_span_in_context(DummySpan(otel_parent_span_context), context=otel_context)
+            otel_context = trace.set_span_in_context(DummySpan(otel_parent_span_context), context=otel_context)
 
         otel_span = self._tracer.start_span(
             name=workunit.name,
