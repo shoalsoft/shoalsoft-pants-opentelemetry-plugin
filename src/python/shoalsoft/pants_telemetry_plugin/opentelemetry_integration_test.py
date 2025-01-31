@@ -81,8 +81,8 @@ def _wait_for_server_availability(port: int, *, num_attempts: int = 4) -> None:
 
 
 def test_otlp_http_exporter() -> None:
-    # Location of a copy of the plugin's source code. The BUILD file arranges for the files to materialized
-    # in the sandbox as a dependency.
+    # Location of a copy of the plugin's source code. The BUILD file arranges for the files to be
+    # materialized in the sandbox as a dependency.
     plugin_python_path = Path.cwd() / "src" / "python"
     assert (plugin_python_path / "shoalsoft" / "pants_telemetry_plugin" / "register.py").exists()
 
@@ -148,8 +148,8 @@ def test_otlp_http_exporter() -> None:
 
 
 def test_otel_json_file_exporter() -> None:
-    # Location of a copy of the plugin's source code. The BUILD file arranges for the files to materialized
-    # in the sandbox as a dependency.
+    # Location of a copy of the plugin's source code. The BUILD file arranges for the files to be
+    # materialized in the sandbox as a dependency.
     plugin_python_path = Path.cwd() / "src" / "python"
     assert (plugin_python_path / "shoalsoft" / "pants_telemetry_plugin" / "register.py").exists()
 
