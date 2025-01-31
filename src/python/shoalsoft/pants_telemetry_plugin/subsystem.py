@@ -171,8 +171,8 @@ class TelemetrySubsystem(Subsystem):
         advanced=True,
         help=softwrap(
             f"""
-            Represents whether to enable client transport security for gRPC requests. A scheme of https takes precedence
-            over this configuration setting. Default is `False`.
+            Represents whether to enable client transport security for gRPC requests. An endpoint scheme of https
+            will error if this option is in effect since `https` implies secure mode.
 
             This option is consumed by the `{TracingExporterId.OTLP_GRPC.value}` exporter.
 
