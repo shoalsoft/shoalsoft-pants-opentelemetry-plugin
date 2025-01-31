@@ -139,7 +139,7 @@ def _make_span_exporter(name: TracingExporterId, telemetry: TelemetrySubsystem) 
         compression = telemetry.otel_exporter_compression
         if compression not in _GRPC_COMPRESSION_MAP.keys():
             raise ValueError(
-                f"OpenTelemetry compression mode `{compression.value}` is not supported for OTLP/GRPC exports."
+                f"OpenTelemetry compression mode `{compression.value}` is not supported for OTLP/gRPC exports."
             )
 
         credentials: GrpcChannelCredentials | None = None
