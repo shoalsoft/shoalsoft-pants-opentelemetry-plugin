@@ -16,13 +16,14 @@ import datetime
 import logging
 import typing
 from pathlib import Path
-from typing import Iterable, TextIO
+from typing import TextIO
 
 from opentelemetry import trace
 from opentelemetry.context import Context
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
     OTLPSpanExporter as GrpcOTLPSpanExporter,
 )
+from opentelemetry.exporter.otlp.proto.http import Compression
 from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
     OTLPSpanExporter as HttpOTLPSpanExporter,
 )
@@ -33,7 +34,7 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter, Spa
 from opentelemetry.trace.span import NonRecordingSpan, SpanContext
 
 from shoalsoft.pants_telemetry_plugin.processor import IncompleteWorkunit, Processor, Workunit
-from shoalsoft.pants_telemetry_plugin.subsystem import TracingExporterId
+from shoalsoft.pants_telemetry_plugin.subsystem import TelemetrySubsystem, TracingExporterId
 
 logger = logging.getLogger(__name__)
 
@@ -66,17 +67,27 @@ class JsonFileSpanExporter(SpanExporter):
         return True
 
 
-def _make_span_exporter(name: TracingExporterId) -> SpanExporter:
+def _make_span_exporter(name: TracingExporterId, telemetry: TelemetrySubsystem) -> SpanExporter:
     if name == TracingExporterId.OTLP_HTTP:
-        return HttpOTLPSpanExporter()
+        return HttpOTLPSpanExporter(
+            endpoint=telemetry.otel_exporter_endpoint,
+            certificate_file=telemetry.otel_exporter_certificate_file,
+            client_key_file=telemetry.otel_exporter_client_key_file,
+            client_certificate_file=telemetry.otel_exporter_client_certificate_file,
+            headers=telemetry.otel_exporter_headers,
+            timeout=telemetry.otel_exporter_timeout,
+            compression=Compression(telemetry.otel_exporter_compression.value),
+        )
     elif name == TracingExporterId.OTLP_GRPC:
         return GrpcOTLPSpanExporter()
     else:
-        raise AssertionError(f"Asked to construct an unknown span exporter: {name}")
+        raise AssertionError(f"Unknown OpenTelemetry tracing span exporter: {name}")
 
 
 def get_otel_processor(
-    span_exporters: Iterable[TracingExporterId], otel_json_file_path: Path | None
+    span_exporter_name: TracingExporterId,
+    telemetry: TelemetrySubsystem,
+    build_root: Path,
 ) -> Processor:
     resource = Resource(
         attributes={
@@ -86,27 +97,28 @@ def get_otel_processor(
     trace.set_tracer_provider(TracerProvider(sampler=sampling.ALWAYS_ON, resource=resource))
     tracer = trace.get_tracer(__name__)
 
-    for span_exporter_name in span_exporters:
-        span_exporter: SpanExporter
-        if span_exporter_name == TracingExporterId.OTEL_JSON_FILE:
-            if not otel_json_file_path:
-                raise ValueError(
-                    f"`--shoalsoft-telemetry-exporters` includes `{TracingExporterId.OTEL_JSON_FILE}` but --shoalsoft-telemetry-json-file is not set."
-                )
-            otel_json_file_path.parent.mkdir(parents=True, exist_ok=True)
-            span_exporter = JsonFileSpanExporter(open(otel_json_file_path, "w"))
-            logger.debug(
-                f"Enabling OpenTelemetry JSON file span exporter: path={otel_json_file_path}"
+    span_exporter: SpanExporter
+    if span_exporter_name == TracingExporterId.OTEL_JSON_FILE:
+        otel_json_file_path_str = telemetry.otel_json_file
+        if not otel_json_file_path_str:
+            raise ValueError(
+                f"`--shoalsoft-telemetry-exporters` includes `{TracingExporterId.OTEL_JSON_FILE}` "
+                "but the `--shoalsoft-telemetry-otel-json-file` option is not set."
             )
-        elif span_exporter_name in {TracingExporterId.OTLP_HTTP, TracingExporterId.OTLP_GRPC}:
-            span_exporter = _make_span_exporter(span_exporter_name)
-        else:
-            raise AssertionError(
-                f"Asked to construct an unknown span exporter: {span_exporter_name}"
-            )
+        otel_json_file_path = build_root / otel_json_file_path_str
+        otel_json_file_path.parent.mkdir(parents=True, exist_ok=True)
+        span_exporter = JsonFileSpanExporter(open(otel_json_file_path, "w"))
+        logger.debug(f"Enabling OpenTelemetry JSON file span exporter: path={otel_json_file_path}")
+    elif span_exporter_name in {TracingExporterId.OTLP_HTTP, TracingExporterId.OTLP_GRPC}:
+        span_exporter = _make_span_exporter(span_exporter_name, telemetry=telemetry)
+        logger.debug(f"Enabling OpenTelemetry span exporter `{span_exporter_name.value}`.")
+    else:
+        raise AssertionError(
+            f"Asked to construct an unknown span exporter: {span_exporter_name.value}"
+        )
 
-        span_processor = BatchSpanProcessor(span_exporter)
-        trace.get_tracer_provider().add_span_processor(span_processor)  # type: ignore[attr-defined]
+    span_processor = BatchSpanProcessor(span_exporter)
+    trace.get_tracer_provider().add_span_processor(span_processor)  # type: ignore[attr-defined]
 
     return OpenTelemetryProcessor(tracer, span_processor)
 
