@@ -62,11 +62,14 @@ class TelemetrySubsystem(Subsystem):
     otel_exporter_endpoint = StrOption(
         default=None,
         help=softwrap(
-            """
+            f"""
             The target to which the span exporter is going to send spans. The endpoint MUST be a valid URL host,
             and MAY contain a scheme (http or https), port and path. A scheme of https indicates a secure
             connection and takes precedence over this configuration setting. Endpoint which will receive exported
             tracing spans.
+
+            This option is consumed by both the `{TracingExporterId.OTLP_HTTP.value}` and `{TracingExporterId.OTLP_GRPC.value}`
+            exporters.
 
             Corresponds to the `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` and `OTEL_EXPORTER_OTLP_ENDPOINT`
             environment variables.
@@ -121,6 +124,9 @@ class TelemetrySubsystem(Subsystem):
             """
             The key-value pairs to be used as headers for spans associated with gRPC or HTTP requests.
 
+            This option is consumed by both the `{TracingExporterId.OTLP_HTTP.value}` and `{TracingExporterId.OTLP_GRPC.value}`
+            exporters.
+
             Corresponds to the `OTEL_EXPORTER_OTLP_TRACES_HEADERS` and `OTEL_EXPORTER_OTLP_HEADERS`
             environment variables.
             """
@@ -131,8 +137,11 @@ class TelemetrySubsystem(Subsystem):
         default=None,
         advanced=True,
         help=softwrap(
-            """
+            f"""
             The maximum time the OTLP exporter will wait for each batch export for spans.
+
+            This option is consumed by both the `{TracingExporterId.OTLP_HTTP.value}` and `{TracingExporterId.OTLP_GRPC.value}`
+            exporters.
 
             Corresponds to the `OTEL_EXPORTER_OTLP_TRACES_TIMEOUT` and `OTEL_EXPORTER_OTLP_TIMEOUT`
             environment variables.
@@ -144,11 +153,30 @@ class TelemetrySubsystem(Subsystem):
         default=OtelCompression.NONE,
         advanced=True,
         help=softwrap(
-            """
+            f"""
             Specifies a gRPC compression method to be used in the OTLP exporters. Possible values are `gzip`,
             `deflate`, and `none`.
 
+            This option is consumed by both the `{TracingExporterId.OTLP_HTTP.value}` and `{TracingExporterId.OTLP_GRPC.value}`
+            exporters.
+
             Corresponds to the `OTEL_EXPORTER_OTLP_TRACES_COMPRESSION` and `OTEL_EXPORTER_OTLP_COMPRESSION`
+            environment variables.
+            """
+        ),
+    )
+
+    otel_exporter_insecure = BoolOption(
+        default=None,
+        advanced=True,
+        help=softwrap(
+            f"""
+            Represents whether to enable client transport security for gRPC requests. An endpoint scheme of https
+            will error if this option is in effect since `https` implies secure mode.
+
+            This option is consumed by the `{TracingExporterId.OTLP_GRPC.value}` exporter.
+
+            Corresponds to the `OTEL_EXPORTER_OTLP_TRACES_INSECURE` and `OTEL_EXPORTER_OTLP_INSECURE`
             environment variables.
             """
         ),

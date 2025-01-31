@@ -15,9 +15,13 @@ from __future__ import annotations
 import datetime
 import logging
 import typing
+import urllib
 from pathlib import Path
 from typing import TextIO
 
+from grpc import ChannelCredentials as GrpcChannelCredentials  # type: ignore[import-untyped]
+from grpc import Compression as GrpcCompression
+from grpc import ssl_channel_credentials
 from opentelemetry import trace
 from opentelemetry.context import Context
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
@@ -34,11 +38,19 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter, Spa
 from opentelemetry.trace.span import NonRecordingSpan, SpanContext
 
 from shoalsoft.pants_telemetry_plugin.processor import IncompleteWorkunit, Processor, Workunit
-from shoalsoft.pants_telemetry_plugin.subsystem import TelemetrySubsystem, TracingExporterId
+from shoalsoft.pants_telemetry_plugin.subsystem import (
+    OtelCompression,
+    TelemetrySubsystem,
+    TracingExporterId,
+)
 
 logger = logging.getLogger(__name__)
 
 _UNIX_EPOCH = datetime.datetime(year=1970, month=1, day=1, tzinfo=datetime.timezone.utc)
+_GRPC_COMPRESSION_MAP: dict[OtelCompression, GrpcCompression | None] = {
+    OtelCompression.GZIP: GrpcCompression.Gzip,
+    OtelCompression.NONE: GrpcCompression.NoCompression,
+}
 
 
 def _datetime_to_otel_timestamp(d: datetime.datetime) -> int:
@@ -67,6 +79,51 @@ class JsonFileSpanExporter(SpanExporter):
         return True
 
 
+def _read_file(file_path: str, option_name: str) -> bytes:
+    try:
+        with open(file_path, "rb") as file:
+            return file.read()
+    except FileNotFoundError as e:
+        raise ValueError(
+            f"Failed to read file `{e.filename}` obtained from the `{option_name}` option: {e}"
+        )
+
+
+def _get_grpc_credentials(
+    telemetry: TelemetrySubsystem,
+) -> GrpcChannelCredentials:
+    certificate_file = telemetry.otel_exporter_certificate_file
+    if not certificate_file:
+        return ssl_channel_credentials()
+    client_key_file = telemetry.otel_exporter_client_key_file
+    client_certificate_file = telemetry.otel_exporter_client_certificate_file
+
+    root_certificates = (
+        _read_file(certificate_file, "--shoalsoft-telemetry-otel-exporter-certificate-file")
+        if certificate_file
+        else None
+    )
+    private_key = (
+        _read_file(client_key_file, "--shoalsoft-telemetry-otel-exporter-client-key-file")
+        if client_key_file
+        else None
+    )
+    certificate_chain = (
+        _read_file(
+            client_certificate_file,
+            "--shoalsoft-telemetry-otel-exporter-client-certificate-file",
+        )
+        if client_certificate_file
+        else None
+    )
+
+    return ssl_channel_credentials(
+        root_certificates=root_certificates,
+        private_key=private_key,
+        certificate_chain=certificate_chain,
+    )
+
+
 def _make_span_exporter(name: TracingExporterId, telemetry: TelemetrySubsystem) -> SpanExporter:
     if name == TracingExporterId.OTLP_HTTP:
         return HttpOTLPSpanExporter(
@@ -79,7 +136,33 @@ def _make_span_exporter(name: TracingExporterId, telemetry: TelemetrySubsystem) 
             compression=Compression(telemetry.otel_exporter_compression.value),
         )
     elif name == TracingExporterId.OTLP_GRPC:
-        return GrpcOTLPSpanExporter()
+        compression = telemetry.otel_exporter_compression
+        if compression not in _GRPC_COMPRESSION_MAP.keys():
+            raise ValueError(
+                f"OpenTelemetry compression mode `{compression.value}` is not supported for OTLP/gRPC exports."
+            )
+
+        credentials: GrpcChannelCredentials | None = None
+        if not telemetry.otel_exporter_insecure:
+            credentials = _get_grpc_credentials(telemetry)
+        elif telemetry.otel_exporter_endpoint:
+            parsed_endpoint = urllib.parse.urlparse(telemetry.otel_exporter_endpoint)
+            if parsed_endpoint.scheme == "https":
+                raise ValueError(
+                    "`--shoalsoft-telemetry-otel-exporter-insecure` is enabled, but the endpoint "
+                    f"`{telemetry.otel_exporter_endpoint}` contains a `https` scheme which "
+                    "requires secure mode. Please set `--no-shoalsoft-telemetry-otel-exporter-insecure` "
+                    "instead."
+                )
+
+        return GrpcOTLPSpanExporter(
+            endpoint=telemetry.otel_exporter_endpoint,
+            insecure=telemetry.otel_exporter_insecure,
+            credentials=credentials,
+            headers=telemetry.otel_exporter_headers,
+            timeout=telemetry.otel_exporter_timeout,
+            compression=_GRPC_COMPRESSION_MAP[compression],
+        )
     else:
         raise AssertionError(f"Unknown OpenTelemetry tracing span exporter: {name}")
 
@@ -191,4 +274,5 @@ class OpenTelemetryProcessor(Processor):
         self._span_count += 1
 
     def finish(self) -> None:
+        logger.debug("OpenTelemetryProcessor requested to finish workunit transmission.")
         self._span_processor.shutdown()
