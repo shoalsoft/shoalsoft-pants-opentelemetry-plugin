@@ -92,12 +92,7 @@ def test_otlp_http_exporter() -> None:
     server_port = http_server.server_port
 
     def _server_thread_func() -> None:
-        print("SERVER THREAD START")
-        try:
-            http_server.serve_forever()
-        except Exception as ex:
-            print(f"EX: {ex}")
-            raise
+        http_server.serve_forever()
 
     server_thread = threading.Thread(target=_server_thread_func)
     server_thread.daemon = True
