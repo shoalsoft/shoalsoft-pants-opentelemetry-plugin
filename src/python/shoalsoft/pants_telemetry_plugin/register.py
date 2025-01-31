@@ -13,7 +13,6 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 
 from pants.base.build_root import BuildRoot
 from pants.engine.rules import collect_rules, rule
@@ -41,13 +40,11 @@ async def telemetry_workunits_callback_factory_request(
     build_root: BuildRoot,
 ) -> WorkunitsCallbackFactory:
     processor: Processor | None = None
-    print(f"telemetry.enabled={telemetry.enabled}; telemetry.exporters={telemetry.exporters}")
-    if telemetry.enabled and telemetry.exporters:
-        otel_json_file_path: Path | None = None
-        if telemetry.otel_json_file is not None:
-            otel_json_file_path = build_root.pathlib_path / telemetry.otel_json_file
+    if telemetry.enabled and telemetry.exporter:
         processor = get_otel_processor(
-            span_exporters=telemetry.exporters, otel_json_file_path=otel_json_file_path
+            span_exporter_name=telemetry.exporter,
+            telemetry=telemetry,
+            build_root=build_root.pathlib_path,
         )
     return WorkunitsCallbackFactory(
         lambda: TelemetryWorkunitsCallback(processor) if processor is not None else None

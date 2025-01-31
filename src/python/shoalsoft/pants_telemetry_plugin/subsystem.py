@@ -12,7 +12,7 @@
 
 import enum
 
-from pants.option.option_types import BoolOption, EnumListOption, StrOption
+from pants.option.option_types import BoolOption, DictOption, EnumOption, IntOption, StrOption
 from pants.option.subsystem import Subsystem
 from pants.util.strutil import softwrap
 
@@ -23,25 +23,27 @@ class TracingExporterId(enum.Enum):
     OTEL_JSON_FILE = "otel-json-file"
 
 
+class OtelCompression(enum.Enum):
+    GZIP = "gzip"
+    DEFLATE = "deflate"
+    NONE = "none"
+
+
 class TelemetrySubsystem(Subsystem):
     options_scope = "shoalsoft-telemetry"
     help = "Pants Telemetry plugin from Shoal Software"
 
-    enabled = BoolOption("--enabled", default=False, help="Whether to enable telemetry.")
+    enabled = BoolOption(default=False, help="Whether to enable the telemetry plugin.")
 
-    exporters = EnumListOption(
-        enum_type=TracingExporterId,
-        default=lambda _cls: None,
+    exporter = EnumOption(
+        default=TracingExporterId.OTEL_JSON_FILE,
         help=softwrap(
             f"""
             Set the exporters to use when exporting workunits to external tracing systems. Choices are
             `{TracingExporterId.OTLP_HTTP.value}` (OpenTelemetry OTLP HTTP),
             `{TracingExporterId.OTLP_GRPC.value}` (OpenTelemetry OTLP GRPC), and
             `{TracingExporterId.OTEL_JSON_FILE.value}` (OpenTelemetry debug output to a file).
-            Default is not export spans at all.
-
-            Configure each OpenTelemetry exporter using the applicable OpenTelemetry environment variables.
-            TODO: Add link to OTEL docs for those environment variables here.
+            Default is `{TracingExporterId.OTEL_JSON_FILE.value}`.
             """
         ),
     )
@@ -53,6 +55,101 @@ class TelemetrySubsystem(Subsystem):
             If set, Pants will write OpenTelemetry tracing spans to a local file for easier debugging. Each line
             will be a tracing span in OpenTelemetry's JSON format. The filename is relative to the build root. Export
             will only occur if the `--shoalsoft-telemetry-exporters` option includes `{TracingExporterId.OTEL_JSON_FILE.value}`.
+            """
+        ),
+    )
+
+    otel_exporter_endpoint = StrOption(
+        default=None,
+        help=softwrap(
+            """
+            The target to which the span exporter is going to send spans. The endpoint MUST be a valid URL host,
+            and MAY contain a scheme (http or https), port and path. A scheme of https indicates a secure
+            connection and takes precedence over this configuration setting. Endpoint which will receive exported
+            tracing spans.
+
+            Corresponds to the `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` and `OTEL_EXPORTER_OTLP_ENDPOINT`
+            environment variables.
+            """
+        ),
+    )
+
+    otel_exporter_certificate_file = StrOption(
+        default=None,
+        advanced=True,
+        help=softwrap(
+            """
+            The path to the certificate file for TLS credentials of gRPC client for traces.
+            Should only be used for a secure connection for tracing.
+
+            Corresponds to the `OTEL_EXPORTER_OTLP_TRACES_CLIENT_KEY` and `OTEL_EXPORTER_OTLP_CERTIFICATE`
+            environment variables.
+            """
+        ),
+    )
+
+    otel_exporter_client_key_file = StrOption(
+        default=None,
+        advanced=True,
+        help=softwrap(
+            """
+            The path to the client private key to use in mTLS communication in PEM format for traces.
+
+            Corresponds to the `OTEL_EXPORTER_OTLP_TRACES_CLIENT_KEY` and `OTEL_EXPORTER_OTLP_CLIENT_KEY`
+            environment variables.
+            """
+        ),
+    )
+
+    otel_exporter_client_certificate_file = StrOption(
+        default=None,
+        advanced=True,
+        help=softwrap(
+            """
+            The path to the client certificate/chain trust for clients private key to use in mTLS
+            communication in PEM format for traces.
+
+            Corresponds to the `OTEL_EXPORTER_OTLP_TRACES_CLIENT_CERTIFICATE` and
+            `OTEL_EXPORTER_OTLP_CLIENT_CERTIFICATE` environment variables.
+            """
+        ),
+    )
+
+    otel_exporter_headers = DictOption[str](
+        advanced=True,
+        help=softwrap(
+            """
+            The key-value pairs to be used as headers for spans associated with gRPC or HTTP requests.
+
+            Corresponds to the `OTEL_EXPORTER_OTLP_TRACES_HEADERS` and `OTEL_EXPORTER_OTLP_HEADERS`
+            environment variables.
+            """
+        ),
+    )
+
+    otel_exporter_timeout = IntOption(
+        default=None,
+        advanced=True,
+        help=softwrap(
+            """
+            The maximum time the OTLP exporter will wait for each batch export for spans.
+
+            Corresponds to the `OTEL_EXPORTER_OTLP_TRACES_TIMEOUT` and `OTEL_EXPORTER_OTLP_TIMEOUT`
+            environment variables.
+            """
+        ),
+    )
+
+    otel_exporter_compression = EnumOption(
+        default=OtelCompression.NONE,
+        advanced=True,
+        help=softwrap(
+            """
+            Specifies a gRPC compression method to be used in the OTLP exporters. Possible values are `gzip`,
+            `deflate`, and `none`.
+
+            Corresponds to the `OTEL_EXPORTER_OTLP_TRACES_COMPRESSION` and `OTEL_EXPORTER_OTLP_COMPRESSION`
+            environment variables.
             """
         ),
     )

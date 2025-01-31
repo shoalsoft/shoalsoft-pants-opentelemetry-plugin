@@ -6,3 +6,4 @@ opentelemetry-exporter-otlp==1.29.0
 # Test dependencies
 pytest
 toml==0.10.2
+httpx==0.28.1

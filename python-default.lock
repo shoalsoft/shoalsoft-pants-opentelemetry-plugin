@@ -9,6 +9,7 @@
 //     "CPython==3.9.*"
 //   ],
 //   "generated_with_requirements": [
+//     "httpx==0.28.1",
 //     "opentelemetry-api==1.29.0",
 //     "opentelemetry-exporter-otlp==1.29.0",
 //     "opentelemetry-sdk==1.29.0",
@@ -51,6 +52,43 @@
           "requires_dists": [],
           "requires_python": null,
           "version": "1.1.8"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
+              "hash": "b5011f270ab5eb0abf13385f851315585cc37ef330dd88e27ec3d34d651fd47a",
+              "url": "https://files.pythonhosted.org/packages/46/eb/e7f063ad1fec6b3178a3cd82d1a3c4de82cccf283fc42746168188e1cdd5/anyio-4.8.0-py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "1d9fe889df5212298c0c0723fa20479d1b94883a2df44bd3897aa91083316f7a",
+              "url": "https://files.pythonhosted.org/packages/a3/73/199a98fc2dae33535d6b8e8e6ec01f8c1d76c9adb096c6b7d64823038cde/anyio-4.8.0.tar.gz"
+            }
+          ],
+          "project_name": "anyio",
+          "requires_dists": [
+            "Sphinx~=7.4; extra == \"doc\"",
+            "anyio[trio]; extra == \"test\"",
+            "coverage[toml]>=7; extra == \"test\"",
+            "exceptiongroup>=1.0.2; python_version < \"3.11\"",
+            "exceptiongroup>=1.2.0; extra == \"test\"",
+            "hypothesis>=4.0; extra == \"test\"",
+            "idna>=2.8",
+            "packaging; extra == \"doc\"",
+            "psutil>=5.9; extra == \"test\"",
+            "pytest>=7.0; extra == \"test\"",
+            "sniffio>=1.1",
+            "sphinx-autodoc-typehints>=1.2.0; extra == \"doc\"",
+            "sphinx_rtd_theme; extra == \"doc\"",
+            "trio>=0.26.1; extra == \"trio\"",
+            "trustme; extra == \"test\"",
+            "truststore>=0.9.1; python_version >= \"3.10\" and extra == \"test\"",
+            "typing_extensions>=4.5; python_version < \"3.13\"",
+            "uvloop>=0.21; (platform_python_implementation == \"CPython\" and platform_system != \"Windows\" and python_version < \"3.14\") and extra == \"test\""
+          ],
+          "requires_python": ">=3.9",
+          "version": "4.8.0"
         },
         {
           "artifacts": [
@@ -115,19 +153,19 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "1275f7a45be9464efc1173084eaa30f866fe2e47d389406136d332ed4967ec56",
-              "url": "https://files.pythonhosted.org/packages/a5/32/8f6669fc4798494966bf446c8c4a162e0b5d893dff088afddf76414f70e1/certifi-2024.12.14-py3-none-any.whl"
+              "hash": "ca78db4565a652026a4db2bcdf68f2fb589ea80d0be70e03929ed730746b84fe",
+              "url": "https://files.pythonhosted.org/packages/38/fc/bce832fd4fd99766c04d1ee0eead6b0ec6486fb100ae5e74c1d91292b982/certifi-2025.1.31-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "b650d30f370c2b724812bee08008be0c4163b163ddaec3f2546c1caf65f191db",
-              "url": "https://files.pythonhosted.org/packages/0f/bd/1d41ee578ce09523c81a15426705dd20969f5abf006d1afe8aeff0dd776a/certifi-2024.12.14.tar.gz"
+              "hash": "3d5da6925056f6f18f119200434a4780a94263f10d1c21d032a6f6b2baa20651",
+              "url": "https://files.pythonhosted.org/packages/1c/ab/c9f1e32b7b1bf505bf26f0ef697775960db7932abeb7b516de930ba2705f/certifi-2025.1.31.tar.gz"
             }
           ],
           "project_name": "certifi",
           "requires_dists": [],
           "requires_python": ">=3.6",
-          "version": "2024.12.14"
+          "version": "2025.1.31"
         },
         {
           "artifacts": [
@@ -249,6 +287,26 @@
           "artifacts": [
             {
               "algorithm": "sha256",
+              "hash": "3111b9d131c238bec2f8f516e123e14ba243563fb135d3fe885990585aa7795b",
+              "url": "https://files.pythonhosted.org/packages/02/cc/b7e31358aac6ed1ef2bb790a9746ac2c69bcb3c8588b41616914eb106eaf/exceptiongroup-1.2.2-py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "47c2edf7c6738fafb49fd34290706d1a1a2f4d1c6df275526b62cbb4aa5393cc",
+              "url": "https://files.pythonhosted.org/packages/09/35/2495c4ac46b980e4ca1f6ad6db102322ef3ad2410b79fdde159a4b0f3b92/exceptiongroup-1.2.2.tar.gz"
+            }
+          ],
+          "project_name": "exceptiongroup",
+          "requires_dists": [
+            "pytest>=6; extra == \"test\""
+          ],
+          "requires_python": ">=3.7",
+          "version": "1.2.2"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
               "hash": "8408e52656455977053871990bd25824d85803b9417aa348f10ba29ef0c751f7",
               "url": "https://files.pythonhosted.org/packages/31/91/6630ebd169ca170634ca8a10dfcc5f5c11b0621672d4c2c9e40381c6d81a/fasteners-0.16.3-py2.py3-none-any.whl"
             },
@@ -336,6 +394,82 @@
           ],
           "requires_python": ">=3.8",
           "version": "1.70.0"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
+              "hash": "e3fe4ac4b851c468cc8363d500db52c2ead036020723024a109d37346efaa761",
+              "url": "https://files.pythonhosted.org/packages/95/04/ff642e65ad6b90db43e668d70ffb6736436c7ce41fcc549f4e9472234127/h11-0.14.0-py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "8f19fbbe99e72420ff35c00b27a34cb9937e902a8b810e2c88300c6f0a3b699d",
+              "url": "https://files.pythonhosted.org/packages/f5/38/3af3d3633a34a3316095b39c8e8fb4853a28a536e55d347bd8d8e9a14b03/h11-0.14.0.tar.gz"
+            }
+          ],
+          "project_name": "h11",
+          "requires_dists": [
+            "typing-extensions; python_version < \"3.8\""
+          ],
+          "requires_python": ">=3.7",
+          "version": "0.14.0"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
+              "hash": "a3fff8f43dc260d5bd363d9f9cf1830fa3a458b332856f34282de498ed420edd",
+              "url": "https://files.pythonhosted.org/packages/87/f5/72347bc88306acb359581ac4d52f23c0ef445b57157adedb9aee0cd689d2/httpcore-1.0.7-py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "8551cb62a169ec7162ac7be8d4817d561f60e08eaa485234898414bb5a8a0b4c",
+              "url": "https://files.pythonhosted.org/packages/6a/41/d7d0a89eb493922c37d343b607bc1b5da7f5be7e383740b4753ad8943e90/httpcore-1.0.7.tar.gz"
+            }
+          ],
+          "project_name": "httpcore",
+          "requires_dists": [
+            "anyio<5.0,>=4.0; extra == \"asyncio\"",
+            "certifi",
+            "h11<0.15,>=0.13",
+            "h2<5,>=3; extra == \"http2\"",
+            "socksio==1.*; extra == \"socks\"",
+            "trio<1.0,>=0.22.0; extra == \"trio\""
+          ],
+          "requires_python": ">=3.8",
+          "version": "1.0.7"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
+              "hash": "d909fcccc110f8c7faf814ca82a9a4d816bc5a6dbfea25d6591d6985b8ba59ad",
+              "url": "https://files.pythonhosted.org/packages/2a/39/e50c7c3a983047577ee07d2a9e53faf5a69493943ec3f6a384bdc792deb2/httpx-0.28.1-py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc",
+              "url": "https://files.pythonhosted.org/packages/b1/df/48c586a5fe32a0f01324ee087459e112ebb7224f646c0b5023f5e79e9956/httpx-0.28.1.tar.gz"
+            }
+          ],
+          "project_name": "httpx",
+          "requires_dists": [
+            "anyio",
+            "brotli; platform_python_implementation == \"CPython\" and extra == \"brotli\"",
+            "brotlicffi; platform_python_implementation != \"CPython\" and extra == \"brotli\"",
+            "certifi",
+            "click==8.*; extra == \"cli\"",
+            "h2<5,>=3; extra == \"http2\"",
+            "httpcore==1.*",
+            "idna",
+            "pygments==2.*; extra == \"cli\"",
+            "rich<14,>=10; extra == \"cli\"",
+            "socksio==1.*; extra == \"socks\"",
+            "zstandard>=0.18.0; extra == \"zstd\""
+          ],
+          "requires_python": ">=3.8",
+          "version": "0.28.1"
         },
         {
           "artifacts": [
@@ -1268,6 +1402,24 @@
           "artifacts": [
             {
               "algorithm": "sha256",
+              "hash": "2f6da418d1f1e0fddd844478f41680e794e6051915791a034ff65e5f100525a2",
+              "url": "https://files.pythonhosted.org/packages/e9/44/75a9c9421471a6c4805dbf2356f7c181a29c1879239abab1ea2cc8f38b40/sniffio-1.3.1-py3-none-any.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "f4324edc670a0f49750a81b895f35c3adb843cca46f0530f79fc1babb23789dc",
+              "url": "https://files.pythonhosted.org/packages/a2/87/a6771e1546d97e7e041b6ae58d80074f81b7d5121207425c964ddf5cfdbd/sniffio-1.3.1.tar.gz"
+            }
+          ],
+          "project_name": "sniffio",
+          "requires_dists": [],
+          "requires_python": ">=3.7",
+          "version": "1.3.1"
+        },
+        {
+          "artifacts": [
+            {
+              "algorithm": "sha256",
               "hash": "806143ae5bfb6a3c6e736a764057db0e6a0e05e338b5630894a5f779cabb4f9b",
               "url": "https://files.pythonhosted.org/packages/44/6f/7120676b6d73228c96e17f1f794d8ab046fc910d781c8d151120c3f1569e/toml-0.10.2-py2.py3-none-any.whl"
             },
@@ -1587,6 +1739,7 @@
   "pip_version": "24.2",
   "prefer_older_binary": false,
   "requirements": [
+    "httpx==0.28.1",
     "opentelemetry-api==1.29.0",
     "opentelemetry-exporter-otlp==1.29.0",
     "opentelemetry-sdk==1.29.0",
