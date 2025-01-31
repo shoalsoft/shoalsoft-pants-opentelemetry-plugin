@@ -139,7 +139,7 @@ def _make_span_exporter(name: TracingExporterId, telemetry: TelemetrySubsystem) 
         compression = telemetry.otel_exporter_compression
         if compression not in _GRPC_COMPRESSION_MAP.keys():
             raise ValueError(
-                f"OpenTelemetry compression mode `{compression.value}` is not supported fot OTLP/GRPC exports."
+                f"OpenTelemetry compression mode `{compression.value}` is not supported for OTLP/GRPC exports."
             )
 
         credentials: GrpcChannelCredentials | None = None
@@ -149,8 +149,10 @@ def _make_span_exporter(name: TracingExporterId, telemetry: TelemetrySubsystem) 
             parsed_endpoint = urllib.parse.urlparse(telemetry.otel_exporter_endpoint)
             if parsed_endpoint.scheme == "https":
                 raise ValueError(
-                    "`--shoalsoft-telemetry-otel-exporter-insecure is enabled, but the endpoint "
-                    f"`{telemetry.otel_exporter_endpoint}` contains an https:// scheme"
+                    "`--shoalsoft-telemetry-otel-exporter-insecure` is enabled, but the endpoint "
+                    f"`{telemetry.otel_exporter_endpoint}` contains a `https` scheme which "
+                    "requires secure mode. Please set `--no-shoalsoft-telemetry-otel-exporter-insecure` "
+                    "instead."
                 )
 
         return GrpcOTLPSpanExporter(
@@ -264,7 +266,6 @@ class OpenTelemetryProcessor(Processor):
             self._trace_id = otel_span_context.trace_id
 
     def complete_workunit(self, workunit: Workunit) -> None:
-        logger.debug("OpenTelemetryProcessor.complete_workunit")
         otel_span_id = self._workunit_span_id_to_otel_span_id[workunit.span_id]
         otel_span = self._otel_spans[otel_span_id]
         # TODO: Update the span with any changed attributes from the completed workunit.
@@ -273,5 +274,5 @@ class OpenTelemetryProcessor(Processor):
         self._span_count += 1
 
     def finish(self) -> None:
-        logger.debug("OpenTelemetryProcessor.debug")
+        logger.debug("OpenTelemetryProcessor requested to finish workunit transmission.")
         self._span_processor.shutdown()
