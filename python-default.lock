@@ -9,9 +9,11 @@
 //     "CPython==3.9.*"
 //   ],
 //   "generated_with_requirements": [
+//     "grpcio==1.70.0",
 //     "httpx==0.28.1",
 //     "opentelemetry-api==1.29.0",
 //     "opentelemetry-exporter-otlp==1.29.0",
+//     "opentelemetry-proto==1.29.0",
 //     "opentelemetry-sdk==1.29.0",
 //     "pantsbuild.pants.testutil==2.24.0",
 //     "pantsbuild.pants==2.24.0",
@@ -1739,9 +1741,11 @@
   "pip_version": "24.2",
   "prefer_older_binary": false,
   "requirements": [
+    "grpcio==1.70.0",
     "httpx==0.28.1",
     "opentelemetry-api==1.29.0",
     "opentelemetry-exporter-otlp==1.29.0",
+    "opentelemetry-proto==1.29.0",
     "opentelemetry-sdk==1.29.0",
     "pantsbuild.pants.testutil==2.24.0",
     "pantsbuild.pants==2.24.0",

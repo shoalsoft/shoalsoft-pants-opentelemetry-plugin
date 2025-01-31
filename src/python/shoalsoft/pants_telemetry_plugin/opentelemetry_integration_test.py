@@ -18,13 +18,16 @@ import tempfile
 import textwrap
 import threading
 import time
+from concurrent import futures
 from dataclasses import dataclass
 from functools import partial
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import Mapping
 
+import grpc  # type: ignore[import-untyped]
 import httpx
+from opentelemetry.proto.collector.trace.v1 import trace_service_pb2, trace_service_pb2_grpc
 
 from pants.util.dirutil import safe_file_dump
 from shoalsoft.pants_telemetry_plugin.pants_integration_testutil import run_pants_with_workdir
@@ -118,9 +121,6 @@ def test_otlp_http_exporter() -> None:
         workdir.mkdir(parents=True)
         _safe_write_files(buildroot, sources)
 
-        trace_file = Path(buildroot) / "dist" / "otel-json-trace.jsonl"
-        assert not trace_file.exists()
-
         result = run_pants_with_workdir(
             [
                 "--shoalsoft-telemetry-enabled",
@@ -140,6 +140,78 @@ def test_otlp_http_exporter() -> None:
 
         # Assert that tracing spans were received over HTTP.
         assert len(recorded_requests) > 0
+
+
+class _TraceServiceImpl(trace_service_pb2_grpc.TraceServiceServicer):
+    def __init__(self, requests: list[trace_service_pb2.ExportTraceServiceRequest]) -> None:
+        self.requests = requests
+
+    def Export(
+        self, request: trace_service_pb2.ExportTraceServiceRequest, context
+    ) -> trace_service_pb2.ExportTraceServiceResponse:
+        self.requests.append(request)
+        return trace_service_pb2.ExportTraceServiceResponse()
+
+
+def test_otlp_grpc_exporter() -> None:
+    # Location of a copy of the plugin's source code. The BUILD file arranges for the files to be
+    # materialized in the sandbox as a dependency.
+    plugin_python_path = Path.cwd() / "src" / "python"
+    assert (plugin_python_path / "shoalsoft" / "pants_telemetry_plugin" / "register.py").exists()
+
+    received_requests: list[trace_service_pb2.ExportTraceServiceRequest] = []
+    server_impl = _TraceServiceImpl(received_requests)
+
+    grpc_server = grpc.server(futures.ThreadPoolExecutor(max_workers=2))
+    trace_service_pb2_grpc.add_TraceServiceServicer_to_server(server_impl, grpc_server)
+    server_port = grpc_server.add_insecure_port("127.0.0.1:0")
+    grpc_server.start()
+
+    sources = {
+        "pants.toml": textwrap.dedent(
+            f"""\
+            [GLOBAL]
+            pants_version = "2.24.0"
+            backend_packages = ["pants.backend.python", "shoalsoft.pants_telemetry_plugin"]
+            pythonpath = ['{plugin_python_path}']
+            print_stacktrace = true
+            """
+        ),
+        "BUILD": "python_sources(name='src')\n",
+        "main.py": "print('Hello World!)\n",
+    }
+    with tempfile.TemporaryDirectory() as buildroot:
+        workdir = Path(buildroot) / ".pants.d" / "the-workdir"
+        workdir.mkdir(parents=True)
+        _safe_write_files(buildroot, sources)
+
+        result = run_pants_with_workdir(
+            [
+                "-ldebug",
+                "--no-pantsd",
+                "--shoalsoft-telemetry-enabled",
+                f"--shoalsoft-telemetry-exporter={TracingExporterId.OTLP_GRPC.value}",
+                f"--shoalsoft-telemetry-otel-exporter-endpoint=http://127.0.0.1:{server_port}/",
+                "--shoalsoft-telemetry-otel-exporter-insecure",
+                "list",
+                "::",
+            ],
+            workdir=str(workdir),
+            extra_env={
+                "PANTS_BUILDROOT_OVERRIDE": str(buildroot),
+                "GRPC_VERBOSITY": "DEBUG",
+            },
+            hermetic=False,
+            cwd=buildroot,
+        )
+        result.assert_success()
+
+        # Assert that tracing spans were received over HTTP.
+        assert len(received_requests) > 0
+        for request in received_requests:
+            assert (
+                request.resource_spans[0].resource.attributes[0].value.string_value == "pantsbuild"
+            )
 
 
 def test_otel_json_file_exporter() -> None:

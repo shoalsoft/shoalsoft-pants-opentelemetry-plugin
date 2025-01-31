@@ -14,12 +14,15 @@ from __future__ import annotations
 
 import datetime
 import logging
+import os
 import typing
 from pathlib import Path
 from typing import TextIO
 
 from opentelemetry import trace
+from opentelemetry._logs import Logger, LoggerProvider, LogRecord, set_logger_provider
 from opentelemetry.context import Context
+from opentelemetry.exporter.otlp.proto.grpc.exporter import environ_to_compression
 from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
     OTLPSpanExporter as GrpcOTLPSpanExporter,
 )
@@ -32,6 +35,7 @@ from opentelemetry.sdk.trace import ReadableSpan, TracerProvider, sampling
 from opentelemetry.sdk.trace.export import SpanProcessor  # type: ignore[attr-defined]
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter, SpanExportResult
 from opentelemetry.trace.span import NonRecordingSpan, SpanContext
+from opentelemetry.util.types import Attributes
 
 from shoalsoft.pants_telemetry_plugin.processor import IncompleteWorkunit, Processor, Workunit
 from shoalsoft.pants_telemetry_plugin.subsystem import TelemetrySubsystem, TracingExporterId
@@ -39,6 +43,22 @@ from shoalsoft.pants_telemetry_plugin.subsystem import TelemetrySubsystem, Traci
 logger = logging.getLogger(__name__)
 
 _UNIX_EPOCH = datetime.datetime(year=1970, month=1, day=1, tzinfo=datetime.timezone.utc)
+
+
+class PrintLogger(Logger):
+    def emit(self, record: LogRecord) -> None:
+        print(f"LOG: {record.body}")
+
+
+class PrintLoggerProvider(LoggerProvider):
+    def get_logger(
+        self,
+        name: str,
+        version: str | None = None,
+        schema_url: str | None = None,
+        attributes: Attributes | None = None,
+    ) -> Logger:
+        return PrintLogger(name=name)
 
 
 def _datetime_to_otel_timestamp(d: datetime.datetime) -> int:
@@ -79,7 +99,14 @@ def _make_span_exporter(name: TracingExporterId, telemetry: TelemetrySubsystem) 
             compression=Compression(telemetry.otel_exporter_compression.value),
         )
     elif name == TracingExporterId.OTLP_GRPC:
-        return GrpcOTLPSpanExporter()
+        return GrpcOTLPSpanExporter(
+            endpoint=telemetry.otel_exporter_endpoint,
+            insecure=telemetry.otel_exporter_insecure,
+            # credentials= # TODO: implement this!
+            headers=telemetry.otel_exporter_headers,
+            timeout=telemetry.otel_exporter_timeout,
+            compression=environ_to_compression(telemetry.otel_exporter_compression.value),
+        )
     else:
         raise AssertionError(f"Unknown OpenTelemetry tracing span exporter: {name}")
 
@@ -89,6 +116,9 @@ def get_otel_processor(
     telemetry: TelemetrySubsystem,
     build_root: Path,
 ) -> Processor:
+    set_logger_provider(PrintLoggerProvider())
+    os.environ["GRPC_VERBOSITY"] = "DEBUG"
+
     resource = Resource(
         attributes={
             SERVICE_NAME: "pantsbuild",
@@ -183,6 +213,7 @@ class OpenTelemetryProcessor(Processor):
             self._trace_id = otel_span_context.trace_id
 
     def complete_workunit(self, workunit: Workunit) -> None:
+        logger.debug("OpenTelemetryProcessor.complete_workunit")
         otel_span_id = self._workunit_span_id_to_otel_span_id[workunit.span_id]
         otel_span = self._otel_spans[otel_span_id]
         # TODO: Update the span with any changed attributes from the completed workunit.
@@ -191,4 +222,5 @@ class OpenTelemetryProcessor(Processor):
         self._span_count += 1
 
     def finish(self) -> None:
+        logger.debug("OpenTelemetryProcessor.debug")
         self._span_processor.shutdown()
