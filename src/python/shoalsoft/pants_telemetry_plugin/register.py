@@ -10,14 +10,24 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
+import logging
+from pathlib import Path
+
+from pants.base.build_root import BuildRoot
 from pants.engine.rules import collect_rules, rule
 from pants.engine.streaming_workunit_handler import (
     WorkunitsCallbackFactory,
     WorkunitsCallbackFactoryRequest,
 )
 from pants.engine.unions import UnionRule
+from shoalsoft.pants_telemetry_plugin.opentelemetry import get_otel_processor
+from shoalsoft.pants_telemetry_plugin.processor import Processor
 from shoalsoft.pants_telemetry_plugin.subsystem import TelemetrySubsystem
-from shoalsoft.pants_telemetry_plugin.workunits import TelemetryWorkunitsCallback
+from shoalsoft.pants_telemetry_plugin.workunit_handler import TelemetryWorkunitsCallback
+
+logger = logging.getLogger(__name__)
 
 
 class TelemetryWorkunitsCallbackFactoryRequest(WorkunitsCallbackFactoryRequest):
@@ -26,10 +36,21 @@ class TelemetryWorkunitsCallbackFactoryRequest(WorkunitsCallbackFactoryRequest):
 
 @rule
 async def telemetry_workunits_callback_factory_request(
-    _: TelemetryWorkunitsCallbackFactoryRequest, telemetry: TelemetrySubsystem
+    _: TelemetryWorkunitsCallbackFactoryRequest,
+    telemetry: TelemetrySubsystem,
+    build_root: BuildRoot,
 ) -> WorkunitsCallbackFactory:
+    processor: Processor | None = None
+    print(f"telemetry.enabled={telemetry.enabled}; telemetry.exporters={telemetry.exporters}")
+    if telemetry.enabled and telemetry.exporters:
+        otel_json_file_path: Path | None = None
+        if telemetry.otel_json_file is not None:
+            otel_json_file_path = build_root.pathlib_path / telemetry.otel_json_file
+        processor = get_otel_processor(
+            span_exporters=telemetry.exporters, otel_json_file_path=otel_json_file_path
+        )
     return WorkunitsCallbackFactory(
-        lambda: TelemetryWorkunitsCallback(telemetry.workunits_file) if telemetry.enabled else None
+        lambda: TelemetryWorkunitsCallback(processor) if processor is not None else None
     )
 
 

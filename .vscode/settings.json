@@ -1,14 +1,24 @@
 {
 	"python.analysis.indexing": true,
-	"python.defaultInterpreterPath": "dist/export/python/virtualenvs/python-default/3.9.21/bin/python3.9",
+	"python.defaultInterpreterPath": "${workspaceFolder}/dist/export/python/virtualenvs/python-default/3.9.21/bin/python3.9",
 	"python.analysis.packageIndexDepths": [
 		{
-			"name": "pantsbuild.pants",
+			"name": "pants",
 			"depth": 5,
 			"includeAllSymbols": true
+		},
+		{
+			"name": "shoalsoft",
+			"depth": 5,
+			"includeAllSymbols": true
+		},
+		{
+			"name": "opentelemetry",
+			"depth": 5,
+                        "includeAllSymbols": true
 		}
 	],
 	"python.analysis.include": [
-		"./dist/export/python/virtualenvs/python-default/3.9.21/lib/python3.9/site-packages/**"
+		"dist/export/python/virtualenvs/python-default/3.9.21/lib/python3.9/site-packages"
 	]
 }

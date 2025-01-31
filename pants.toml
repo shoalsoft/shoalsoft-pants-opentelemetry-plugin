@@ -14,13 +14,21 @@ backend_packages.add = [
 [python]
 interpreter_constraints = ["==3.9.*"]
 enable_resolves = true
-resolves = { python-default = "python-default.lock" }
+
+[python.resolves]
+python-default = "python-default.lock"
+pytest = "3rdparty/python/pytest.lock"
 
 [python-bootstrap]
 search_path = ["<PYENV>"]
 
 [python-repos]
 find_links = ["https://wheels.pantsbuild.org/simple"]
+
+[pytest]
+args = ["--no-header", "-vv"]
+install_from_resolve = "pytest"
+requirements = ["//3rdparty/python:pytest"]
 
 [source]
 root_patterns = ["/src/python"]
