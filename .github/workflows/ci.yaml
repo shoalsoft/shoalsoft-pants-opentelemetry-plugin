@@ -24,3 +24,7 @@ jobs:
         run: "pants lint ::"
       - name: Run tests
         run: "pants test ::"
+      - name: Package for 2.24.x
+        run: "pants package src/python/shoalsoft/pants_telemetry_plugin:wheel-2.24.x"
+      - name: Package for 2.23.x
+        run: "pants package src/python/shoalsoft/pants_telemetry_plugin:wheel-2.23.x"
