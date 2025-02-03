@@ -20,3 +20,14 @@ python_tests(
         }
     },
 )
+
+python_distribution(
+    name="wheel-2.24.x",
+    provides=setup_py(
+        name="shoalsoft.pants_telemetry_plugin",
+        description="Pants Telemetry Plugin from Shoal Software LLC",
+        python_requires="==3.9.*",
+        version="0.0.1",
+    ),
+    dependencies=["./register.py@resolve=pants-2.24.x"],
+)
