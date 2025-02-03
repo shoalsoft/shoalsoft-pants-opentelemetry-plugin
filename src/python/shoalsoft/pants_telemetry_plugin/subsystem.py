@@ -39,7 +39,7 @@ class TelemetrySubsystem(Subsystem):
         default=TracingExporterId.OTEL_JSON_FILE,
         help=softwrap(
             f"""
-            Set the exporters to use when exporting workunits to external tracing systems. Choices are
+            Set the exporter to use when exporting workunits to external tracing systems. Choices are
             `{TracingExporterId.OTLP_HTTP.value}` (OpenTelemetry OTLP HTTP),
             `{TracingExporterId.OTLP_GRPC.value}` (OpenTelemetry OTLP GRPC), and
             `{TracingExporterId.OTEL_JSON_FILE.value}` (OpenTelemetry debug output to a file).
