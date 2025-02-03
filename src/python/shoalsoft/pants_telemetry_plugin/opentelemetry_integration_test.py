@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import tempfile
 import textwrap
 import threading
@@ -30,7 +31,7 @@ import httpx
 from opentelemetry.proto.collector.trace.v1 import trace_service_pb2, trace_service_pb2_grpc
 
 from pants.util.dirutil import safe_file_dump
-from pants.version import PANTS_SEMVER
+from pants.version import PANTS_SEMVER, MAJOR_MINOR
 from shoalsoft.pants_telemetry_plugin.pants_integration_testutil import run_pants_with_workdir
 from shoalsoft.pants_telemetry_plugin.subsystem import TracingExporterId
 
@@ -87,8 +88,10 @@ def _wait_for_server_availability(port: int, *, num_attempts: int = 4) -> None:
 def test_otlp_http_exporter() -> None:
     # Location of a copy of the plugin's source code. The BUILD file arranges for the files to be
     # materialized in the sandbox as a dependency.
-    plugin_python_path = Path.cwd() / "src" / "python"
-    assert (plugin_python_path / "shoalsoft" / "pants_telemetry_plugin" / "register.py").exists()
+    plugin_wheels_path = Path.cwd() / "wheels"
+    plugin_wheels_path.mkdir(parents=True)
+    for filename in [p for p in os.listdir(Path.cwd()) if p.endswith(".whl")]:
+        shutil.move(filename, plugin_wheels_path)
 
     recorded_requests: list[RecordedRequest] = []
     server_handler = partial(_RequestRecorder, requests=recorded_requests)
@@ -110,15 +113,20 @@ def test_otlp_http_exporter() -> None:
             [GLOBAL]
             pants_version = "{PANTS_SEMVER}"
             backend_packages = ["pants.backend.python", "shoalsoft.pants_telemetry_plugin"]
-            pythonpath = ['{plugin_python_path}']
             print_stacktrace = true
+            plugins = ["shoalsoft_pants_telemetry_plugin-pants{MAJOR_MINOR}.x"]
+
+            [python-repos]
+            find_links = "file://{plugin_wheels_path}"
             """
         ),
         "BUILD": "python_sources(name='src')\n",
         "main.py": "print('Hello World!)\n",
     }
-    with tempfile.TemporaryDirectory() as buildroot:
-        workdir = Path(buildroot) / ".pants.d" / "the-workdir"
+    buildroot = Path.cwd() / "buildroot"
+    buildroot.mkdir(parents=True)
+    try:
+        workdir = buildroot / ".pants.d" / "the-workdir"
         workdir.mkdir(parents=True)
         _safe_write_files(buildroot, sources)
 
@@ -127,6 +135,8 @@ def test_otlp_http_exporter() -> None:
                 "--shoalsoft-telemetry-enabled",
                 f"--shoalsoft-telemetry-exporter={TracingExporterId.OTLP_HTTP.value}",
                 f"--shoalsoft-telemetry-otel-exporter-endpoint=http://127.0.0.1:{server_port}/v1/traces",
+                "--keep-sandboxes=on_failure",
+                "-ldebug",
                 "list",
                 "::",
             ],
@@ -141,6 +151,8 @@ def test_otlp_http_exporter() -> None:
 
         # Assert that tracing spans were received over HTTP.
         assert len(recorded_requests) > 0
+    finally:
+        pass
 
 
 class _TraceServiceImpl(trace_service_pb2_grpc.TraceServiceServicer):

@@ -16,7 +16,10 @@ python_tests(
     name="tests",
     overrides={
         "opentelemetry_integration_test.py": {
-            "dependencies": ["//src/python:plugin_files_for_integration_test"]
+            "runtime_package_dependencies": [
+                ":wheel-2.24.x",
+                ":wheel-2.23.x",
+            ]
         }
     },
 )
