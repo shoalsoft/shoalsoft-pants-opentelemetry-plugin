@@ -30,6 +30,7 @@ import httpx
 from opentelemetry.proto.collector.trace.v1 import trace_service_pb2, trace_service_pb2_grpc
 
 from pants.util.dirutil import safe_file_dump
+from pants.version import PANTS_SEMVER
 from shoalsoft.pants_telemetry_plugin.pants_integration_testutil import run_pants_with_workdir
 from shoalsoft.pants_telemetry_plugin.subsystem import TracingExporterId
 
@@ -107,7 +108,7 @@ def test_otlp_http_exporter() -> None:
         "pants.toml": textwrap.dedent(
             f"""\
             [GLOBAL]
-            pants_version = "2.24.0"
+            pants_version = "{PANTS_SEMVER}"
             backend_packages = ["pants.backend.python", "shoalsoft.pants_telemetry_plugin"]
             pythonpath = ['{plugin_python_path}']
             print_stacktrace = true
@@ -171,7 +172,7 @@ def test_otlp_grpc_exporter() -> None:
         "pants.toml": textwrap.dedent(
             f"""\
             [GLOBAL]
-            pants_version = "2.24.0"
+            pants_version = "{PANTS_SEMVER}"
             backend_packages = ["pants.backend.python", "shoalsoft.pants_telemetry_plugin"]
             pythonpath = ['{plugin_python_path}']
             print_stacktrace = true
@@ -224,7 +225,7 @@ def test_otel_json_file_exporter() -> None:
         "pants.toml": textwrap.dedent(
             f"""\
             [GLOBAL]
-            pants_version = "2.24.0"
+            pants_version = "{PANTS_SEMVER}"
             backend_packages = ["pants.backend.python", "shoalsoft.pants_telemetry_plugin"]
             pythonpath = ['{plugin_python_path}']
             print_stacktrace = true

@@ -20,5 +20,3 @@ python_tests(
         }
     },
 )
-
-pants_requirements(name="pants-reqs")

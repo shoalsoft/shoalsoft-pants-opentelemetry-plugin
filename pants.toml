@@ -14,13 +14,18 @@ backend_packages.add = [
 [python]
 interpreter_constraints = ["==3.9.*"]
 enable_resolves = true
+default_resolve = "pants-2.24.x"
 
 [python.resolves]
-python-default = "python-default.lock"
+"pants-2.24.x" = "3rdparty/python/pants-2.24.x.lock"
+"pants-2.23.x" = "3rdparty/python/pants-2.23.x.lock"
 pytest = "3rdparty/python/pytest.lock"
 
 [python-bootstrap]
 search_path = ["<PYENV>"]
+
+[python-infer]
+unowned_dependency_behavior = "error"
 
 [python-repos]
 find_links = ["https://wheels.pantsbuild.org/simple"]
