@@ -74,7 +74,7 @@ class PantsJoinHandle:
     process: subprocess.Popen
     workdir: str
 
-    def join(self, stdin_data: bytes | str | None = None, tee_output: bool = False) -> PantsResult:
+    def join(self, stdin_data: bytes | str | None = None, stream_output: bool = False) -> PantsResult:
         """Wait for the pants process to complete, and return a PantsResult for
         it."""
         if stdin_data is not None:
@@ -88,7 +88,7 @@ class PantsJoinHandle:
                 tee_stream.flush()
                 data = stream.read1(1024)
 
-        if tee_output:
+        if stream_output:
             stdout_buffer = bytearray()
             stdout_thread = Thread(
                 target=worker, args=(self.process.stdout, stdout_buffer, sys.stdout)
@@ -245,7 +245,7 @@ def run_pants_with_workdir(
     shell: bool = False,
     set_pants_ignore: bool = True,
     cwd: str | bytes | os.PathLike | None = None,
-    tee_output: bool = False,
+    stream_output: bool = False,
 ) -> PantsResult:
     handle = run_pants_with_workdir_without_waiting(
         command,
@@ -258,7 +258,7 @@ def run_pants_with_workdir(
         set_pants_ignore=set_pants_ignore,
         cwd=cwd,
     )
-    return handle.join(stdin_data=stdin_data, tee_output=tee_output)
+    return handle.join(stdin_data=stdin_data, stream_output=stream_output)
 
 
 def run_pants(
@@ -270,6 +270,7 @@ def run_pants(
     extra_env: Env | None = None,
     stdin_data: bytes | str | None = None,
     cwd: str | bytes | os.PathLike | None = None,
+    stream_output: bool = False,
 ) -> PantsResult:
     """Runs Pants in a subprocess.
 
@@ -291,6 +292,7 @@ def run_pants(
             stdin_data=stdin_data,
             extra_env=extra_env,
             cwd=cwd,
+            stream_output=stream_output,
         )
 
 
