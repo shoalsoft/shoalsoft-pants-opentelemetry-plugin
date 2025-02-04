@@ -10,21 +10,49 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-python_sources()
+python_sources(
+    resolve=parametrize("pants-2.24.x", "pants-2.23.x"),
+)
 
 python_tests(
     name="tests",
-    overrides={
-        "opentelemetry_integration_test.py": {
-            "dependencies": ["//src/python:plugin_files_for_integration_test"]
-        }
-    },
+    sources=["!*_integration_test.py"],
+    resolve=parametrize("pants-2.24.x", "pants-2.23.x"),
+)
+
+python_tests(
+    name="integration_tests",
+    sources=["*_integration_test.py"],
+    runtime_package_dependencies=[
+        ":wheel-2.24.x",
+        ":wheel-2.23.x",
+        ":pants-for-tests@parametrize=pants-2.24.x",
+        ":pants-for-tests@parametrize=pants-2.23.x",
+    ],
+)
+
+pex_binary(
+    name="pants-for-tests",
+    entry_point="pants",
+    execution_mode="venv",
+    **parametrize(
+        "pants-2.24.x",
+        resolve="pants-2.24.x",
+        dependencies=["3rdparty/python:pants-2.24.x#pantsbuild.pants"],
+        output_path="pants-2.24.pex",
+    ),
+    **parametrize(
+        "pants-2.23.x",
+        resolve="pants-2.23.x",
+        dependencies=["3rdparty/python:pants-2.23.x#pantsbuild.pants"],
+        output_path="pants-2.23.pex",
+    ),
 )
 
 python_distribution(
     name="wheel-2.24.x",
     provides=setup_py(
-        name="shoalsoft_pants_telemetry_plugin-pants2.24.x",
+        name="shoalsoft-pants-telemetry-plugin-pants2.24.x",
         description="Pants Telemetry Plugin from Shoal Software LLC [Pants v2.24.x]",
         python_requires="==3.9.*",
         version="0.0.1",
@@ -35,7 +63,7 @@ python_distribution(
 python_distribution(
     name="wheel-2.23.x",
     provides=setup_py(
-        name="shoalsoft_pants_telemetry_plugin-pants2.23.x",
+        name="shoalsoft-pants-telemetry-plugin-pants2.23.x",
         description="Pants Telemetry Plugin from Shoal Software LLC [Pants v2.23.x]",
         python_requires="==3.9.*",
         version="0.0.1",

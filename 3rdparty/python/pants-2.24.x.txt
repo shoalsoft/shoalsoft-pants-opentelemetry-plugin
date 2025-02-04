@@ -13,3 +13,4 @@ toml==0.10.2
 httpx==0.28.1
 opentelemetry-proto==1.29.0
 grpcio==1.70.0
+packaging  # match version in Pants repository

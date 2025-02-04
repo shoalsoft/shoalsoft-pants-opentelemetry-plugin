@@ -5,4 +5,5 @@ ipdb
 pytest-asyncio
 pytest-html
 pytest-icdiff
+pytest-subtests
 pygments

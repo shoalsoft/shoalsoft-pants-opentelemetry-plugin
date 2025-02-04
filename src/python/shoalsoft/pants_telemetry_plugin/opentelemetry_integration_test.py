@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import tempfile
 import textwrap
 import threading
@@ -27,15 +28,16 @@ from typing import Mapping
 
 import grpc  # type: ignore[import-untyped]
 import httpx
+import pytest
 from opentelemetry.proto.collector.trace.v1 import trace_service_pb2, trace_service_pb2_grpc
+from packaging.version import Version
 
 from pants.util.dirutil import safe_file_dump
-from pants.version import PANTS_SEMVER
 from shoalsoft.pants_telemetry_plugin.pants_integration_testutil import run_pants_with_workdir
 from shoalsoft.pants_telemetry_plugin.subsystem import TracingExporterId
 
 
-def _safe_write_files(base_path: str, files: Mapping[str, str | bytes]) -> None:
+def _safe_write_files(base_path: str | os.PathLike, files: Mapping[str, str | bytes]) -> None:
     for name, content in files.items():
         safe_file_dump(os.path.join(base_path, name), content, makedirs=True)
 
@@ -84,12 +86,9 @@ def _wait_for_server_availability(port: int, *, num_attempts: int = 4) -> None:
         raise Exception("HTTP server did not startup.")
 
 
-def test_otlp_http_exporter() -> None:
-    # Location of a copy of the plugin's source code. The BUILD file arranges for the files to be
-    # materialized in the sandbox as a dependency.
-    plugin_python_path = Path.cwd() / "src" / "python"
-    assert (plugin_python_path / "shoalsoft" / "pants_telemetry_plugin" / "register.py").exists()
-
+def do_test_of_otlp_http_exporter(
+    *, buildroot: Path, pants_pex_path: Path, workdir_base: Path
+) -> None:
     recorded_requests: list[RecordedRequest] = []
     server_handler = partial(_RequestRecorder, requests=recorded_requests)
     http_server = HTTPServer(("127.0.0.1", 0), server_handler)
@@ -105,21 +104,10 @@ def test_otlp_http_exporter() -> None:
     _wait_for_server_availability(server_port)
 
     sources = {
-        "pants.toml": textwrap.dedent(
-            f"""\
-            [GLOBAL]
-            pants_version = "{PANTS_SEMVER}"
-            backend_packages = ["pants.backend.python", "shoalsoft.pants_telemetry_plugin"]
-            pythonpath = ['{plugin_python_path}']
-            print_stacktrace = true
-            """
-        ),
-        "BUILD": "python_sources(name='src')\n",
-        "main.py": "print('Hello World!)\n",
+        "otlp-http/BUILD": "python_sources(name='src')\n",
+        "otlp-http/main.py": "print('Hello World!)\n",
     }
-    with tempfile.TemporaryDirectory() as buildroot:
-        workdir = Path(buildroot) / ".pants.d" / "the-workdir"
-        workdir.mkdir(parents=True)
+    with tempfile.TemporaryDirectory(dir=workdir_base) as workdir:
         _safe_write_files(buildroot, sources)
 
         result = run_pants_with_workdir(
@@ -128,13 +116,13 @@ def test_otlp_http_exporter() -> None:
                 f"--shoalsoft-telemetry-exporter={TracingExporterId.OTLP_HTTP.value}",
                 f"--shoalsoft-telemetry-otel-exporter-endpoint=http://127.0.0.1:{server_port}/v1/traces",
                 "list",
-                "::",
+                "otlp-http::",
             ],
+            pants_pex_path=pants_pex_path,
             workdir=str(workdir),
             extra_env={
                 "PANTS_BUILDROOT_OVERRIDE": str(buildroot),
             },
-            hermetic=False,
             cwd=buildroot,
         )
         result.assert_success()
@@ -154,12 +142,9 @@ class _TraceServiceImpl(trace_service_pb2_grpc.TraceServiceServicer):
         return trace_service_pb2.ExportTraceServiceResponse()
 
 
-def test_otlp_grpc_exporter() -> None:
-    # Location of a copy of the plugin's source code. The BUILD file arranges for the files to be
-    # materialized in the sandbox as a dependency.
-    plugin_python_path = Path.cwd() / "src" / "python"
-    assert (plugin_python_path / "shoalsoft" / "pants_telemetry_plugin" / "register.py").exists()
-
+def do_test_of_otlp_grpc_exporter(
+    *, buildroot: Path, pants_pex_path: Path, workdir_base: Path
+) -> None:
     received_requests: list[trace_service_pb2.ExportTraceServiceRequest] = []
     server_impl = _TraceServiceImpl(received_requests)
 
@@ -169,40 +154,27 @@ def test_otlp_grpc_exporter() -> None:
     grpc_server.start()
 
     sources = {
-        "pants.toml": textwrap.dedent(
-            f"""\
-            [GLOBAL]
-            pants_version = "{PANTS_SEMVER}"
-            backend_packages = ["pants.backend.python", "shoalsoft.pants_telemetry_plugin"]
-            pythonpath = ['{plugin_python_path}']
-            print_stacktrace = true
-            """
-        ),
-        "BUILD": "python_sources(name='src')\n",
-        "main.py": "print('Hello World!)\n",
+        "otlp-grpc/BUILD": "python_sources(name='src')\n",
+        "otlp-grpc/main.py": "print('Hello World!)\n",
     }
-    with tempfile.TemporaryDirectory() as buildroot:
-        workdir = Path(buildroot) / ".pants.d" / "the-workdir"
-        workdir.mkdir(parents=True)
+    with tempfile.TemporaryDirectory(dir=workdir_base) as workdir:
         _safe_write_files(buildroot, sources)
 
         result = run_pants_with_workdir(
             [
-                "-ldebug",
-                "--no-pantsd",
                 "--shoalsoft-telemetry-enabled",
                 f"--shoalsoft-telemetry-exporter={TracingExporterId.OTLP_GRPC.value}",
                 f"--shoalsoft-telemetry-otel-exporter-endpoint=http://127.0.0.1:{server_port}/",
                 "--shoalsoft-telemetry-otel-exporter-insecure",
                 "list",
-                "::",
+                "otlp-grpc::",
             ],
-            workdir=str(workdir),
+            pants_pex_path=pants_pex_path,
+            workdir=workdir,
             extra_env={
                 "PANTS_BUILDROOT_OVERRIDE": str(buildroot),
                 "GRPC_VERBOSITY": "DEBUG",
             },
-            hermetic=False,
             cwd=buildroot,
         )
         result.assert_success()
@@ -215,28 +187,14 @@ def test_otlp_grpc_exporter() -> None:
             )
 
 
-def test_otel_json_file_exporter() -> None:
-    # Location of a copy of the plugin's source code. The BUILD file arranges for the files to be
-    # materialized in the sandbox as a dependency.
-    plugin_python_path = Path.cwd() / "src" / "python"
-    assert (plugin_python_path / "shoalsoft" / "pants_telemetry_plugin" / "register.py").exists()
-
+def do_test_of_otel_json_file_exporter(
+    *, buildroot: Path, pants_pex_path: Path, workdir_base: Path
+) -> None:
     sources = {
-        "pants.toml": textwrap.dedent(
-            f"""\
-            [GLOBAL]
-            pants_version = "{PANTS_SEMVER}"
-            backend_packages = ["pants.backend.python", "shoalsoft.pants_telemetry_plugin"]
-            pythonpath = ['{plugin_python_path}']
-            print_stacktrace = true
-            """
-        ),
-        "BUILD": "python_sources(name='src')\n",
-        "main.py": "print('Hello World!)\n",
+        "otel-json/BUILD": "python_sources(name='src')\n",
+        "otel-json/main.py": "print('Hello World!)\n",
     }
-    with tempfile.TemporaryDirectory() as buildroot:
-        workdir = Path(buildroot) / ".pants.d" / "the-workdir"
-        workdir.mkdir(parents=True)
+    with tempfile.TemporaryDirectory(dir=workdir_base) as workdir:
         _safe_write_files(buildroot, sources)
 
         trace_file = Path(buildroot) / "dist" / "otel-json-trace.jsonl"
@@ -247,13 +205,13 @@ def test_otel_json_file_exporter() -> None:
                 "--shoalsoft-telemetry-enabled",
                 f"--shoalsoft-telemetry-exporter={TracingExporterId.OTEL_JSON_FILE.value}",
                 "list",
-                "::",
+                "otel-json::",
             ],
+            pants_pex_path=pants_pex_path,
             workdir=str(workdir),
             extra_env={
                 "PANTS_BUILDROOT_OVERRIDE": str(buildroot),
             },
-            hermetic=False,
             cwd=buildroot,
         )
         result.assert_success()
@@ -265,3 +223,87 @@ def test_otel_json_file_exporter() -> None:
             assert len(trace_json["context"]["trace_id"]) > 0
             assert len(trace_json["context"]["span_id"]) > 0
             assert trace_json["resource"]["attributes"]["service.name"] == "pantsbuild"
+
+
+@pytest.mark.parametrize("pants_version_str", ["2.24.0", "2.23.2rc0"])
+def test_opentelemetry_integration(subtests, pants_version_str: str) -> None:
+    pants_version = Version(pants_version_str)
+    pants_major_minor = f"{pants_version.major}.{pants_version.minor}"
+
+    # Move the plugin's wheels into a subdirectory. (The BUILD file arranges for the wheels to be materialized
+    # in the sandbox as a dependency.)
+    plugin_wheels_path = (Path.cwd() / f"wheels-{pants_major_minor}").resolve()
+    plugin_wheels_path.mkdir(parents=True)
+    for filename in [
+        p for p in os.listdir(Path.cwd()) if p.endswith(".whl") and pants_major_minor in p
+    ]:
+        shutil.copy(filename, plugin_wheels_path)
+
+    # A pex of the Pants version in this resolve is materialised as `pants-MAJOR.MINOR.pex` in the sandbox.
+    # This is done to isolate the test environment's virtualenv from the Pants under test.
+    pants_pex_path = (Path.cwd() / f"pants-{pants_major_minor}.pex").resolve()
+    assert pants_pex_path.exists(), f"Expected to find pants-{pants_major_minor}.pex in sandbox."
+
+    buildroot = (Path.cwd() / f"buildroot-{pants_major_minor}").resolve()
+    buildroot.mkdir(parents=True)
+
+    # Write out common configuration file for all integration tests.
+    safe_file_dump(
+        str(buildroot / "pants.toml"),
+        textwrap.dedent(
+            f"""\
+        [GLOBAL]
+        pants_version = "{pants_version}"
+        backend_packages = ["pants.backend.python", "shoalsoft.pants_telemetry_plugin"]
+        print_stacktrace = true
+        plugins = ["shoalsoft-pants-telemetry-plugin-pants{pants_major_minor}.x==0.0.1"]
+        pantsd = false
+
+        [python-repos]
+        find_links = [
+            "file://{plugin_wheels_path}/",
+            "https://wheels.pantsbuild.org/simple/",
+        ]
+
+        [python]
+        interpreter_constraints = "==3.9.*"
+        pip_version = "25.0"
+
+        [pex-cli]
+        version = "v2.32.1"
+        known_versions = [
+          "v2.32.1|macos_arm64|1e953b668ae930e0472e8a40709adbf7c342de9ad249d8bbbc719dce7e50e0f7|4450314",
+          "v2.32.1|macos_x86_64|1e953b668ae930e0472e8a40709adbf7c342de9ad249d8bbbc719dce7e50e0f7|4450314",
+          "v2.32.1|linux_x86_64|1e953b668ae930e0472e8a40709adbf7c342de9ad249d8bbbc719dce7e50e0f7|4450314",
+          "v2.32.1|linux_arm64|1e953b668ae930e0472e8a40709adbf7c342de9ad249d8bbbc719dce7e50e0f7|4450314",
+        ]
+        """
+        ),
+    )
+
+    # Force Pants to resolve the plugin.
+    workdir_base = buildroot / ".pants.d" / "workdirs"
+    workdir_base.mkdir(parents=True)
+    with tempfile.TemporaryDirectory(dir=workdir_base) as workdir:
+        result = run_pants_with_workdir(
+            ["--version"],
+            pants_pex_path=pants_pex_path,
+            cwd=buildroot,
+            workdir=workdir,
+        )
+        result.assert_success()
+
+    with subtests.test(msg="OTLP/HTTP span exporter"):
+        do_test_of_otlp_http_exporter(
+            buildroot=buildroot, pants_pex_path=pants_pex_path, workdir_base=workdir_base
+        )
+
+    with subtests.test(msg="OTLP/GRPC span exporter"):
+        do_test_of_otlp_grpc_exporter(
+            buildroot=buildroot, pants_pex_path=pants_pex_path, workdir_base=workdir_base
+        )
+
+    with subtests.test(msg="OTEL/JSON file span exporter"):
+        do_test_of_otel_json_file_exporter(
+            buildroot=buildroot, pants_pex_path=pants_pex_path, workdir_base=workdir_base
+        )

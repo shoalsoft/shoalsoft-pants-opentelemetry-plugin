@@ -13,7 +13,10 @@ import subprocess
 import sys
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Any, Iterator, List, Mapping, Union, cast
+from io import BytesIO
+from pathlib import Path
+from threading import Thread
+from typing import Any, Iterator, List, Mapping, TextIO, Union, cast
 
 import pytest
 import toml
@@ -23,7 +26,7 @@ from pants.base.exiter import PANTS_SUCCEEDED_EXIT_CODE
 from pants.option.options_bootstrapper import OptionsBootstrapper
 from pants.pantsd.pants_daemon_client import PantsDaemonClient
 from pants.util.contextutil import temporary_dir
-from pants.util.dirutil import fast_relpath, safe_file_dump, safe_mkdir, safe_open
+from pants.util.dirutil import fast_relpath, safe_file_dump, safe_mkdir
 from pants.util.osutil import Pid
 from pants.util.strutil import ensure_binary
 
@@ -71,12 +74,43 @@ class PantsJoinHandle:
     process: subprocess.Popen
     workdir: str
 
-    def join(self, stdin_data: bytes | str | None = None) -> PantsResult:
+    def join(
+        self, stdin_data: bytes | str | None = None, stream_output: bool = False
+    ) -> PantsResult:
         """Wait for the pants process to complete, and return a PantsResult for
         it."""
         if stdin_data is not None:
             stdin_data = ensure_binary(stdin_data)
-        (stdout, stderr) = self.process.communicate(stdin_data)
+
+        def worker(stream: BytesIO, buffer: bytearray, tee_stream: TextIO) -> None:
+            data = stream.read1(1024)
+            while data:
+                buffer.extend(data)
+                tee_stream.write(data.decode(errors="ignore"))
+                tee_stream.flush()
+                data = stream.read1(1024)
+
+        if stream_output:
+            stdout_buffer = bytearray()
+            stdout_thread = Thread(
+                target=worker, args=(self.process.stdout, stdout_buffer, sys.stdout)
+            )
+            stdout_thread.daemon = True
+            stdout_thread.start()
+
+            stderr_buffer = bytearray()
+            stderr_thread = Thread(
+                target=worker, args=(self.process.stderr, stderr_buffer, sys.stderr)
+            )
+            stderr_thread.daemon = True
+            stderr_thread.start()
+
+            if stdin_data and self.process.stdin:
+                self.process.stdin.write(stdin_data)
+            self.process.wait()
+            stdout, stderr = (bytes(stdout_buffer), bytes(stderr_buffer))
+        else:
+            stdout, stderr = self.process.communicate(stdin_data)
 
         if self.process.returncode != PANTS_SUCCEEDED_EXIT_CODE:
             render_logs(self.workdir)
@@ -94,8 +128,8 @@ class PantsJoinHandle:
 def run_pants_with_workdir_without_waiting(
     command: Command,
     *,
+    pants_pex_path: Path,
     workdir: str,
-    hermetic: bool = True,
     use_pantsd: bool = True,
     config: Mapping | None = None,
     extra_env: Env | None = None,
@@ -116,27 +150,27 @@ def run_pants_with_workdir_without_waiting(
     if not pantsd_in_command and not pantsd_in_config:
         args.append("--pantsd" if use_pantsd else "--no-pantsd")
 
-    if hermetic:
-        args.append("--pants-config-files=[]")
-        if set_pants_ignore:
-            # Certain tests may be invoking `./pants test` for a pytest test with conftest discovery
-            # enabled. We should ignore the root conftest.py for these cases.
-            args.append("--pants-ignore=+['/conftest.py']")
+    # if hermetic:
+    #     args.append("--pants-config-files=[]")
+    if set_pants_ignore:
+        # Certain tests may be invoking `./pants test` for a pytest test with conftest discovery
+        # enabled. We should ignore the root conftest.py for these cases.
+        args.append("--pants-ignore=+['/conftest.py']")
 
-    if config:
-        toml_file_name = os.path.join(workdir, "pants.toml")
-        with safe_open(toml_file_name, mode="w") as fp:
-            fp.write(_TomlSerializer(config).serialize())
-        args.append(f"--pants-config-files={toml_file_name}")
+    # if config:
+    #     toml_file_name = os.path.join(workdir, "pants.toml")
+    #     with safe_open(toml_file_name, mode="w") as fp:
+    #         fp.write(_TomlSerializer(config).serialize())
+    #     args.append(f"--pants-config-files={toml_file_name}")
 
     # The python backend requires setting ICs explicitly.
     # We do this centrally here for convenience.
-    if any("pants.backend.python" in arg for arg in command) and not any(
-        "--python-interpreter-constraints" in arg for arg in command
-    ):
-        args.append("--python-interpreter-constraints=['>=3.8,<4']")
+    # if any("pants.backend.python" in arg for arg in command) and not any(
+    #     "--python-interpreter-constraints" in arg for arg in command
+    # ):
+    #     args.append("--python-interpreter-constraints=['>=3.8,<4']")
 
-    pants_script = [sys.executable, "-m", "pants"]
+    pants_script = [sys.executable, str(pants_pex_path)]
 
     # Permit usage of shell=True and string-based commands to allow e.g. `./pants | head`.
     pants_command: Command
@@ -150,35 +184,38 @@ def run_pants_with_workdir_without_waiting(
     # the env will already be fairly hermetic thanks to the v2 engine; this provides an
     # additional layer of hermiticity.
     env: dict[Union[str, bytes], Union[str, bytes]]
-    if hermetic:
-        # With an empty environment, we would generally get the true underlying system default
-        # encoding, which is unlikely to be what we want (it's generally ASCII, still). So we
-        # explicitly set an encoding here.
-        env = {"LC_ALL": "en_US.UTF-8"}
-        # Apply our allowlist.
-        for h in (
-            "HOME",
-            "PATH",  # Needed to find Python interpreters and other binaries.
-        ):
+
+    # With an empty environment, we would generally get the true underlying system default
+    # encoding, which is unlikely to be what we want (it's generally ASCII, still). So we
+    # explicitly set an encoding here.
+    env = {"LC_ALL": "en_US.UTF-8"}
+
+    # Apply our allowlist.
+    for h in (
+        "HOME",
+        "PATH",  # Needed to find Python interpreters and other binaries.
+    ):
+        if value := os.getenv(h):
+            env[h] = value
+
+    hermetic_env = os.getenv("HERMETIC_ENV")
+    if hermetic_env:
+        for h in hermetic_env.strip(",").split(","):
             value = os.getenv(h)
             if value is not None:
                 env[h] = value
-        hermetic_env = os.getenv("HERMETIC_ENV")
-        if hermetic_env:
-            for h in hermetic_env.strip(",").split(","):
-                value = os.getenv(h)
-                if value is not None:
-                    env[h] = value
-    else:
-        env = cast(dict[Union[str, bytes], Union[str, bytes]], os.environ.copy())
 
-    env.update(PYTHONPATH=os.pathsep.join(sys.path), NO_SCIE_WARNING="1")
+    env.update(NO_SCIE_WARNING="1", PEX_VENV="true")
+
     if extra_env:
         env.update(cast(dict[Union[str, bytes], Union[str, bytes]], extra_env))
 
     # Pants command that was called from the test shouldn't have a parent.
     if "PANTS_PARENT_BUILD_ID" in env:
         del env["PANTS_PARENT_BUILD_ID"]
+
+    print(f"pants_command={pants_command}")
+    print(f"env={env}")
 
     return PantsJoinHandle(
         command=pants_command,
@@ -201,8 +238,8 @@ def run_pants_with_workdir_without_waiting(
 def run_pants_with_workdir(
     command: Command,
     *,
+    pants_pex_path: Path,
     workdir: str,
-    hermetic: bool = True,
     use_pantsd: bool = True,
     config: Mapping | None = None,
     extra_env: Env | None = None,
@@ -210,11 +247,12 @@ def run_pants_with_workdir(
     shell: bool = False,
     set_pants_ignore: bool = True,
     cwd: str | bytes | os.PathLike | None = None,
+    stream_output: bool = False,
 ) -> PantsResult:
     handle = run_pants_with_workdir_without_waiting(
         command,
+        pants_pex_path=pants_pex_path,
         workdir=workdir,
-        hermetic=hermetic,
         use_pantsd=use_pantsd,
         shell=shell,
         config=config,
@@ -222,18 +260,19 @@ def run_pants_with_workdir(
         set_pants_ignore=set_pants_ignore,
         cwd=cwd,
     )
-    return handle.join(stdin_data=stdin_data)
+    return handle.join(stdin_data=stdin_data, stream_output=stream_output)
 
 
 def run_pants(
     command: Command,
     *,
-    hermetic: bool = True,
+    pants_pex_path: Path,
     use_pantsd: bool = False,
     config: Mapping | None = None,
     extra_env: Env | None = None,
     stdin_data: bytes | str | None = None,
     cwd: str | bytes | os.PathLike | None = None,
+    stream_output: bool = False,
 ) -> PantsResult:
     """Runs Pants in a subprocess.
 
@@ -248,13 +287,14 @@ def run_pants(
     with temporary_workdir() as workdir:
         return run_pants_with_workdir(
             command,
+            pants_pex_path=pants_pex_path,
             workdir=workdir,
-            hermetic=hermetic,
             use_pantsd=use_pantsd,
             config=config,
             stdin_data=stdin_data,
             extra_env=extra_env,
             cwd=cwd,
+            stream_output=stream_output,
         )
 
 
