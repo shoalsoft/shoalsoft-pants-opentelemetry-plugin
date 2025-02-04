@@ -9,12 +9,14 @@ from __future__ import annotations
 
 import glob
 import os
-from pathlib import Path
 import subprocess
 import sys
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Any, Iterator, List, Mapping, Union, cast
+from io import BytesIO, StringIO
+from pathlib import Path
+from threading import Thread
+from typing import Any, Iterator, List, Mapping, TextIO, Union, cast
 
 import pytest
 import toml
@@ -72,12 +74,41 @@ class PantsJoinHandle:
     process: subprocess.Popen
     workdir: str
 
-    def join(self, stdin_data: bytes | str | None = None) -> PantsResult:
+    def join(self, stdin_data: bytes | str | None = None, tee_output: bool = False) -> PantsResult:
         """Wait for the pants process to complete, and return a PantsResult for
         it."""
         if stdin_data is not None:
             stdin_data = ensure_binary(stdin_data)
-        (stdout, stderr) = self.process.communicate(stdin_data)
+
+        def worker(stream: BytesIO, buffer: bytearray, tee_stream: TextIO) -> None:
+            data = stream.read1(1024)
+            while data:
+                buffer.extend(data)
+                tee_stream.write(buffer.decode(errors="ignore"))
+                tee_stream.flush()
+                data = stream.read1(1024)
+
+        if tee_output:
+            stdout_buffer = bytearray()
+            stdout_thread = Thread(
+                target=worker, args=(self.process.stdout, stdout_buffer, sys.stdout)
+            )
+            stdout_thread.daemon = True
+            stdout_thread.start()
+
+            stderr_buffer = bytearray()
+            stderr_thread = Thread(
+                target=worker, args=(self.process.stderr, stderr_buffer, sys.stderr)
+            )
+            stderr_thread.daemon = True
+            stderr_thread.start()
+
+            if stdin_data:
+                self.process.stdin.write(stdin_data)
+            self.process.wait()
+            stdout, stderr = (bytes(stdout_buffer), bytes(stderr_buffer))
+        else:
+            stdout, stderr = self.process.communicate(stdin_data)
 
         if self.process.returncode != PANTS_SUCCEEDED_EXIT_CODE:
             render_logs(self.workdir)
@@ -214,6 +245,7 @@ def run_pants_with_workdir(
     shell: bool = False,
     set_pants_ignore: bool = True,
     cwd: str | bytes | os.PathLike | None = None,
+    tee_output: bool = False,
 ) -> PantsResult:
     handle = run_pants_with_workdir_without_waiting(
         command,
@@ -226,7 +258,7 @@ def run_pants_with_workdir(
         set_pants_ignore=set_pants_ignore,
         cwd=cwd,
     )
-    return handle.join(stdin_data=stdin_data)
+    return handle.join(stdin_data=stdin_data, tee_output=tee_output)
 
 
 def run_pants(

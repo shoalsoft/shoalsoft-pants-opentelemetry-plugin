@@ -152,6 +152,7 @@ def test_otlp_http_exporter() -> None:
                 "PANTS_BUILDROOT_OVERRIDE": str(buildroot),
             },
             cwd=buildroot,
+            tee_output=True,
         )
         result.assert_success()
 
