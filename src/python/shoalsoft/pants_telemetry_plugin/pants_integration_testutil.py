@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import glob
 import os
+from pathlib import Path
 import subprocess
 import sys
 from contextlib import contextmanager
@@ -94,8 +95,8 @@ class PantsJoinHandle:
 def run_pants_with_workdir_without_waiting(
     command: Command,
     *,
+    pants_pex_path: Path,
     workdir: str,
-    hermetic: bool = True,
     use_pantsd: bool = True,
     config: Mapping | None = None,
     extra_env: Env | None = None,
@@ -136,7 +137,7 @@ def run_pants_with_workdir_without_waiting(
     ):
         args.append("--python-interpreter-constraints=['>=3.8,<4']")
 
-    pants_script = [sys.executable, "-m", "pants"]
+    pants_script = [pants_pex_path]
 
     # Permit usage of shell=True and string-based commands to allow e.g. `./pants | head`.
     pants_command: Command
@@ -204,8 +205,8 @@ def run_pants_with_workdir_without_waiting(
 def run_pants_with_workdir(
     command: Command,
     *,
+    pants_pex_path: Path,
     workdir: str,
-    hermetic: bool = True,
     use_pantsd: bool = True,
     config: Mapping | None = None,
     extra_env: Env | None = None,
@@ -216,8 +217,8 @@ def run_pants_with_workdir(
 ) -> PantsResult:
     handle = run_pants_with_workdir_without_waiting(
         command,
+        pants_pex_path=pants_pex_path,
         workdir=workdir,
-        hermetic=hermetic,
         use_pantsd=use_pantsd,
         shell=shell,
         config=config,
@@ -231,7 +232,7 @@ def run_pants_with_workdir(
 def run_pants(
     command: Command,
     *,
-    hermetic: bool = True,
+    pants_pex_path: Path,
     use_pantsd: bool = False,
     config: Mapping | None = None,
     extra_env: Env | None = None,
@@ -251,8 +252,8 @@ def run_pants(
     with temporary_workdir() as workdir:
         return run_pants_with_workdir(
             command,
+            pants_pex_path=pants_pex_path,
             workdir=workdir,
-            hermetic=hermetic,
             use_pantsd=use_pantsd,
             config=config,
             stdin_data=stdin_data,

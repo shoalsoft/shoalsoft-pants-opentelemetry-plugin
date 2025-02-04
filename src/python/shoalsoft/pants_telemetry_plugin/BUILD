@@ -19,9 +19,28 @@ python_tests(
             "runtime_package_dependencies": [
                 ":wheel-2.24.x",
                 ":wheel-2.23.x",
+                ":pants-for-tests@parametrize=pants-2.24.x",
+                ":pants-for-tests@parametrize=pants-2.23.x",
             ]
         }
     },
+)
+
+pex_binary(
+    name="pants-for-tests",
+    entry_point="pants",
+    **parametrize(
+        "pants-2.24.x",
+        resolve="pants-2.24.x",
+        dependencies=["3rdparty/python:pants-2.24.x#pantsbuild.pants"],
+        output_path="pants-2.24.pex",
+    ),
+    **parametrize(
+        "pants-2.23.x",
+        resolve="pants-2.23.x",
+        dependencies=["3rdparty/python:pants-2.23.x#pantsbuild.pants"],
+        output_path="pants-2.23.pex",
+    ),
 )
 
 python_distribution(
