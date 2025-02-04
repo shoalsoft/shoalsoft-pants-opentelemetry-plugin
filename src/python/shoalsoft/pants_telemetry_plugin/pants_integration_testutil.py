@@ -13,7 +13,7 @@ import subprocess
 import sys
 from contextlib import contextmanager
 from dataclasses import dataclass
-from io import BytesIO, StringIO
+from io import BytesIO
 from pathlib import Path
 from threading import Thread
 from typing import Any, Iterator, List, Mapping, TextIO, Union, cast
@@ -26,7 +26,7 @@ from pants.base.exiter import PANTS_SUCCEEDED_EXIT_CODE
 from pants.option.options_bootstrapper import OptionsBootstrapper
 from pants.pantsd.pants_daemon_client import PantsDaemonClient
 from pants.util.contextutil import temporary_dir
-from pants.util.dirutil import fast_relpath, safe_file_dump, safe_mkdir, safe_open
+from pants.util.dirutil import fast_relpath, safe_file_dump, safe_mkdir
 from pants.util.osutil import Pid
 from pants.util.strutil import ensure_binary
 
@@ -84,7 +84,7 @@ class PantsJoinHandle:
             data = stream.read1(1024)
             while data:
                 buffer.extend(data)
-                tee_stream.write(buffer.decode(errors="ignore"))
+                tee_stream.write(data.decode(errors="ignore"))
                 tee_stream.flush()
                 data = stream.read1(1024)
 
@@ -163,12 +163,12 @@ def run_pants_with_workdir_without_waiting(
 
     # The python backend requires setting ICs explicitly.
     # We do this centrally here for convenience.
-    if any("pants.backend.python" in arg for arg in command) and not any(
-        "--python-interpreter-constraints" in arg for arg in command
-    ):
-        args.append("--python-interpreter-constraints=['>=3.8,<4']")
+    # if any("pants.backend.python" in arg for arg in command) and not any(
+    #     "--python-interpreter-constraints" in arg for arg in command
+    # ):
+    #     args.append("--python-interpreter-constraints=['>=3.8,<4']")
 
-    pants_script = [pants_pex_path]
+    pants_script = [sys.executable, str(pants_pex_path)]
 
     # Permit usage of shell=True and string-based commands to allow e.g. `./pants | head`.
     pants_command: Command
@@ -204,7 +204,7 @@ def run_pants_with_workdir_without_waiting(
     else:
         env = cast(dict[Union[str, bytes], Union[str, bytes]], os.environ.copy())
 
-    env.update(NO_SCIE_WARNING="1")
+    env.update(NO_SCIE_WARNING="1", PEX_VENV="true")
     if extra_env:
         env.update(cast(dict[Union[str, bytes], Union[str, bytes]], extra_env))
 

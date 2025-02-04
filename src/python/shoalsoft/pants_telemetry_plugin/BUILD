@@ -10,25 +10,31 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-python_sources()
+python_sources(
+    resolve=parametrize("pants-2.24.x", "pants-2.23.x"),
+)
 
 python_tests(
     name="tests",
-    overrides={
-        "opentelemetry_integration_test.py": {
-            "runtime_package_dependencies": [
-                ":wheel-2.24.x",
-                ":wheel-2.23.x",
-                ":pants-for-tests@parametrize=pants-2.24.x",
-                ":pants-for-tests@parametrize=pants-2.23.x",
-            ]
-        }
-    },
+    sources=["!*_integration_test.py"],
+    resolve=parametrize("pants-2.24.x", "pants-2.23.x"),
+)
+
+python_tests(
+    name="integration_tests",
+    sources=["*_integration_test.py"],
+    runtime_package_dependencies=[
+        ":wheel-2.24.x",
+        ":wheel-2.23.x",
+        ":pants-for-tests@parametrize=pants-2.24.x",
+        ":pants-for-tests@parametrize=pants-2.23.x",
+    ],
 )
 
 pex_binary(
     name="pants-for-tests",
     entry_point="pants",
+    execution_mode="venv",
     **parametrize(
         "pants-2.24.x",
         resolve="pants-2.24.x",
