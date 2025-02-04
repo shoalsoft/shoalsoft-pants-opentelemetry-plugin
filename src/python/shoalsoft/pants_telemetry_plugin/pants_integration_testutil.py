@@ -74,7 +74,9 @@ class PantsJoinHandle:
     process: subprocess.Popen
     workdir: str
 
-    def join(self, stdin_data: bytes | str | None = None, stream_output: bool = False) -> PantsResult:
+    def join(
+        self, stdin_data: bytes | str | None = None, stream_output: bool = False
+    ) -> PantsResult:
         """Wait for the pants process to complete, and return a PantsResult for
         it."""
         if stdin_data is not None:
