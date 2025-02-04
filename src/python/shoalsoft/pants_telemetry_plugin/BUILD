@@ -27,7 +27,7 @@ python_tests(
 python_distribution(
     name="wheel-2.24.x",
     provides=setup_py(
-        name="shoalsoft_pants_telemetry_plugin-pants2.24.x",
+        name="shoalsoft-pants-telemetry-plugin-pants2.24.x",
         description="Pants Telemetry Plugin from Shoal Software LLC [Pants v2.24.x]",
         python_requires="==3.9.*",
         version="0.0.1",
@@ -38,7 +38,7 @@ python_distribution(
 python_distribution(
     name="wheel-2.23.x",
     provides=setup_py(
-        name="shoalsoft_pants_telemetry_plugin-pants2.23.x",
+        name="shoalsoft-pants-telemetry-plugin-pants2.23.x",
         description="Pants Telemetry Plugin from Shoal Software LLC [Pants v2.23.x]",
         python_requires="==3.9.*",
         version="0.0.1",

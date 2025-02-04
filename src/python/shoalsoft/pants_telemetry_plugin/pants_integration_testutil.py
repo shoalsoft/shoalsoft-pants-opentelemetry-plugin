@@ -116,18 +116,18 @@ def run_pants_with_workdir_without_waiting(
     if not pantsd_in_command and not pantsd_in_config:
         args.append("--pantsd" if use_pantsd else "--no-pantsd")
 
-    if hermetic:
-        args.append("--pants-config-files=[]")
-        if set_pants_ignore:
-            # Certain tests may be invoking `./pants test` for a pytest test with conftest discovery
-            # enabled. We should ignore the root conftest.py for these cases.
-            args.append("--pants-ignore=+['/conftest.py']")
+    # if hermetic:
+    #     args.append("--pants-config-files=[]")
+    if set_pants_ignore:
+        # Certain tests may be invoking `./pants test` for a pytest test with conftest discovery
+        # enabled. We should ignore the root conftest.py for these cases.
+        args.append("--pants-ignore=+['/conftest.py']")
 
-    if config:
-        toml_file_name = os.path.join(workdir, "pants.toml")
-        with safe_open(toml_file_name, mode="w") as fp:
-            fp.write(_TomlSerializer(config).serialize())
-        args.append(f"--pants-config-files={toml_file_name}")
+    # if config:
+    #     toml_file_name = os.path.join(workdir, "pants.toml")
+    #     with safe_open(toml_file_name, mode="w") as fp:
+    #         fp.write(_TomlSerializer(config).serialize())
+    #     args.append(f"--pants-config-files={toml_file_name}")
 
     # The python backend requires setting ICs explicitly.
     # We do this centrally here for convenience.
@@ -150,7 +150,7 @@ def run_pants_with_workdir_without_waiting(
     # the env will already be fairly hermetic thanks to the v2 engine; this provides an
     # additional layer of hermiticity.
     env: dict[Union[str, bytes], Union[str, bytes]]
-    if hermetic:
+    if True:
         # With an empty environment, we would generally get the true underlying system default
         # encoding, which is unlikely to be what we want (it's generally ASCII, still). So we
         # explicitly set an encoding here.
@@ -172,13 +172,16 @@ def run_pants_with_workdir_without_waiting(
     else:
         env = cast(dict[Union[str, bytes], Union[str, bytes]], os.environ.copy())
 
-    env.update(PYTHONPATH=os.pathsep.join(sys.path), NO_SCIE_WARNING="1")
+    env.update(NO_SCIE_WARNING="1")
     if extra_env:
         env.update(cast(dict[Union[str, bytes], Union[str, bytes]], extra_env))
 
     # Pants command that was called from the test shouldn't have a parent.
     if "PANTS_PARENT_BUILD_ID" in env:
         del env["PANTS_PARENT_BUILD_ID"]
+
+    print(f"pants_command={pants_command}")
+    print(f"env={env}")
 
     return PantsJoinHandle(
         command=pants_command,

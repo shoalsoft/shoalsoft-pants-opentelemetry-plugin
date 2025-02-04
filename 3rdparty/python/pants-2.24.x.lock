@@ -15,8 +15,9 @@
 //     "opentelemetry-exporter-otlp==1.29.0",
 //     "opentelemetry-proto==1.29.0",
 //     "opentelemetry-sdk==1.29.0",
-//     "pantsbuild-pants-testutil<2.25,>=2.24.0",
-//     "pantsbuild-pants<2.25,>=2.24.0",
+//     "packaging==21.3",
+//     "pantsbuild.pants.testutil==2.24.0",
+//     "pantsbuild.pants==2.24.0",
 //     "pytest",
 //     "toml==0.10.2"
 //   ],
@@ -1748,8 +1749,9 @@
     "opentelemetry-exporter-otlp==1.29.0",
     "opentelemetry-proto==1.29.0",
     "opentelemetry-sdk==1.29.0",
-    "pantsbuild-pants-testutil<2.25,>=2.24.0",
-    "pantsbuild-pants<2.25,>=2.24.0",
+    "packaging==21.3",
+    "pantsbuild.pants.testutil==2.24.0",
+    "pantsbuild.pants==2.24.0",
     "pytest",
     "toml==0.10.2"
   ],

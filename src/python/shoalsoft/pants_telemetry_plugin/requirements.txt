@@ -2,3 +2,6 @@
 opentelemetry-api==1.29.0
 opentelemetry-sdk==1.29.0
 opentelemetry-exporter-otlp==1.29.0
+
+# Override to make plugin resolution happy.
+packaging==21.3

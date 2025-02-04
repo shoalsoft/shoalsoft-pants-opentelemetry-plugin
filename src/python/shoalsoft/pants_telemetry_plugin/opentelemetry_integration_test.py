@@ -114,10 +114,25 @@ def test_otlp_http_exporter() -> None:
             pants_version = "{PANTS_SEMVER}"
             backend_packages = ["pants.backend.python", "shoalsoft.pants_telemetry_plugin"]
             print_stacktrace = true
-            plugins = ["shoalsoft_pants_telemetry_plugin-pants{MAJOR_MINOR}.x"]
+            plugins = ["shoalsoft-pants-telemetry-plugin-pants{MAJOR_MINOR}.x==0.0.1"]
+
+            #[python]
+            #pip_version = "25.0"
 
             [python-repos]
-            find_links = "file://{plugin_wheels_path}"
+            find_links = [
+              "file://{plugin_wheels_path}/",
+              "https://wheels.pantsbuild.org/simple/",
+            ]
+            
+            #[pex-cli]
+            #version = "v2.32.1"
+            #known_versions = [
+            #"v2.32.1|macos_arm64|1e953b668ae930e0472e8a40709adbf7c342de9ad249d8bbbc719dce7e50e0f7|4450314",
+            #"v2.32.1|macos_x86_64|1e953b668ae930e0472e8a40709adbf7c342de9ad249d8bbbc719dce7e50e0f7|4450314",
+            #"v2.32.1|linux_x86_64|1e953b668ae930e0472e8a40709adbf7c342de9ad249d8bbbc719dce7e50e0f7|4450314",
+            #"v2.32.1|linux_arm64|1e953b668ae930e0472e8a40709adbf7c342de9ad249d8bbbc719dce7e50e0f7|4450314",
+            #]
             """
         ),
         "BUILD": "python_sources(name='src')\n",
@@ -125,6 +140,7 @@ def test_otlp_http_exporter() -> None:
     }
     buildroot = Path.cwd() / "buildroot"
     buildroot.mkdir(parents=True)
+    # import pdb ; pdb.set_trace()
     try:
         workdir = buildroot / ".pants.d" / "the-workdir"
         workdir.mkdir(parents=True)
@@ -135,7 +151,7 @@ def test_otlp_http_exporter() -> None:
                 "--shoalsoft-telemetry-enabled",
                 f"--shoalsoft-telemetry-exporter={TracingExporterId.OTLP_HTTP.value}",
                 f"--shoalsoft-telemetry-otel-exporter-endpoint=http://127.0.0.1:{server_port}/v1/traces",
-                "--keep-sandboxes=on_failure",
+                "--keep-sandboxes=always",
                 "-ldebug",
                 "list",
                 "::",
@@ -144,7 +160,6 @@ def test_otlp_http_exporter() -> None:
             extra_env={
                 "PANTS_BUILDROOT_OVERRIDE": str(buildroot),
             },
-            hermetic=False,
             cwd=buildroot,
         )
         result.assert_success()
