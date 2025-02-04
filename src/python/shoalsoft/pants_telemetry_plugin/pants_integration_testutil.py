@@ -103,7 +103,7 @@ class PantsJoinHandle:
             stderr_thread.daemon = True
             stderr_thread.start()
 
-            if stdin_data:
+            if stdin_data and self.process.stdin:
                 self.process.stdin.write(stdin_data)
             self.process.wait()
             stdout, stderr = (bytes(stdout_buffer), bytes(stderr_buffer))
@@ -182,29 +182,29 @@ def run_pants_with_workdir_without_waiting(
     # the env will already be fairly hermetic thanks to the v2 engine; this provides an
     # additional layer of hermiticity.
     env: dict[Union[str, bytes], Union[str, bytes]]
-    if True:
-        # With an empty environment, we would generally get the true underlying system default
-        # encoding, which is unlikely to be what we want (it's generally ASCII, still). So we
-        # explicitly set an encoding here.
-        env = {"LC_ALL": "en_US.UTF-8"}
-        # Apply our allowlist.
-        for h in (
-            "HOME",
-            "PATH",  # Needed to find Python interpreters and other binaries.
-        ):
+
+    # With an empty environment, we would generally get the true underlying system default
+    # encoding, which is unlikely to be what we want (it's generally ASCII, still). So we
+    # explicitly set an encoding here.
+    env = {"LC_ALL": "en_US.UTF-8"}
+
+    # Apply our allowlist.
+    for h in (
+        "HOME",
+        "PATH",  # Needed to find Python interpreters and other binaries.
+    ):
+        if value := os.getenv(h):
+            env[h] = value
+
+    hermetic_env = os.getenv("HERMETIC_ENV")
+    if hermetic_env:
+        for h in hermetic_env.strip(",").split(","):
             value = os.getenv(h)
             if value is not None:
                 env[h] = value
-        hermetic_env = os.getenv("HERMETIC_ENV")
-        if hermetic_env:
-            for h in hermetic_env.strip(",").split(","):
-                value = os.getenv(h)
-                if value is not None:
-                    env[h] = value
-    else:
-        env = cast(dict[Union[str, bytes], Union[str, bytes]], os.environ.copy())
 
     env.update(NO_SCIE_WARNING="1", PEX_VENV="true")
+
     if extra_env:
         env.update(cast(dict[Union[str, bytes], Union[str, bytes]], extra_env))
 
