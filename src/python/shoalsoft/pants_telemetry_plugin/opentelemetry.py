@@ -16,6 +16,7 @@ import datetime
 import logging
 import typing
 import urllib
+from collections import defaultdict
 from pathlib import Path
 from typing import TextIO
 
@@ -35,7 +36,7 @@ from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import ReadableSpan, TracerProvider, sampling
 from opentelemetry.sdk.trace.export import SpanProcessor  # type: ignore[attr-defined]
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter, SpanExportResult
-from opentelemetry.trace.span import NonRecordingSpan, SpanContext
+from opentelemetry.trace.span import NonRecordingSpan, Span, SpanContext
 
 from shoalsoft.pants_telemetry_plugin.processor import IncompleteWorkunit, Processor, Workunit
 from shoalsoft.pants_telemetry_plugin.subsystem import (
@@ -228,13 +229,29 @@ class OpenTelemetryProcessor(Processor):
         self._otel_spans: dict[int, trace.Span] = {}
         self._span_processor = span_processor
         self._span_count: int = 0
+        self._counters: dict[str, int] = defaultdict(int)
 
-    def start_workunit(self, workunit: IncompleteWorkunit) -> None:
-        # Construct an OTEL `SpanContext` for the parent of this workunit (or else None for the root span).
-        workunit_parent_span_id = workunit.primary_parent_id
+    def _increment_counter(self, name: str, delta: int = 1) -> None:
+        self._counters[name] += delta
+
+    def _construct_otel_span(
+        self,
+        *,
+        workunit_span_id: str,
+        workunit_parent_span_id: str | None,
+        name: str,
+        start_time: datetime.datetime,
+    ) -> tuple[Span, int]:
+        """Construct an OpenTelemetry span.
+
+        Shared between `start_workunit` and `complete_workunit` since
+        some spans may arrive already-completed.
+        """
+        assert workunit_span_id not in self._workunit_span_id_to_otel_span_id
+
         otel_context = Context()
         if workunit_parent_span_id:
-            # OpenTelemetry pulls the parent span ID from the span set as "current" in the context.
+            # OpenTelemetry pulls the parent span ID from the span set as "current" in the supplied context.
             assert self._trace_id is not None
             otel_parent_span_context = SpanContext(
                 trace_id=self._trace_id,
@@ -246,33 +263,56 @@ class OpenTelemetryProcessor(Processor):
             )
 
         otel_span = self._tracer.start_span(
-            name=workunit.name,
+            name=name,
             context=otel_context,
-            start_time=_datetime_to_otel_timestamp(workunit.start_time),
+            start_time=_datetime_to_otel_timestamp(start_time),
             record_exception=False,
             set_status_on_exception=False,
         )
 
-        # TODO: Record any Pants-specific workunit attributes.
-
         # Record the span ID chosen by the tracer for this span.
         otel_span_context = otel_span.get_span_context()
         otel_span_id = otel_span_context.span_id
-        self._workunit_span_id_to_otel_span_id[workunit.span_id] = otel_span_id
+        self._workunit_span_id_to_otel_span_id[workunit_span_id] = otel_span_id
         self._otel_spans[otel_span_id] = otel_span
 
-        # Record the trace ID the first time we make a span.
+        # Record the trace ID generated the first time any span is constructed.
         if self._trace_id is None:
-            self._trace_id = otel_span_context.trace_id
+            self._trace_id = otel_span.get_span_context().trace_id
+
+        return otel_span, otel_span_id
+
+    def start_workunit(self, workunit: IncompleteWorkunit) -> None:
+        if workunit.span_id in self._workunit_span_id_to_otel_span_id:
+            self._increment_counter("multiple_start_workunit_for_span_id")
+            return
+
+        self._construct_otel_span(
+            workunit_span_id=workunit.span_id,
+            workunit_parent_span_id=workunit.primary_parent_id,
+            name=workunit.name,
+            start_time=workunit.start_time,
+        )
 
     def complete_workunit(self, workunit: Workunit) -> None:
-        otel_span_id = self._workunit_span_id_to_otel_span_id[workunit.span_id]
-        otel_span = self._otel_spans[otel_span_id]
-        # TODO: Update the span with any changed attributes from the completed workunit.
+        otel_span: Span
+        otel_span_id: int
+        if workunit.span_id in self._workunit_span_id_to_otel_span_id:
+            otel_span_id = self._workunit_span_id_to_otel_span_id[workunit.span_id]
+            otel_span = self._otel_spans[otel_span_id]
+        else:
+            otel_span, otel_span_id = self._construct_otel_span(
+                workunit_span_id=workunit.span_id,
+                workunit_parent_span_id=workunit.primary_parent_id,
+                name=workunit.name,
+                start_time=workunit.start_time,
+            )
+
         otel_span.end(end_time=_datetime_to_otel_timestamp(workunit.end_time))
         del self._otel_spans[otel_span_id]
         self._span_count += 1
 
     def finish(self) -> None:
         logger.debug("OpenTelemetryProcessor requested to finish workunit transmission.")
+        logger.info(f"OpenTelemetry processing counters: {self._counters}")
         self._span_processor.shutdown()
