@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import datetime
+import json
 import logging
 import typing
 import urllib
@@ -42,6 +43,7 @@ from shoalsoft.pants_telemetry_plugin.processor import (
     IncompleteWorkunit,
     Level,
     Processor,
+    ProcessorContext,
     Workunit,
 )
 from shoalsoft.pants_telemetry_plugin.subsystem import (
@@ -314,7 +316,7 @@ class OpenTelemetryProcessor(Processor):
             ):
                 otel_span.set_attribute(f"pantsbuild.workunit.metadata.{key}", value)
 
-    def start_workunit(self, workunit: IncompleteWorkunit) -> None:
+    def start_workunit(self, workunit: IncompleteWorkunit, *, context: ProcessorContext) -> None:
         if workunit.span_id in self._workunit_span_id_to_otel_span_id:
             self._increment_counter("multiple_start_workunit_for_span_id")
             return
@@ -328,7 +330,7 @@ class OpenTelemetryProcessor(Processor):
 
         self._apply_incomplete_workunit_attributes(workunit=workunit, otel_span=otel_span)
 
-    def complete_workunit(self, workunit: Workunit) -> None:
+    def complete_workunit(self, workunit: Workunit, *, context: ProcessorContext) -> None:
         otel_span: Span
         otel_span_id: int
         if workunit.span_id in self._workunit_span_id_to_otel_span_id:
@@ -344,12 +346,17 @@ class OpenTelemetryProcessor(Processor):
 
         self._apply_workunit_attributes(workunit=workunit, otel_span=otel_span)
 
+        # Set the metrics for the session as an attribute of the root span.
+        if not workunit.primary_parent_id:
+            metrics = context.get_metrics()
+            otel_span.set_attribute("pantsbuild.metricsV0", json.dumps(metrics, sort_keys=True))
+
         otel_span.end(end_time=_datetime_to_otel_timestamp(workunit.end_time))
 
         del self._otel_spans[otel_span_id]
         self._span_count += 1
 
-    def finish(self) -> None:
+    def finish(self, *, context: ProcessorContext) -> None:
         logger.debug("OpenTelemetryProcessor requested to finish workunit transmission.")
         logger.debug(f"OpenTelemetry processing counters: {self._counters.items()}")
         self._span_processor.shutdown()

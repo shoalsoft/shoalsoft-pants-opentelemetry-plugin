@@ -15,7 +15,7 @@ from __future__ import annotations
 import datetime
 import enum
 from dataclasses import dataclass
-from typing import Any, Protocol
+from typing import Any, Mapping, Protocol
 
 from pants.util.frozendict import FrozenDict
 
@@ -54,14 +54,19 @@ class Workunit(IncompleteWorkunit):
     metadata: FrozenDict[str, Any]
 
 
+class ProcessorContext(Protocol):
+    def get_metrics(self) -> Mapping[str, int]:
+        ...
+
+
 class Processor(Protocol):
     """Protocol for emitter implementations."""
 
-    def start_workunit(self, workunit: IncompleteWorkunit) -> None:
+    def start_workunit(self, workunit: IncompleteWorkunit, *, context: ProcessorContext) -> None:
         ...
 
-    def complete_workunit(self, workunit: Workunit) -> None:
+    def complete_workunit(self, workunit: Workunit, *, context: ProcessorContext) -> None:
         ...
 
-    def finish(self) -> None:
+    def finish(self, *, context: ProcessorContext) -> None:
         ...
