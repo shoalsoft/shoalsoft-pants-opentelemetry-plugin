@@ -16,7 +16,6 @@ import datetime
 import logging
 import typing
 import urllib
-from collections import defaultdict
 from pathlib import Path
 from typing import TextIO
 
@@ -37,8 +36,14 @@ from opentelemetry.sdk.trace import ReadableSpan, TracerProvider, sampling
 from opentelemetry.sdk.trace.export import SpanProcessor  # type: ignore[attr-defined]
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter, SpanExportResult
 from opentelemetry.trace.span import NonRecordingSpan, Span, SpanContext
+from opentelemetry.trace.status import StatusCode
 
-from shoalsoft.pants_telemetry_plugin.processor import IncompleteWorkunit, Processor, Workunit
+from shoalsoft.pants_telemetry_plugin.processor import (
+    IncompleteWorkunit,
+    Level,
+    Processor,
+    Workunit,
+)
 from shoalsoft.pants_telemetry_plugin.subsystem import (
     OtelCompression,
     TelemetrySubsystem,
@@ -229,9 +234,11 @@ class OpenTelemetryProcessor(Processor):
         self._otel_spans: dict[int, trace.Span] = {}
         self._span_processor = span_processor
         self._span_count: int = 0
-        self._counters: dict[str, int] = defaultdict(int)
+        self._counters: dict[str, int] = {}
 
     def _increment_counter(self, name: str, delta: int = 1) -> None:
+        if name not in self._counters:
+            self._counters[name] = 0
         self._counters[name] += delta
 
     def _construct_otel_span(
@@ -282,17 +289,44 @@ class OpenTelemetryProcessor(Processor):
 
         return otel_span, otel_span_id
 
+    def _apply_incomplete_workunit_attributes(
+        self, workunit: IncompleteWorkunit, otel_span: Span
+    ) -> None:
+        otel_span.set_attribute("pantsbuild.workunit.span_id", workunit.span_id)
+        otel_span.set_attribute("pantsbuild.workunit.parent_span_ids", workunit.parent_ids)
+
+        otel_span.set_attribute("pantsbuild.workunit.level", workunit.level.value.upper())
+        if workunit.level == Level.ERROR:
+            otel_span.set_status(StatusCode.ERROR)
+
+    def _apply_workunit_attributes(self, workunit: Workunit, otel_span: Span) -> None:
+        self._apply_incomplete_workunit_attributes(workunit=workunit, otel_span=otel_span)
+
+        for key, value in workunit.metadata.items():
+            if isinstance(
+                value,
+                (
+                    str,
+                    bool,
+                    int,
+                    float,
+                ),
+            ):
+                otel_span.set_attribute(f"pantsbuild.workunit.metadata.{key}", value)
+
     def start_workunit(self, workunit: IncompleteWorkunit) -> None:
         if workunit.span_id in self._workunit_span_id_to_otel_span_id:
             self._increment_counter("multiple_start_workunit_for_span_id")
             return
 
-        self._construct_otel_span(
+        otel_span, _ = self._construct_otel_span(
             workunit_span_id=workunit.span_id,
             workunit_parent_span_id=workunit.primary_parent_id,
             name=workunit.name,
             start_time=workunit.start_time,
         )
+
+        self._apply_incomplete_workunit_attributes(workunit=workunit, otel_span=otel_span)
 
     def complete_workunit(self, workunit: Workunit) -> None:
         otel_span: Span
@@ -308,11 +342,14 @@ class OpenTelemetryProcessor(Processor):
                 start_time=workunit.start_time,
             )
 
+        self._apply_workunit_attributes(workunit=workunit, otel_span=otel_span)
+
         otel_span.end(end_time=_datetime_to_otel_timestamp(workunit.end_time))
+
         del self._otel_spans[otel_span_id]
         self._span_count += 1
 
     def finish(self) -> None:
         logger.debug("OpenTelemetryProcessor requested to finish workunit transmission.")
-        logger.info(f"OpenTelemetry processing counters: {self._counters}")
+        logger.debug(f"OpenTelemetry processing counters: {self._counters.items()}")
         self._span_processor.shutdown()

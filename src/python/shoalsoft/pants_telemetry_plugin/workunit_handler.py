@@ -63,7 +63,7 @@ class TelemetryWorkunitsCallback(WorkunitsCallback):
             description=raw_workunit.get("description"),
             start_time=start_time,
             end_time=end_time,
-            metadata=FrozenDict(raw_workunit.get("metadata", {})),
+            metadata=FrozenDict.deep_freeze(raw_workunit.get("metadata", {})),
         )
 
     def __call__(
