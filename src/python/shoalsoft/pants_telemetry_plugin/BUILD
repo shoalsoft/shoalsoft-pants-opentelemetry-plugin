@@ -51,6 +51,7 @@ python_tests(
 python_tests(
     name="integration_tests",
     sources=["*_integration_test.py"],
+    interpreter_constraints=["==3.11.*"],
     runtime_package_dependencies=[
         ":wheel-2.25.x",
         ":wheel-2.24.x",
@@ -90,6 +91,7 @@ pex_binary(
 
 python_distribution(
     name="wheel-2.25.x",
+    interpreter_constraints=["==3.11.*"],
     provides=setup_py(
         name="shoalsoft-pants-telemetry-plugin-pants2.25",
         description="Pants Telemetry Plugin from Shoal Software LLC [Pants v2.25.x]",
@@ -101,6 +103,7 @@ python_distribution(
 
 python_distribution(
     name="wheel-2.24.x",
+    interpreter_constraints=["==3.9.*"],
     provides=setup_py(
         name="shoalsoft-pants-telemetry-plugin-pants2.24",
         description="Pants Telemetry Plugin from Shoal Software LLC [Pants v2.24.x]",
@@ -112,6 +115,7 @@ python_distribution(
 
 python_distribution(
     name="wheel-2.23.x",
+    interpreter_constraints=["==3.9.*"],
     provides=setup_py(
         name="shoalsoft-pants-telemetry-plugin-pants2.23",
         description="Pants Telemetry Plugin from Shoal Software LLC [Pants v2.23.x]",
