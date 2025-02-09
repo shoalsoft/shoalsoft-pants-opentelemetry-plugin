@@ -13,8 +13,9 @@
 from __future__ import annotations
 
 import datetime
-from typing import Any
+from typing import Any, Mapping
 
+from pants.engine.internals.native_engine import all_counter_names
 from pants.engine.internals.scheduler import Workunit as RawWorkunit
 from pants.engine.streaming_workunit_handler import StreamingWorkunitContext, WorkunitsCallback
 from pants.util.frozendict import FrozenDict
@@ -22,8 +23,22 @@ from shoalsoft.pants_telemetry_plugin.processor import (
     IncompleteWorkunit,
     Level,
     Processor,
+    ProcessorContext,
     Workunit,
 )
+
+
+class _TelemetryContext(ProcessorContext):
+    def __init__(self, pants_context: StreamingWorkunitContext) -> None:
+        self._pants_context = pants_context
+
+    def get_metrics(self) -> Mapping[str, int]:
+        metric_names = all_counter_names()
+        metrics = self._pants_context.get_metrics()
+        for metric_name in metric_names:
+            if metric_name not in metrics:
+                metrics[metric_name] = 0
+        return metrics
 
 
 class TelemetryWorkunitsCallback(WorkunitsCallback):
@@ -75,11 +90,17 @@ class TelemetryWorkunitsCallback(WorkunitsCallback):
         finished: bool = False,
         **kwargs: Any,
     ) -> None:
+        telemetry_context = _TelemetryContext(context)
+
         for started_workunit in started_workunits:
-            self.processor.start_workunit(self._convert_incomplete_workunit(started_workunit))
+            self.processor.start_workunit(
+                self._convert_incomplete_workunit(started_workunit), context=telemetry_context
+            )
 
         for completed_workunit in completed_workunits:
-            self.processor.complete_workunit(self._convert_completed_workunit(completed_workunit))
+            self.processor.complete_workunit(
+                self._convert_completed_workunit(completed_workunit), context=telemetry_context
+            )
 
         if finished:
-            self.processor.finish()
+            self.processor.finish(context=telemetry_context)
