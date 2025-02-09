@@ -15,6 +15,7 @@ from __future__ import annotations
 import datetime
 from typing import Any, Mapping
 
+from pants.engine.internals.native_engine import all_counter_names
 from pants.engine.internals.scheduler import Workunit as RawWorkunit
 from pants.engine.streaming_workunit_handler import StreamingWorkunitContext, WorkunitsCallback
 from pants.util.frozendict import FrozenDict
@@ -32,7 +33,12 @@ class _TelemetryContext(ProcessorContext):
         self._pants_context = pants_context
 
     def get_metrics(self) -> Mapping[str, int]:
-        return self._pants_context.get_metrics()
+        metric_names = all_counter_names()
+        metrics = self._pants_context.get_metrics()
+        for metric_name in metric_names:
+            if metric_name not in metrics:
+                metrics[metric_name] = 0
+        return metrics
 
 
 class TelemetryWorkunitsCallback(WorkunitsCallback):
