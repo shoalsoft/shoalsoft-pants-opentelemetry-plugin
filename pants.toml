@@ -1,5 +1,5 @@
 [GLOBAL]
-pants_version = "2.25.0.a1"
+pants_version = "2.25.0a1"
 backend_packages.add = [
   "pants.backend.build_files.fmt.black",
   "pants.backend.plugin_development",

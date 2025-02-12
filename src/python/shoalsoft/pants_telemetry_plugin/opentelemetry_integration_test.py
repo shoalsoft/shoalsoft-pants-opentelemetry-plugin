@@ -225,7 +225,7 @@ def do_test_of_otel_json_file_exporter(
             assert trace_json["resource"]["attributes"]["service.name"] == "pantsbuild"
 
 
-@pytest.mark.parametrize("pants_version_str", ["2.24.0", "2.23.2rc0"])
+@pytest.mark.parametrize("pants_version_str", ["2.25.0a1", "2.24.1", "2.23.2"])
 def test_opentelemetry_integration(subtests, pants_version_str: str) -> None:
     pants_version = Version(pants_version_str)
     pants_major_minor = f"{pants_version.major}.{pants_version.minor}"
@@ -256,7 +256,7 @@ def test_opentelemetry_integration(subtests, pants_version_str: str) -> None:
         pants_version = "{pants_version}"
         backend_packages = ["pants.backend.python", "shoalsoft.pants_telemetry_plugin"]
         print_stacktrace = true
-        plugins = ["shoalsoft-pants-telemetry-plugin-pants{pants_major_minor}.x==0.0.1"]
+        plugins = ["shoalsoft-pants-telemetry-plugin-pants{pants_major_minor}==0.0.1"]
         pantsd = false
 
         [python-repos]
