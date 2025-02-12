@@ -125,78 +125,98 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "f0f334ae844675420164175bf32b04e18a81fe57ad8eb7e0cfd4689d681ffed7",
-              "url": "https://files.pythonhosted.org/packages/24/f3/63cd48409a519d4f6cf79abc6c89103a8eabc5c93e496f40779269dba0c0/coverage-7.6.11-py3-none-any.whl"
+              "hash": "eb8668cfbc279a536c633137deeb9435d2962caec279c3f8cf8b91fff6ff8953",
+              "url": "https://files.pythonhosted.org/packages/fb/b2/f655700e1024dec98b10ebaafd0cedbc25e40e4abe62a3c8e2ceef4f8f0a/coverage-7.6.12-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "4bda710139ea646890d1c000feb533caff86904a0e0638f85e967c28cb8eec50",
-              "url": "https://files.pythonhosted.org/packages/0b/4b/670ad3c404802d45211a5cf0605a70a109ad0bc1210dabb463642a143949/coverage-7.6.11-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl"
+              "hash": "48cfc4641d95d34766ad41d9573cc0f22a48aa88d22657a1fe01dca0dbae4de2",
+              "url": "https://files.pythonhosted.org/packages/0c/d6/2b53ab3ee99f2262e6f0b8369a43f6d66658eab45510331c0b3d5c8c4272/coverage-7.6.12.tar.gz"
             },
             {
               "algorithm": "sha256",
-              "hash": "e0b0f272901a5172090c0802053fbc503cdc3fa2612720d2669a98a7384a7bec",
-              "url": "https://files.pythonhosted.org/packages/11/a0/8b4d0c21deac57253348ea35c86cbbe5077241d418540bfe58b561826649/coverage-7.6.11-cp311-cp311-macosx_11_0_arm64.whl"
+              "hash": "66fe626fd7aa5982cdebad23e49e78ef7dbb3e3c2a5960a2b53632f1f703ea45",
+              "url": "https://files.pythonhosted.org/packages/31/f2/c269f46c470bdabe83a69e860c80a82e5e76840e9f4bbd7f38f8cebbee2f/coverage-7.6.12-cp311-cp311-macosx_11_0_arm64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "532fe139691af134aa8b54ed60dd3c806aa81312d93693bd2883c7b61592c840",
-              "url": "https://files.pythonhosted.org/packages/28/c9/dc238d47920531f7a7fa39f4e2110d9c964c284ffa8b9bacb3db94eafe36/coverage-7.6.11-cp311-cp311-macosx_10_9_x86_64.whl"
+              "hash": "3a1e465f398c713f1b212400b4e79a09829cd42aebd360362cd89c5bdc44eb87",
+              "url": "https://files.pythonhosted.org/packages/44/9f/421e84f7f9455eca85ff85546f26cbc144034bb2587e08bfc214dd6e9c8f/coverage-7.6.12-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "90de4e9ca4489e823138bd13098af9ac8028cc029f33f60098b5c08c675c7bda",
-              "url": "https://files.pythonhosted.org/packages/4c/33/1019042fd4dc89d52d33abcadd759e196cc4094db869cab8534c87282ff5/coverage-7.6.11-cp39-cp39-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl"
+              "hash": "0ef01d70198431719af0b1f5dcbefc557d44a190e749004042927b2a3fed0702",
+              "url": "https://files.pythonhosted.org/packages/47/63/5682bf14d2ce20819998a49c0deadb81e608a59eed64d6bc2191bc8046b9/coverage-7.6.12-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "ff52b4e2ac0080c96e506819586c4b16cdbf46724bda90d308a7330a73cc8521",
-              "url": "https://files.pythonhosted.org/packages/4e/23/30679564463db0e9a5dba6f1e2ad950b467f45795b209847c86744734d18/coverage-7.6.11-cp39-cp39-macosx_10_9_x86_64.whl"
+              "hash": "d74c08e9aaef995f8c4ef6d202dbd219c318450fe2a76da624f2ebb9c8ec5d9f",
+              "url": "https://files.pythonhosted.org/packages/4b/26/56afefc03c30871326e3d99709a70d327ac1f33da383cba108c79bd71563/coverage-7.6.12-cp311-cp311-musllinux_1_2_aarch64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "6c96a142057d83ee993eaf71629ca3fb952cda8afa9a70af4132950c2bd3deb9",
-              "url": "https://files.pythonhosted.org/packages/58/fc/3b2a595b4bf9d706fe53e9d6807074b0451b438e9b964c6794d1d72e9a96/coverage-7.6.11-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+              "hash": "aa6f302a3a0b5f240ee201297fff0bbfe2fa0d415a94aeb257d8b461032389bd",
+              "url": "https://files.pythonhosted.org/packages/4d/49/51cd991b56257d2e07e3d5cb053411e9de5b0f4e98047167ec05e4e19b55/coverage-7.6.12-cp39-cp39-musllinux_1_2_aarch64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "050172741de03525290e67f0161ae5f7f387c88fca50d47fceb4724ceaa591d2",
-              "url": "https://files.pythonhosted.org/packages/59/7b/ab1c1ff66efbbd978b27e9789ce430cbbce53195fb18f7fe3ba14fc73b9b/coverage-7.6.11-cp311-cp311-musllinux_1_2_x86_64.whl"
+              "hash": "e18aafdfb3e9ec0d261c942d35bd7c28d031c5855dadb491d2723ba54f4c3015",
+              "url": "https://files.pythonhosted.org/packages/64/2d/da78abbfff98468c91fd63a73cccdfa0e99051676ded8dd36123e3a2d4d5/coverage-7.6.12-cp311-cp311-macosx_10_9_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "a165b09e7d5f685bf659063334a9a7b1a2d57b531753d3e04bd442b3cfe5845b",
-              "url": "https://files.pythonhosted.org/packages/7a/d8/a241aa17ca90478b98da23dfe08ae871d8cfa949e34a61d667802b7f6f2d/coverage-7.6.11-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+              "hash": "07e92ae5a289a4bc4c0aae710c0948d3c7892e20fd3588224ebe242039573bf0",
+              "url": "https://files.pythonhosted.org/packages/6a/b6/6b6631f1172d437e11067e1c2edfdb7238b65dff965a12bce3b6d1bf2be2/coverage-7.6.12-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "e642e6a46a04e992ebfdabed79e46f478ec60e2c528e1e1a074d63800eda4286",
-              "url": "https://files.pythonhosted.org/packages/89/4e/38141d42af7452f4b7c5d3d7442a8018de34754ef52eb9a400768bc8d59e/coverage-7.6.11.tar.gz"
+              "hash": "e7575ab65ca8399c8c4f9a7d61bbd2d204c8b8e447aab9d355682205c9dd948d",
+              "url": "https://files.pythonhosted.org/packages/6c/eb/cf062b1c3dbdcafd64a2a154beea2e4aa8e9886c34e41f53fa04925c8b35/coverage-7.6.12-cp39-cp39-macosx_10_9_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "476f29a258b9cd153f2be5bf5f119d670d2806363595263917bddc167d6e5cce",
-              "url": "https://files.pythonhosted.org/packages/ad/4d/13ed57038b6fe56453fbc5bd367fe96f6d5f625cf93e37f8f69965260f56/coverage-7.6.11-cp39-cp39-musllinux_1_2_i686.whl"
+              "hash": "b1f097878d74fe51e1ddd1be62d8e3682748875b461232cf4b52ddc6e6db0bba",
+              "url": "https://files.pythonhosted.org/packages/6e/d4/1d9404566f553728889409eff82151d515fbb46dc92cbd13b5337fa0de8c/coverage-7.6.12-cp311-cp311-musllinux_1_2_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "ff136607689c1c87f43d24203b6d2055b42030f352d5176f9c8b204d4235ef27",
-              "url": "https://files.pythonhosted.org/packages/b5/9b/e9af16145352fc5889f9c3df343235796e170c04295e615180fa194f8d41/coverage-7.6.11-cp311-cp311-musllinux_1_2_i686.whl"
+              "hash": "7e39e845c4d764208e7b8f6a21c541ade741e2c41afabdfa1caa28687a3c98cf",
+              "url": "https://files.pythonhosted.org/packages/7a/7f/05818c62c7afe75df11e0233bd670948d68b36cdbf2a339a095bc02624a8/coverage-7.6.12-pp39.pp310-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "adc2d941c0381edfcf3897f94b9f41b1e504902fab78a04b1677f2f72afead4b",
-              "url": "https://files.pythonhosted.org/packages/ba/2a/a072ae54fa666397960b5a84702f62e13360e6040998cf6ac2114f44153c/coverage-7.6.11-pp39.pp310-none-any.whl"
+              "hash": "78f5243bb6b1060aed6213d5107744c19f9571ec76d54c99cc15938eb69e0e86",
+              "url": "https://files.pythonhosted.org/packages/7c/34/edd03f6933f766ec97dddd178a7295855f8207bb708dbac03777107ace5b/coverage-7.6.12-cp39-cp39-musllinux_1_2_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "09d03f48d9025b8a6a116cddcb6c7b8ce80e4fb4c31dd2e124a7c377036ad58e",
-              "url": "https://files.pythonhosted.org/packages/c1/f1/81efac6a344cb336484d9c47e6d0f6e850ded77ad7432392ebee499786c8/coverage-7.6.11-cp39-cp39-musllinux_1_2_x86_64.whl"
+              "hash": "8161d9fbc7e9fe2326de89cd0abb9f3599bccc1287db0aba285cb68d204ce929",
+              "url": "https://files.pythonhosted.org/packages/95/42/4ebad0ab065228e29869a060644712ab1b0821d8c29bfefa20c2118c9e19/coverage-7.6.12-cp39-cp39-macosx_11_0_arm64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "f4679fcc9eb9004fdd1b00231ef1ec7167168071bebc4d66327e28c1979b4449",
-              "url": "https://files.pythonhosted.org/packages/db/fe/d532cf0b6724f1f07645a232385fd5cab7da0b75ed375d6f8fb9c21064cf/coverage-7.6.11-cp39-cp39-macosx_11_0_arm64.whl"
+              "hash": "e695df2c58ce526eeab11a2e915448d3eb76f75dffe338ea613c1201b33bab2f",
+              "url": "https://files.pythonhosted.org/packages/c7/01/9cd06cbb1be53e837e16f1b4309f6357e2dfcbdab0dd7cd3b1a50589e4e1/coverage-7.6.12-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "f25d8b92a4e31ff1bd873654ec367ae811b3a943583e05432ea29264782dc32c",
+              "url": "https://files.pythonhosted.org/packages/c9/c4/a2c4f274bcb711ed5db2ccc1b851ca1c45f35ed6077aec9d6c61845d80e3/coverage-7.6.12-cp39-cp39-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "e995b3b76ccedc27fe4f477b349b7d64597e53a43fc2961db9d3fbace085d69d",
+              "url": "https://files.pythonhosted.org/packages/dd/ea/88a1ff951ed288f56aa561558ebe380107cf9132facd0b50bced63ba7238/coverage-7.6.12-cp311-cp311-musllinux_1_2_i686.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "1a936309a65cc5ca80fa9f20a442ff9e2d06927ec9a4f54bcba9c14c066323f2",
+              "url": "https://files.pythonhosted.org/packages/e0/10/a3d317e38e5627b06debe861d6c511b1611dd9dc0e2a47afbe6257ffd341/coverage-7.6.12-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+            },
+            {
+              "algorithm": "sha256",
+              "hash": "f973643ef532d4f9be71dd88cf7588936685fdb576d93a79fe9f65bc337d9d73",
+              "url": "https://files.pythonhosted.org/packages/f7/87/631e5883fe0a80683a1f20dadbd0f99b79e17a9d8ea9aff3a9b4cfe50b93/coverage-7.6.12-cp39-cp39-musllinux_1_2_i686.whl"
             }
           ],
           "project_name": "coverage",
@@ -204,7 +224,7 @@
             "tomli; python_full_version <= \"3.11.0a6\" and extra == \"toml\""
           ],
           "requires_python": ">=3.9",
-          "version": "7.6.11"
+          "version": "7.6.12"
         },
         {
           "artifacts": [

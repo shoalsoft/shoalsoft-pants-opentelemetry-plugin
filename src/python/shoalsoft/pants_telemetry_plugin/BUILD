@@ -30,7 +30,7 @@ python_sources(
 
 python_tests(
     name="tests",
-    sources=["!*_integration_test.py"],
+    sources=["*_test.py", "!*_integration_test.py"],
     **parametrize(
         "pants-2.25.x",
         resolve="pants-2.25.x",
@@ -66,6 +66,7 @@ pex_binary(
     name="pants-for-tests",
     entry_point="pants",
     execution_mode="venv",
+    layout="zipapp",
     **parametrize(
         "pants-2.25.x",
         resolve="pants-2.25.x",
