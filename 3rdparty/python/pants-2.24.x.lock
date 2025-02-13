@@ -16,8 +16,8 @@
 //     "opentelemetry-proto==1.29.0",
 //     "opentelemetry-sdk==1.29.0",
 //     "packaging",
-//     "pantsbuild.pants.testutil==2.24.0",
-//     "pantsbuild.pants==2.24.0",
+//     "pantsbuild.pants.testutil==2.24.1",
+//     "pantsbuild.pants==2.24.1",
 //     "pytest",
 //     "toml==0.10.2"
 //   ],
@@ -332,22 +332,22 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "d7abcd75fabb2e0ec9f74466401f6c119a0b498e27370e9be4c94cb7e382b8ed",
-              "url": "https://files.pythonhosted.org/packages/a0/0f/c0713fb2b3d28af4b2fded3291df1c4d4f79a00d15c2374a9e010870016c/googleapis_common_protos-1.66.0-py2.py3-none-any.whl"
+              "hash": "579de760800d13616f51cf8be00c876f00a9f146d3e6510e19d1f4111758b741",
+              "url": "https://files.pythonhosted.org/packages/89/30/2bd0eb03a7dee7727cd2ec643d1e992979e62d5e7443507381cce0455132/googleapis_common_protos-1.67.0-py2.py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "c3e7b33d15fdca5374cc0a7346dd92ffa847425cc4ea941d970f13680052ec8c",
-              "url": "https://files.pythonhosted.org/packages/ff/a7/8e9cccdb1c49870de6faea2a2764fa23f627dd290633103540209f03524c/googleapis_common_protos-1.66.0.tar.gz"
+              "hash": "21398025365f138be356d5923e9168737d94d46a72aefee4a6110a1f23463c86",
+              "url": "https://files.pythonhosted.org/packages/31/e1/fbffb85a624f1404133b5bb624834e77e0f549e2b8548146fe18c56e1411/googleapis_common_protos-1.67.0.tar.gz"
             }
           ],
           "project_name": "googleapis-common-protos",
           "requires_dists": [
             "grpcio<2.0.0.dev0,>=1.44.0; extra == \"grpc\"",
-            "protobuf!=3.20.0,!=3.20.1,!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<6.0.0.dev0,>=3.20.2"
+            "protobuf!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<6.0.0.dev0,>=3.20.2"
           ],
           "requires_python": ">=3.7",
-          "version": "1.66.0"
+          "version": "1.67.0"
         },
         {
           "artifacts": [
@@ -915,23 +915,23 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "6a01c7f78a4c1cc89ed6df0b3196842a9818e26030626d1796ea02b8d806c365",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.24.0/pantsbuild.pants-2.24.0-cp39-cp39-manylinux2014_x86_64.whl"
+              "hash": "b964572e611e834e540e1e32ecdf56ee5a4d6a0e83f34bb6a5761ce835078ee1",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.24.1/pantsbuild.pants-2.24.1-cp39-cp39-manylinux2014_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "3f3fcc0c30589eb7c662f416d986bff2d6360285457afaec5cba3ce94cc57e55",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.24.0/pantsbuild.pants-2.24.0-cp39-cp39-macosx_10_15_x86_64.whl"
+              "hash": "1c8a2e9cb63340abca81d37f01e1ea4fd8e49cb5e91cf634eb2084cdffc8a6c2",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.24.1/pantsbuild.pants-2.24.1-cp39-cp39-macosx_10_15_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "e540a36380da2e4d16571e13ce57f83d5948b1ba4f936bae308aa75376b1523b",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.24.0/pantsbuild.pants-2.24.0-cp39-cp39-macosx_11_0_arm64.whl"
+              "hash": "726fe7f46317d1118f82e43e0262697b680b686e238d8a8f75fec2e51a1e35d0",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.24.1/pantsbuild.pants-2.24.1-cp39-cp39-macosx_11_0_arm64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "e0076fdb8e14809f5e5b986ee3794f46a478616a38e8230aa3f6eac9002b2086",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.24.0/pantsbuild.pants-2.24.0-cp39-cp39-manylinux2014_aarch64.whl"
+              "hash": "2dd6dbe84a9d2e410dbd5f59db675410126d0b6f1efa2b351ad0edb0315eb7ce",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.24.1/pantsbuild.pants-2.24.1-cp39-cp39-manylinux2014_aarch64.whl"
             }
           ],
           "project_name": "pantsbuild-pants",
@@ -955,23 +955,23 @@
             "typing-extensions~=4.12"
           ],
           "requires_python": "==3.9.*",
-          "version": "2.24.0"
+          "version": "2.24.1"
         },
         {
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "34afb9a60c66a094feacd5f10b82f01e3eb10b5be5d59f1e39c038f6c15ba0c4",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.24.0/pantsbuild.pants.testutil-2.24.0-py3-none-any.whl"
+              "hash": "f3fec4d76830907a3c5ca89aba051369572ea0aa9948b9e4c6a526e0df0de612",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.24.1/pantsbuild.pants.testutil-2.24.1-py3-none-any.whl"
             }
           ],
           "project_name": "pantsbuild-pants-testutil",
           "requires_dists": [
-            "pantsbuild.pants==2.24.0",
+            "pantsbuild.pants==2.24.1",
             "pytest<7.1.0,>=6.2.4"
           ],
           "requires_python": "==3.9.*",
-          "version": "2.24.0"
+          "version": "2.24.1"
         },
         {
           "artifacts": [
@@ -1750,8 +1750,8 @@
     "opentelemetry-proto==1.29.0",
     "opentelemetry-sdk==1.29.0",
     "packaging",
-    "pantsbuild.pants.testutil==2.24.0",
-    "pantsbuild.pants==2.24.0",
+    "pantsbuild.pants.testutil==2.24.1",
+    "pantsbuild.pants==2.24.1",
     "pytest",
     "toml==0.10.2"
   ],

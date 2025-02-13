@@ -24,7 +24,7 @@ from dataclasses import dataclass
 from functools import partial
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
-from typing import Mapping
+from typing import Iterable, Mapping
 
 import grpc  # type: ignore[import-untyped]
 import httpx
@@ -32,6 +32,7 @@ import pytest
 from opentelemetry.proto.collector.trace.v1 import trace_service_pb2, trace_service_pb2_grpc
 from packaging.version import Version
 
+from pants.testutil.python_interpreter_selection import python_interpreter_path
 from pants.util.dirutil import safe_file_dump
 from shoalsoft.pants_telemetry_plugin.pants_integration_testutil import run_pants_with_workdir
 from shoalsoft.pants_telemetry_plugin.subsystem import TracingExporterId
@@ -87,7 +88,11 @@ def _wait_for_server_availability(port: int, *, num_attempts: int = 4) -> None:
 
 
 def do_test_of_otlp_http_exporter(
-    *, buildroot: Path, pants_pex_path: Path, workdir_base: Path
+    *,
+    buildroot: Path,
+    pants_exe_args: Iterable[str],
+    workdir_base: Path,
+    extra_env: Mapping[str, str] | None = None,
 ) -> None:
     recorded_requests: list[RecordedRequest] = []
     server_handler = partial(_RequestRecorder, requests=recorded_requests)
@@ -118,9 +123,10 @@ def do_test_of_otlp_http_exporter(
                 "list",
                 "otlp-http::",
             ],
-            pants_pex_path=pants_pex_path,
+            pants_exe_args=pants_exe_args,
             workdir=str(workdir),
             extra_env={
+                **(extra_env if extra_env else {}),
                 "PANTS_BUILDROOT_OVERRIDE": str(buildroot),
             },
             cwd=buildroot,
@@ -143,7 +149,11 @@ class _TraceServiceImpl(trace_service_pb2_grpc.TraceServiceServicer):
 
 
 def do_test_of_otlp_grpc_exporter(
-    *, buildroot: Path, pants_pex_path: Path, workdir_base: Path
+    *,
+    buildroot: Path,
+    pants_exe_args: Iterable[str],
+    workdir_base: Path,
+    extra_env: Mapping[str, str] | None = None,
 ) -> None:
     received_requests: list[trace_service_pb2.ExportTraceServiceRequest] = []
     server_impl = _TraceServiceImpl(received_requests)
@@ -169,9 +179,10 @@ def do_test_of_otlp_grpc_exporter(
                 "list",
                 "otlp-grpc::",
             ],
-            pants_pex_path=pants_pex_path,
+            pants_exe_args=pants_exe_args,
             workdir=workdir,
             extra_env={
+                **(extra_env if extra_env else {}),
                 "PANTS_BUILDROOT_OVERRIDE": str(buildroot),
                 "GRPC_VERBOSITY": "DEBUG",
             },
@@ -188,7 +199,11 @@ def do_test_of_otlp_grpc_exporter(
 
 
 def do_test_of_otel_json_file_exporter(
-    *, buildroot: Path, pants_pex_path: Path, workdir_base: Path
+    *,
+    buildroot: Path,
+    pants_exe_args: Iterable[str],
+    workdir_base: Path,
+    extra_env: Mapping[str, str] | None = None,
 ) -> None:
     sources = {
         "otel-json/BUILD": "python_sources(name='src')\n",
@@ -207,9 +222,10 @@ def do_test_of_otel_json_file_exporter(
                 "list",
                 "otel-json::",
             ],
-            pants_pex_path=pants_pex_path,
+            pants_exe_args=pants_exe_args,
             workdir=str(workdir),
             extra_env={
+                **(extra_env if extra_env else {}),
                 "PANTS_BUILDROOT_OVERRIDE": str(buildroot),
             },
             cwd=buildroot,
@@ -225,10 +241,21 @@ def do_test_of_otel_json_file_exporter(
             assert trace_json["resource"]["attributes"]["service.name"] == "pantsbuild"
 
 
-@pytest.mark.parametrize("pants_version_str", ["2.24.0", "2.23.2rc0"])
+@pytest.mark.parametrize("pants_version_str", ["2.25.0a1", "2.24.1", "2.23.2"])
 def test_opentelemetry_integration(subtests, pants_version_str: str) -> None:
     pants_version = Version(pants_version_str)
     pants_major_minor = f"{pants_version.major}.{pants_version.minor}"
+
+    # Find the Python interpreter compatible with this version of Pants.
+    py_version_for_pants_major_minor = {
+        "2.25": "3.11",
+        "2.24": "3.9",
+        "2.23": "3.9",
+    }
+    python_path = python_interpreter_path(py_version_for_pants_major_minor[pants_major_minor])
+    assert (
+        python_path
+    ), f"Did not find a compatible Python interpreter for test: Pants v{pants_major_minor}"
 
     # Move the plugin's wheels into a subdirectory. (The BUILD file arranges for the wheels to be materialized
     # in the sandbox as a dependency.)
@@ -256,7 +283,7 @@ def test_opentelemetry_integration(subtests, pants_version_str: str) -> None:
         pants_version = "{pants_version}"
         backend_packages = ["pants.backend.python", "shoalsoft.pants_telemetry_plugin"]
         print_stacktrace = true
-        plugins = ["shoalsoft-pants-telemetry-plugin-pants{pants_major_minor}.x==0.0.1"]
+        plugins = ["shoalsoft-pants-telemetry-plugin-pants{pants_major_minor}==0.0.1"]
         pantsd = false
 
         [python-repos]
@@ -281,29 +308,42 @@ def test_opentelemetry_integration(subtests, pants_version_str: str) -> None:
         ),
     )
 
+    pants_exe_args = [str(pants_pex_path)]
+    extra_env = {"PEX_PYTHON": python_path}
+
     # Force Pants to resolve the plugin.
     workdir_base = buildroot / ".pants.d" / "workdirs"
     workdir_base.mkdir(parents=True)
     with tempfile.TemporaryDirectory(dir=workdir_base) as workdir:
         result = run_pants_with_workdir(
             ["--version"],
-            pants_pex_path=pants_pex_path,
+            pants_exe_args=pants_exe_args,
             cwd=buildroot,
             workdir=workdir,
+            extra_env=extra_env,
         )
         result.assert_success()
 
     with subtests.test(msg="OTLP/HTTP span exporter"):
         do_test_of_otlp_http_exporter(
-            buildroot=buildroot, pants_pex_path=pants_pex_path, workdir_base=workdir_base
+            buildroot=buildroot,
+            pants_exe_args=pants_exe_args,
+            workdir_base=workdir_base,
+            extra_env=extra_env,
         )
 
     with subtests.test(msg="OTLP/GRPC span exporter"):
         do_test_of_otlp_grpc_exporter(
-            buildroot=buildroot, pants_pex_path=pants_pex_path, workdir_base=workdir_base
+            buildroot=buildroot,
+            pants_exe_args=pants_exe_args,
+            workdir_base=workdir_base,
+            extra_env=extra_env,
         )
 
     with subtests.test(msg="OTEL/JSON file span exporter"):
         do_test_of_otel_json_file_exporter(
-            buildroot=buildroot, pants_pex_path=pants_pex_path, workdir_base=workdir_base
+            buildroot=buildroot,
+            pants_exe_args=pants_exe_args,
+            workdir_base=workdir_base,
+            extra_env=extra_env,
         )
