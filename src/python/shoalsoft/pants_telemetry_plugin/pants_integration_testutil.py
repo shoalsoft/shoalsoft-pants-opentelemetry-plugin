@@ -14,9 +14,8 @@ import sys
 from contextlib import contextmanager
 from dataclasses import dataclass
 from io import BytesIO
-from pathlib import Path
 from threading import Thread
-from typing import Any, Iterator, List, Mapping, TextIO, Union, cast
+from typing import Any, Iterable, Iterator, List, Mapping, TextIO, Union, cast
 
 import pytest
 import toml
@@ -128,7 +127,7 @@ class PantsJoinHandle:
 def run_pants_with_workdir_without_waiting(
     command: Command,
     *,
-    pants_pex_path: Path,
+    pants_exe_args: Iterable[str],
     workdir: str,
     use_pantsd: bool = True,
     config: Mapping | None = None,
@@ -170,7 +169,7 @@ def run_pants_with_workdir_without_waiting(
     # ):
     #     args.append("--python-interpreter-constraints=['>=3.8,<4']")
 
-    pants_script = [sys.executable, str(pants_pex_path)]
+    pants_script = list(pants_exe_args)
 
     # Permit usage of shell=True and string-based commands to allow e.g. `./pants | head`.
     pants_command: Command
@@ -238,7 +237,7 @@ def run_pants_with_workdir_without_waiting(
 def run_pants_with_workdir(
     command: Command,
     *,
-    pants_pex_path: Path,
+    pants_exe_args: Iterable[str],
     workdir: str,
     use_pantsd: bool = True,
     config: Mapping | None = None,
@@ -251,7 +250,7 @@ def run_pants_with_workdir(
 ) -> PantsResult:
     handle = run_pants_with_workdir_without_waiting(
         command,
-        pants_pex_path=pants_pex_path,
+        pants_exe_args=pants_exe_args,
         workdir=workdir,
         use_pantsd=use_pantsd,
         shell=shell,
@@ -266,7 +265,7 @@ def run_pants_with_workdir(
 def run_pants(
     command: Command,
     *,
-    pants_pex_path: Path,
+    pants_exe_args: Iterable[str],
     use_pantsd: bool = False,
     config: Mapping | None = None,
     extra_env: Env | None = None,
@@ -287,7 +286,7 @@ def run_pants(
     with temporary_workdir() as workdir:
         return run_pants_with_workdir(
             command,
-            pants_pex_path=pants_pex_path,
+            pants_exe_args=pants_exe_args,
             workdir=workdir,
             use_pantsd=use_pantsd,
             config=config,
