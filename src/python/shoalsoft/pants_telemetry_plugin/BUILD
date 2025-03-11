@@ -26,6 +26,11 @@ python_sources(
         resolve="pants-2.23.x",
         interpreter_constraints=["==3.9.*"],
     ),
+    **parametrize(
+        "pants-2.21.x",
+        resolve="pants-2.21.x",
+        interpreter_constraints=["==3.9.*"],
+    ),
 )
 
 python_tests(
@@ -46,6 +51,11 @@ python_tests(
         resolve="pants-2.23.x",
         interpreter_constraints=["==3.9.*"],
     ),
+    **parametrize(
+        "pants-2.21.x",
+        resolve="pants-2.21.x",
+        interpreter_constraints=["==3.9.*"],
+    ),
 )
 
 python_tests(
@@ -56,9 +66,11 @@ python_tests(
         ":wheel-2.25.x",
         ":wheel-2.24.x",
         ":wheel-2.23.x",
+        ":wheel-2.21.x",
         ":pants-for-tests@parametrize=pants-2.25.x",
         ":pants-for-tests@parametrize=pants-2.24.x",
         ":pants-for-tests@parametrize=pants-2.23.x",
+        ":pants-for-tests@parametrize=pants-2.21.x",
     ],
 )
 
