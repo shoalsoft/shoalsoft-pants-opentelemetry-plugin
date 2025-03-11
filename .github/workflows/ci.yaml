@@ -21,7 +21,7 @@ jobs:
           gha-cache-key: cache0-py3.9
           named-caches-hash: ${{ hashFiles('python-default.lock') }}
       - name: Lint and typecheck the code
-        run: "pants lint ::"
+        run: "pants lint check ::"
       - name: Run tests
         run: "pants test ::"
       - name: Package for 2.24.x
