@@ -88,6 +88,13 @@ pex_binary(
         dependencies=["3rdparty/python:pants-2.23.x#pantsbuild.pants"],
         output_path="pants-2.23.pex",
     ),
+    **parametrize(
+        "pants-2.21.x",
+        resolve="pants-2.21.x",
+        interpreter_constraints=["==3.9.*"],
+        dependencies=["3rdparty/python:pants-2.21.x#pantsbuild.pants"],
+        output_path="pants-2.21.pex",
+    ),
 )
 
 python_distribution(
@@ -124,4 +131,16 @@ python_distribution(
         version="0.0.1",
     ),
     dependencies=["./register.py@parametrize=pants-2.23.x"],
+)
+
+python_distribution(
+    name="wheel-2.21.x",
+    interpreter_constraints=["==3.9.*"],
+    provides=setup_py(
+        name="shoalsoft-pants-telemetry-plugin-pants2.21",
+        description="Pants Telemetry Plugin from Shoal Software LLC [Pants v2.21.x]",
+        python_requires="==3.9.*",
+        version="0.0.1",
+    ),
+    dependencies=["./register.py@parametrize=pants-2.21.x"],
 )

@@ -21,12 +21,14 @@ default_resolve = "pants-2.25.x"
 "pants-2.25.x" = "3rdparty/python/pants-2.25.x.lock"
 "pants-2.24.x" = "3rdparty/python/pants-2.24.x.lock"
 "pants-2.23.x" = "3rdparty/python/pants-2.23.x.lock"
+"pants-2.21.x" = "3rdparty/python/pants-2.21.x.lock"
 pytest = "3rdparty/python/pytest.lock"
 
 [python.resolves_to_interpreter_constraints]
 "pants-2.25.x" = ["==3.11.*"]
 "pants-2.24.x" = ["==3.9.*"]
 "pants-2.23.x" = ["==3.9.*"]
+"pants-2.21.x" = ["==3.9.*"]
 pytest = ["==3.11.*", "==3.9.*"]
 
 [python-bootstrap]

@@ -241,7 +241,7 @@ def do_test_of_otel_json_file_exporter(
             assert trace_json["resource"]["attributes"]["service.name"] == "pantsbuild"
 
 
-@pytest.mark.parametrize("pants_version_str", ["2.25.0a1", "2.24.1", "2.23.2"])
+@pytest.mark.parametrize("pants_version_str", ["2.25.0a1", "2.24.1", "2.23.2", "2.21.2"])
 def test_opentelemetry_integration(subtests, pants_version_str: str) -> None:
     pants_version = Version(pants_version_str)
     pants_major_minor = f"{pants_version.major}.{pants_version.minor}"
