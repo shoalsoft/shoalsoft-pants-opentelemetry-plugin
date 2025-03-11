@@ -72,6 +72,8 @@ python_tests(
         ":pants-for-tests@parametrize=pants-2.23.x",
         ":pants-for-tests@parametrize=pants-2.21.x",
     ],
+    # Integration tests take forever given how they are run. :(
+    timeout=600,
 )
 
 pex_binary(
