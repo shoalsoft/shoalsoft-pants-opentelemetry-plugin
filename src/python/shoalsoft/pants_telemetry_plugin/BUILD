@@ -26,6 +26,11 @@ python_sources(
         resolve="pants-2.23.x",
         interpreter_constraints=["==3.9.*"],
     ),
+    **parametrize(
+        "pants-2.21.x",
+        resolve="pants-2.21.x",
+        interpreter_constraints=["==3.9.*"],
+    ),
 )
 
 python_tests(
@@ -46,6 +51,11 @@ python_tests(
         resolve="pants-2.23.x",
         interpreter_constraints=["==3.9.*"],
     ),
+    **parametrize(
+        "pants-2.21.x",
+        resolve="pants-2.21.x",
+        interpreter_constraints=["==3.9.*"],
+    ),
 )
 
 python_tests(
@@ -56,10 +66,14 @@ python_tests(
         ":wheel-2.25.x",
         ":wheel-2.24.x",
         ":wheel-2.23.x",
+        ":wheel-2.21.x",
         ":pants-for-tests@parametrize=pants-2.25.x",
         ":pants-for-tests@parametrize=pants-2.24.x",
         ":pants-for-tests@parametrize=pants-2.23.x",
+        ":pants-for-tests@parametrize=pants-2.21.x",
     ],
+    # Integration tests take forever given how they are run. :(
+    timeout=600,
 )
 
 pex_binary(
@@ -87,6 +101,13 @@ pex_binary(
         interpreter_constraints=["==3.9.*"],
         dependencies=["3rdparty/python:pants-2.23.x#pantsbuild.pants"],
         output_path="pants-2.23.pex",
+    ),
+    **parametrize(
+        "pants-2.21.x",
+        resolve="pants-2.21.x",
+        interpreter_constraints=["==3.9.*"],
+        dependencies=["3rdparty/python:pants-2.21.x#pantsbuild.pants"],
+        output_path="pants-2.21.pex",
     ),
 )
 
@@ -124,4 +145,16 @@ python_distribution(
         version="0.0.1",
     ),
     dependencies=["./register.py@parametrize=pants-2.23.x"],
+)
+
+python_distribution(
+    name="wheel-2.21.x",
+    interpreter_constraints=["==3.9.*"],
+    provides=setup_py(
+        name="shoalsoft-pants-telemetry-plugin-pants2.21",
+        description="Pants Telemetry Plugin from Shoal Software LLC [Pants v2.21.x]",
+        python_requires="==3.9.*",
+        version="0.0.1",
+    ),
+    dependencies=["./register.py@parametrize=pants-2.21.x"],
 )

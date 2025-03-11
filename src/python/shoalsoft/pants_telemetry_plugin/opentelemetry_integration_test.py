@@ -241,18 +241,16 @@ def do_test_of_otel_json_file_exporter(
             assert trace_json["resource"]["attributes"]["service.name"] == "pantsbuild"
 
 
-@pytest.mark.parametrize("pants_version_str", ["2.25.0a1", "2.24.1", "2.23.2"])
+@pytest.mark.parametrize("pants_version_str", ["2.25.0a1", "2.24.1", "2.23.2", "2.21.2"])
 def test_opentelemetry_integration(subtests, pants_version_str: str) -> None:
     pants_version = Version(pants_version_str)
     pants_major_minor = f"{pants_version.major}.{pants_version.minor}"
 
     # Find the Python interpreter compatible with this version of Pants.
-    py_version_for_pants_major_minor = {
-        "2.25": "3.11",
-        "2.24": "3.9",
-        "2.23": "3.9",
-    }
-    python_path = python_interpreter_path(py_version_for_pants_major_minor[pants_major_minor])
+    py_version_for_pants_major_minor = (
+        "3.11" if Version(pants_major_minor) >= Version("2.25") else "3.9"
+    )
+    python_path = python_interpreter_path(py_version_for_pants_major_minor)
     assert (
         python_path
     ), f"Did not find a compatible Python interpreter for test: Pants v{pants_major_minor}"
