@@ -16,8 +16,8 @@
 //     "opentelemetry-proto==1.29.0",
 //     "opentelemetry-sdk==1.29.0",
 //     "packaging",
-//     "pantsbuild.pants.testutil==2.25.0rc1",
-//     "pantsbuild.pants==2.25.0rc1",
+//     "pantsbuild.pants.testutil==2.25.0",
+//     "pantsbuild.pants==2.25.0",
 //     "pytest",
 //     "toml==0.10.2"
 //   ],
@@ -61,19 +61,20 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "b5011f270ab5eb0abf13385f851315585cc37ef330dd88e27ec3d34d651fd47a",
-              "url": "https://files.pythonhosted.org/packages/46/eb/e7f063ad1fec6b3178a3cd82d1a3c4de82cccf283fc42746168188e1cdd5/anyio-4.8.0-py3-none-any.whl"
+              "hash": "9f76d541cad6e36af7beb62e978876f3b41e3e04f2c1fbf0884604c0a9c4d93c",
+              "url": "https://files.pythonhosted.org/packages/a1/ee/48ca1a7c89ffec8b6a0c5d02b89c305671d5ffd8d3c94acf8b8c408575bb/anyio-4.9.0-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "1d9fe889df5212298c0c0723fa20479d1b94883a2df44bd3897aa91083316f7a",
-              "url": "https://files.pythonhosted.org/packages/a3/73/199a98fc2dae33535d6b8e8e6ec01f8c1d76c9adb096c6b7d64823038cde/anyio-4.8.0.tar.gz"
+              "hash": "673c0c244e15788651a4ff38710fea9675823028a6f08a5eda409e0c9840a028",
+              "url": "https://files.pythonhosted.org/packages/95/7d/4c1bd541d4dffa1b52bd83fb8527089e097a106fc90b467a7313b105f840/anyio-4.9.0.tar.gz"
             }
           ],
           "project_name": "anyio",
           "requires_dists": [
-            "Sphinx~=7.4; extra == \"doc\"",
+            "Sphinx~=8.2; extra == \"doc\"",
             "anyio[trio]; extra == \"test\"",
+            "blockbuster>=1.5.23; extra == \"test\"",
             "coverage[toml]>=7; extra == \"test\"",
             "exceptiongroup>=1.0.2; python_version < \"3.11\"",
             "exceptiongroup>=1.2.0; extra == \"test\"",
@@ -92,19 +93,19 @@
             "uvloop>=0.21; (platform_python_implementation == \"CPython\" and platform_system != \"Windows\" and python_version < \"3.14\") and extra == \"test\""
           ],
           "requires_python": ">=3.9",
-          "version": "4.8.0"
+          "version": "4.9.0"
         },
         {
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "c75a69e28a550a7e93789579c22aa26b0f5b83b75dc4e08fe092980051e1090a",
-              "url": "https://files.pythonhosted.org/packages/fc/30/d4986a882011f9df997a55e6becd864812ccfcd821d64aac8570ee39f719/attrs-25.1.0-py3-none-any.whl"
+              "hash": "427318ce031701fea540783410126f03899a97ffc6f61596ad581ac2e40e3bc3",
+              "url": "https://files.pythonhosted.org/packages/77/06/bb80f5f86020c4551da315d78b3ab75e8228f89f0162f2c3a819e407941a/attrs-25.3.0-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "1c97078a80c814273a76b2a298a932eb681c87415c11dee0a6921de7f1b02c3e",
-              "url": "https://files.pythonhosted.org/packages/49/7c/fdf464bcc51d23881d110abd74b512a42b3d5d376a55a831b44c603ae17f/attrs-25.1.0.tar.gz"
+              "hash": "75d7cefc7fb576747b2c81b4442d4d4a1ce0900973527c011d1030fd3bf4af1b",
+              "url": "https://files.pythonhosted.org/packages/5a/b0/1367933a8532ee6ff8d63537de4f1177af4bff9f3e829baf7331f595bb24/attrs-25.3.0.tar.gz"
             }
           ],
           "project_name": "attrs",
@@ -148,10 +149,10 @@
             "sphinx-notfound-page; extra == \"docs\"",
             "sphinx; extra == \"docs\"",
             "sphinxcontrib-towncrier; extra == \"docs\"",
-            "towncrier<24.7; extra == \"docs\""
+            "towncrier; extra == \"docs\""
           ],
           "requires_python": ">=3.8",
-          "version": "25.1.0"
+          "version": "25.3.0"
         },
         {
           "artifacts": [
@@ -312,22 +313,22 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "4077f27a6900d5946ee5a369fab9c8ded4c0ef1c6e880458ea2f70c14f7b70d5",
-              "url": "https://files.pythonhosted.org/packages/16/cb/2f4aa605b16df1e031dd7c322c597613eef933e8dd5b6a4414330b21e791/googleapis_common_protos-1.69.1-py2.py3-none-any.whl"
+              "hash": "0b30452ff9c7a27d80bfc5718954063e8ab53dd3697093d3bc99581f5fd24212",
+              "url": "https://files.pythonhosted.org/packages/f9/53/d35476d547a286506f0a6a634ccf1e5d288fffd53d48f0bd5fef61d68684/googleapis_common_protos-1.69.2-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "e20d2d8dda87da6fe7340afbbdf4f0bcb4c8fae7e6cadf55926c31f946b0b9b1",
-              "url": "https://files.pythonhosted.org/packages/41/4f/d8be74b88621131dfd1ed70e5aff2c47f2bdf2289a70736bbf3eb0e7bc70/googleapis_common_protos-1.69.1.tar.gz"
+              "hash": "3e1b904a27a33c821b4b749fd31d334c0c9c30e6113023d495e48979a3dc9c5f",
+              "url": "https://files.pythonhosted.org/packages/1b/d7/ee9d56af4e6dbe958562b5020f46263c8a4628e7952070241fc0e9b182ae/googleapis_common_protos-1.69.2.tar.gz"
             }
           ],
           "project_name": "googleapis-common-protos",
           "requires_dists": [
-            "grpcio<2.0.0.dev0,>=1.44.0; extra == \"grpc\"",
-            "protobuf!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<6.0.0.dev0,>=3.20.2"
+            "grpcio<2.0.0,>=1.44.0; extra == \"grpc\"",
+            "protobuf!=4.21.1,!=4.21.2,!=4.21.3,!=4.21.4,!=4.21.5,<7.0.0,>=3.20.2"
           ],
           "requires_python": ">=3.7",
-          "version": "1.69.1"
+          "version": "1.69.2"
         },
         {
           "artifacts": [
@@ -580,19 +581,19 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "b6a85871a79d2e3b22d2d1b94ac2824226a63c6b741c88f7ae975f18b6778374",
-              "url": "https://files.pythonhosted.org/packages/ef/a6/62565a6e1cf69e10f5727360368e451d4b7f58beeac6173dc9db836a5b46/iniconfig-2.0.0-py3-none-any.whl"
+              "hash": "9deba5723312380e77435581c6bf4935c94cbfab9b1ed33ef8d238ea168eb760",
+              "url": "https://files.pythonhosted.org/packages/2c/e1/e6716421ea10d38022b952c159d5161ca1193197fb744506875fbb87ea7b/iniconfig-2.1.0-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "2d91e135bf72d31a410b17c16da610a82cb55f6b0477d1a902134b24a455b8b3",
-              "url": "https://files.pythonhosted.org/packages/d7/4b/cbd8e699e64a6f16ca3a8220661b5f83792b3017d0f79807cb8708d33913/iniconfig-2.0.0.tar.gz"
+              "hash": "3abbd2e30b36733fee78f9c7f7308f2d0050e88f0087fd25c2645f63c773e1c7",
+              "url": "https://files.pythonhosted.org/packages/f2/97/ebf4da567aa6827c909642694d71c9fcf53e5b504f2d96afea02718862f3/iniconfig-2.1.0.tar.gz"
             }
           ],
           "project_name": "iniconfig",
           "requires_dists": [],
-          "requires_python": ">=3.7",
-          "version": "2.0.0"
+          "requires_python": ">=3.8",
+          "version": "2.1.0"
         },
         {
           "artifacts": [
@@ -875,23 +876,23 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "62d213e213da2eee635b1f3c30cf1f3d707693bb59455c940de340b715aa0dc2",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.25.0rc1/pantsbuild.pants-2.25.0rc1-cp311-cp311-manylinux2014_x86_64.whl"
+              "hash": "9ac4810a7352b03ed094afbde908f8a0f20aeb95bccfec4c3bf349540d865243",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.25.0/pantsbuild.pants-2.25.0-cp311-cp311-manylinux2014_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "a5c675ad7fe9f0e0728102a6b074c93dd6074214f983591e5368a0d50dca3750",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.25.0rc1/pantsbuild.pants-2.25.0rc1-cp311-cp311-macosx_13_0_x86_64.whl"
+              "hash": "afbfa2a208860e7ab425add7255838ff6999b006d5b93db874e40344911c452d",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.25.0/pantsbuild.pants-2.25.0-cp311-cp311-macosx_13_0_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "9a2c55b2a94140e23775c8df6894338f1dd5d6dd9dccf87a5f507d50d1094683",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.25.0rc1/pantsbuild.pants-2.25.0rc1-cp311-cp311-macosx_14_0_arm64.whl"
+              "hash": "61a13f9b12c3071f23164d562c1d104e2d7cc6aa9b1afb353be58e337941bf83",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.25.0/pantsbuild.pants-2.25.0-cp311-cp311-macosx_14_0_arm64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "38de6acdad2414dcb98f4e8ecf4d5f1a2505ca6603b7922726774ebe1d63b240",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.25.0rc1/pantsbuild.pants-2.25.0rc1-cp311-cp311-manylinux2014_aarch64.whl"
+              "hash": "5a41fc3357bc922812aa22e980f53064cedf0b8943b1286d13108c7ad93b9e2f",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.25.0/pantsbuild.pants-2.25.0-cp311-cp311-manylinux2014_aarch64.whl"
             }
           ],
           "project_name": "pantsbuild-pants",
@@ -915,25 +916,25 @@
             "typing-extensions~=4.12"
           ],
           "requires_python": "==3.11.*",
-          "version": "2.25.0rc1"
+          "version": "2.25.0"
         },
         {
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "6aab20d92fa9032827d71ac49e343984491e03dcce6729ccde3ae8629bd5d685",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.25.0rc1/pantsbuild.pants.testutil-2.25.0rc1-py3-none-any.whl"
+              "hash": "e95b5fc46fb868e81672473712d2c8425f1dc05a93641303b02c985ca4cadd18",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.25.0/pantsbuild.pants.testutil-2.25.0-py3-none-any.whl"
             }
           ],
           "project_name": "pantsbuild-pants-testutil",
           "requires_dists": [
-            "pantsbuild.pants==2.25.0rc1",
+            "pantsbuild.pants==2.25.0",
             "pytest<7.1.0,>=6.2.4",
             "toml==0.10.2",
             "types-toml==0.10.8"
           ],
           "requires_python": "==3.11.*",
-          "version": "2.25.0rc1"
+          "version": "2.25.0"
         },
         {
           "artifacts": [
@@ -962,34 +963,34 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "0a18ed4a24198528f2333802eb075e59dea9d679ab7a6c5efb017a59004d849f",
-              "url": "https://files.pythonhosted.org/packages/fd/b2/ab07b09e0f6d143dfb839693aa05765257bceaa13d03bf1a696b78323e7a/protobuf-5.29.3-py3-none-any.whl"
+              "hash": "3fde11b505e1597f71b875ef2fc52062b6a9740e5f7c8997ce878b6009145862",
+              "url": "https://files.pythonhosted.org/packages/12/fb/a586e0c973c95502e054ac5f81f88394f24ccc7982dac19c515acd9e2c93/protobuf-5.29.4-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "daaf63f70f25e8689c072cfad4334ca0ac1d1e05a92fc15c54eb9cf23c3efd84",
-              "url": "https://files.pythonhosted.org/packages/4f/06/7c467744d23c3979ce250397e26d8ad8eeb2bea7b18ca12ad58313c1b8d5/protobuf-5.29.3-cp38-abi3-manylinux2014_aarch64.whl"
+              "hash": "4f1dfcd7997b31ef8f53ec82781ff434a28bf71d9102ddde14d076adcfc78c99",
+              "url": "https://files.pythonhosted.org/packages/17/7d/b9dca7365f0e2c4fa7c193ff795427cfa6290147e5185ab11ece280a18e7/protobuf-5.29.4.tar.gz"
             },
             {
               "algorithm": "sha256",
-              "hash": "c027e08a08be10b67c06bf2370b99c811c466398c357e615ca88c91c07f0910f",
-              "url": "https://files.pythonhosted.org/packages/a8/45/2ebbde52ad2be18d3675b6bee50e68cd73c9e0654de77d595540b5129df8/protobuf-5.29.3-cp38-abi3-manylinux2014_x86_64.whl"
+              "hash": "d7d3f7d1d5a66ed4942d4fefb12ac4b14a29028b209d4bfb25c68ae172059922",
+              "url": "https://files.pythonhosted.org/packages/46/88/b01ed2291aae68b708f7d334288ad5fb3e7aa769a9c309c91a0d55cb91b0/protobuf-5.29.4-cp38-abi3-manylinux2014_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "a8434404bbf139aa9e1300dbf989667a83d42ddda9153d8ab76e0d5dcaca484e",
-              "url": "https://files.pythonhosted.org/packages/dd/04/3eaedc2ba17a088961d0e3bd396eac764450f431621b58a04ce898acd126/protobuf-5.29.3-cp38-abi3-macosx_10_9_universal2.whl"
+              "hash": "307ecba1d852ec237e9ba668e087326a67564ef83e45a0189a772ede9e854dd0",
+              "url": "https://files.pythonhosted.org/packages/46/de/7c126bbb06aa0f8a7b38aaf8bd746c514d70e6a2a3f6dd460b3b7aad7aae/protobuf-5.29.4-cp38-abi3-macosx_10_9_universal2.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "5da0f41edaf117bde316404bad1a486cb4ededf8e4a54891296f648e8e076620",
-              "url": "https://files.pythonhosted.org/packages/f7/d1/e0a911544ca9993e0f17ce6d3cc0932752356c1b0a834397f28e63479344/protobuf-5.29.3.tar.gz"
+              "hash": "aec4962f9ea93c431d5714ed1be1c93f13e1a8618e70035ba2b0564d9e633f2e",
+              "url": "https://files.pythonhosted.org/packages/a2/b5/bade14ae31ba871a139aa45e7a8183d869efe87c34a4850c87b936963261/protobuf-5.29.4-cp38-abi3-manylinux2014_aarch64.whl"
             }
           ],
           "project_name": "protobuf",
           "requires_dists": [],
           "requires_python": ">=3.8",
-          "version": "5.29.3"
+          "version": "5.29.4"
         },
         {
           "artifacts": [
@@ -1052,13 +1053,13 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "506ff4f4386c4cec0590ec19e6302d3aedb992fdc02c761e90416f158dacf8e1",
-              "url": "https://files.pythonhosted.org/packages/1c/a7/c8a2d361bf89c0d9577c934ebb7421b25dc84bf3a8e3ac0a40aed9acc547/pyparsing-3.2.1-py3-none-any.whl"
+              "hash": "a749938e02d6fd0b59b356ca504a24982314bb090c383e3cf201c95ef7e2bfcf",
+              "url": "https://files.pythonhosted.org/packages/05/e7/df2285f3d08fee213f2d041540fa4fc9ca6c2d44cf36d3a035bf2a8d2bcc/pyparsing-3.2.3-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "61980854fd66de3a90028d679a954d5f2623e83144b5afe5ee86f43d762e5f0a",
-              "url": "https://files.pythonhosted.org/packages/8b/1a/3544f4f299a47911c2ab3710f534e52fea62a633c96806995da5d25be4b2/pyparsing-3.2.1.tar.gz"
+              "hash": "b9c13f1ab8b3b542f72e28f634bad4de758ab3ce4546e4301970ad6fa77c38be",
+              "url": "https://files.pythonhosted.org/packages/bb/22/f1129e69d94ffff626bdb5c835506b3a5b4f3d070f17ea295e12c2c6f60f/pyparsing-3.2.3.tar.gz"
             }
           ],
           "project_name": "pyparsing",
@@ -1067,7 +1068,7 @@
             "railroad-diagrams; extra == \"diagrams\""
           ],
           "requires_python": ">=3.9",
-          "version": "3.2.1"
+          "version": "3.2.3"
         },
         {
           "artifacts": [
@@ -1501,19 +1502,19 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "04e5ca0351e0f3f85c6853954072df659d0d13fac324d0072316b67d7794700d",
-              "url": "https://files.pythonhosted.org/packages/26/9f/ad63fc0248c5379346306f8668cda6e2e2e9c95e01216d2b8ffd9ff037d0/typing_extensions-4.12.2-py3-none-any.whl"
+              "hash": "c8dd92cc0d6425a97c18fbb9d1954e5ff92c1ca881a309c45f06ebc0b79058e5",
+              "url": "https://files.pythonhosted.org/packages/e0/86/39b65d676ec5732de17b7e3c476e45bb80ec64eb50737a8dce1a4178aba1/typing_extensions-4.13.0-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "1a7ead55c7e559dd4dee8856e3a88b41225abfe1ce8df57b7c13915fe121ffb8",
-              "url": "https://files.pythonhosted.org/packages/df/db/f35a00659bc03fec321ba8bce9420de607a1d37f8342eee1863174c69557/typing_extensions-4.12.2.tar.gz"
+              "hash": "0a4ac55a5820789d87e297727d229866c9650f6521b64206413c4fbada24d95b",
+              "url": "https://files.pythonhosted.org/packages/0e/3e/b00a62db91a83fff600de219b6ea9908e6918664899a2d85db222f4fbf19/typing_extensions-4.13.0.tar.gz"
             }
           ],
           "project_name": "typing-extensions",
           "requires_dists": [],
           "requires_python": ">=3.8",
-          "version": "4.12.2"
+          "version": "4.13.0"
         },
         {
           "artifacts": [
@@ -1712,8 +1713,8 @@
     "opentelemetry-proto==1.29.0",
     "opentelemetry-sdk==1.29.0",
     "packaging",
-    "pantsbuild.pants.testutil==2.25.0rc1",
-    "pantsbuild.pants==2.25.0rc1",
+    "pantsbuild.pants.testutil==2.25.0",
+    "pantsbuild.pants==2.25.0",
     "pytest",
     "toml==0.10.2"
   ],
