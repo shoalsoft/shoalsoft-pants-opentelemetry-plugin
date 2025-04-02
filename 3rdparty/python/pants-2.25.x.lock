@@ -16,8 +16,8 @@
 //     "opentelemetry-proto==1.29.0",
 //     "opentelemetry-sdk==1.29.0",
 //     "packaging",
-//     "pantsbuild.pants.testutil==2.25.0",
-//     "pantsbuild.pants==2.25.0",
+//     "pantsbuild.pants.testutil==2.25.1",
+//     "pantsbuild.pants==2.25.1",
 //     "pytest",
 //     "toml==0.10.2"
 //   ],
@@ -876,23 +876,23 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "9ac4810a7352b03ed094afbde908f8a0f20aeb95bccfec4c3bf349540d865243",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.25.0/pantsbuild.pants-2.25.0-cp311-cp311-manylinux2014_x86_64.whl"
+              "hash": "47d4684f6e7a5d7ba1a70c347aeabee8f1049a2ecea971ffcf288ae731985c54",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.25.1/pantsbuild.pants-2.25.1-cp311-cp311-manylinux2014_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "afbfa2a208860e7ab425add7255838ff6999b006d5b93db874e40344911c452d",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.25.0/pantsbuild.pants-2.25.0-cp311-cp311-macosx_13_0_x86_64.whl"
+              "hash": "b0d8bc6266f257b93cbe44c128211529e782642b2897fdf18bfe465f166f01b5",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.25.1/pantsbuild.pants-2.25.1-cp311-cp311-macosx_13_0_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "61a13f9b12c3071f23164d562c1d104e2d7cc6aa9b1afb353be58e337941bf83",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.25.0/pantsbuild.pants-2.25.0-cp311-cp311-macosx_14_0_arm64.whl"
+              "hash": "21a67aa04037191c730b2bc8c012ea35764306ea1c1bd562599e83f54448137a",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.25.1/pantsbuild.pants-2.25.1-cp311-cp311-macosx_14_0_arm64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "5a41fc3357bc922812aa22e980f53064cedf0b8943b1286d13108c7ad93b9e2f",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.25.0/pantsbuild.pants-2.25.0-cp311-cp311-manylinux2014_aarch64.whl"
+              "hash": "0827d18a0a1f512af1a178546652098aa3613c6c6b2719d0e6481883b44d3d26",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.25.1/pantsbuild.pants-2.25.1-cp311-cp311-manylinux2014_aarch64.whl"
             }
           ],
           "project_name": "pantsbuild-pants",
@@ -916,25 +916,25 @@
             "typing-extensions~=4.12"
           ],
           "requires_python": "==3.11.*",
-          "version": "2.25.0"
+          "version": "2.25.1"
         },
         {
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "e95b5fc46fb868e81672473712d2c8425f1dc05a93641303b02c985ca4cadd18",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.25.0/pantsbuild.pants.testutil-2.25.0-py3-none-any.whl"
+              "hash": "66baecd76438eecafc16f2dbc23502e63e15149d58dc6b7ffc93e5afe1ec27dc",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.25.1/pantsbuild.pants.testutil-2.25.1-py3-none-any.whl"
             }
           ],
           "project_name": "pantsbuild-pants-testutil",
           "requires_dists": [
-            "pantsbuild.pants==2.25.0",
+            "pantsbuild.pants==2.25.1",
             "pytest<7.1.0,>=6.2.4",
             "toml==0.10.2",
             "types-toml==0.10.8"
           ],
           "requires_python": "==3.11.*",
-          "version": "2.25.0"
+          "version": "2.25.1"
         },
         {
           "artifacts": [
@@ -1713,8 +1713,8 @@
     "opentelemetry-proto==1.29.0",
     "opentelemetry-sdk==1.29.0",
     "packaging",
-    "pantsbuild.pants.testutil==2.25.0",
-    "pantsbuild.pants==2.25.0",
+    "pantsbuild.pants.testutil==2.25.1",
+    "pantsbuild.pants==2.25.1",
     "pytest",
     "toml==0.10.2"
   ],
