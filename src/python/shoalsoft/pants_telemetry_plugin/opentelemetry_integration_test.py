@@ -46,20 +46,6 @@ def _safe_write_files(base_path: str | os.PathLike, files: Mapping[str, str | by
         safe_file_dump(os.path.join(base_path, name), content, makedirs=True)
 
 
-def _parse_trace_id(trace_id_hex: str) -> int:
-    # Remove any potential formatting like hyphens or "0x" prefix
-    trace_id_hex = trace_id_hex.replace("-", "").replace("0x", "").lower()
-
-    # Check if the length is correct (32 hex characters = 16 bytes)
-    if len(trace_id_hex) != 32:
-        raise ValueError(
-            f"Invalid trace ID length: expected 32 hex chars, got {len(trace_id_hex)}, for `--shoalsoft-telemetry-otel-parent-trace-id` option."
-        )
-
-    # Convert hex string to integer
-    return int(trace_id_hex, 16)
-
-
 @dataclass(frozen=True)
 class RecordedRequest:
     method: str
