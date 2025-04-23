@@ -48,6 +48,16 @@ class TelemetrySubsystem(Subsystem):
         ),
     )
 
+    otel_parent_trace_id = StrOption(
+        default="",
+        help=softwrap(
+            """
+            The parent trace ID to use for the generated trace. This is useful for linking traces together
+            in a distributed system. The trace ID should be a 16-byte hex string.
+            """
+        ),
+    )
+
     otel_json_file = StrOption(
         default="dist/otel-json-trace.jsonl",
         help=softwrap(

@@ -36,6 +36,7 @@ from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import ReadableSpan, TracerProvider, sampling
 from opentelemetry.sdk.trace.export import SpanProcessor  # type: ignore[attr-defined]
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter, SpanExportResult
+from opentelemetry.trace import Link, TraceFlags
 from opentelemetry.trace.span import NonRecordingSpan, Span, SpanContext
 from opentelemetry.trace.status import StatusCode
 
@@ -211,7 +212,7 @@ def get_otel_processor(
     span_processor = BatchSpanProcessor(span_exporter)
     trace.get_tracer_provider().add_span_processor(span_processor)  # type: ignore[attr-defined]
 
-    return OpenTelemetryProcessor(tracer, span_processor)
+    return OpenTelemetryProcessor(tracer, span_processor, telemetry.otel_parent_trace_id)
 
 
 class DummySpan(NonRecordingSpan):
@@ -228,8 +229,24 @@ class DummySpan(NonRecordingSpan):
         return f"DummySpan({self._context!r})"
 
 
+def _parse_trace_id(trace_id_hex: str) -> int:
+    # Remove any potential formatting like hyphens or "0x" prefix
+    trace_id_hex = trace_id_hex.replace("-", "").replace("0x", "").lower()
+
+    # Check if the length is correct (32 hex characters = 16 bytes)
+    if len(trace_id_hex) != 32:
+        raise ValueError(
+            f"Invalid trace ID length: expected 32 hex chars, got {len(trace_id_hex)}, for `--shoalsoft-telemetry-otel-parent-trace-id` option."
+        )
+
+    # Convert hex string to integer
+    return int(trace_id_hex, 16)
+
+
 class OpenTelemetryProcessor(Processor):
-    def __init__(self, tracer: trace.Tracer, span_processor: SpanProcessor) -> None:
+    def __init__(
+        self, tracer: trace.Tracer, span_processor: SpanProcessor, parent_trace_id: str | None
+    ) -> None:
         self._tracer = tracer
         self._trace_id: int | None = None
         self._workunit_span_id_to_otel_span_id: dict[str, int] = {}
@@ -237,6 +254,10 @@ class OpenTelemetryProcessor(Processor):
         self._span_processor = span_processor
         self._span_count: int = 0
         self._counters: dict[str, int] = {}
+
+        self._parent_trace_id: int | None = None
+        if parent_trace_id:
+            self._parent_trace_id = _parse_trace_id(parent_trace_id)
 
     def _increment_counter(self, name: str, delta: int = 1) -> None:
         if name not in self._counters:
@@ -271,12 +292,23 @@ class OpenTelemetryProcessor(Processor):
                 DummySpan(otel_parent_span_context), context=otel_context
             )
 
+        links: list[Link] = []
+        if not workunit_parent_span_id and self._parent_trace_id:
+            parent_trace_id_context = SpanContext(
+                trace_id=self._parent_trace_id,
+                span_id=1,  # Using 1 as a placeholder since we don't have a specific span ID
+                is_remote=True,
+                trace_flags=TraceFlags(TraceFlags.SAMPLED),
+            )
+            links.append(Link(context=parent_trace_id_context))
+
         otel_span = self._tracer.start_span(
             name=name,
             context=otel_context,
             start_time=_datetime_to_otel_timestamp(start_time),
             record_exception=False,
             set_status_on_exception=False,
+            links=links,
         )
 
         # Record the span ID chosen by the tracer for this span.
