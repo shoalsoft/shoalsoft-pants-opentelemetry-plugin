@@ -19,17 +19,20 @@ import tempfile
 import textwrap
 import threading
 import time
+import typing
 from concurrent import futures
 from dataclasses import dataclass
 from functools import partial
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
-from typing import Iterable, Mapping
+from typing import Any, Iterable, Mapping
 
 import grpc  # type: ignore[import-untyped]
 import httpx
 import pytest
 from opentelemetry.proto.collector.trace.v1 import trace_service_pb2, trace_service_pb2_grpc
+from opentelemetry.proto.common.v1 import common_pb2
+from opentelemetry.proto.trace.v1 import trace_pb2
 from packaging.version import Version
 
 from pants.testutil.python_interpreter_selection import python_interpreter_path
@@ -41,6 +44,20 @@ from shoalsoft.pants_telemetry_plugin.subsystem import TracingExporterId
 def _safe_write_files(base_path: str | os.PathLike, files: Mapping[str, str | bytes]) -> None:
     for name, content in files.items():
         safe_file_dump(os.path.join(base_path, name), content, makedirs=True)
+
+
+def _parse_trace_id(trace_id_hex: str) -> int:
+    # Remove any potential formatting like hyphens or "0x" prefix
+    trace_id_hex = trace_id_hex.replace("-", "").replace("0x", "").lower()
+
+    # Check if the length is correct (32 hex characters = 16 bytes)
+    if len(trace_id_hex) != 32:
+        raise ValueError(
+            f"Invalid trace ID length: expected 32 hex chars, got {len(trace_id_hex)}, for `--shoalsoft-telemetry-otel-parent-trace-id` option."
+        )
+
+    # Convert hex string to integer
+    return int(trace_id_hex, 16)
 
 
 @dataclass(frozen=True)
@@ -87,6 +104,53 @@ def _wait_for_server_availability(port: int, *, num_attempts: int = 4) -> None:
         raise Exception("HTTP server did not startup.")
 
 
+def _get_span_attr(span: trace_pb2.Span, key: str) -> common_pb2.KeyValue | None:
+    for attr in span.attributes:
+        if attr.key == key:
+            return typing.cast(common_pb2.KeyValue, attr)
+    return None
+
+
+def _assert_trace_requests(requests: Iterable[trace_service_pb2.ExportTraceServiceRequest]) -> None:
+    root_span: trace_pb2.Span | None = None
+    for request in requests:
+        for resource_span in request.resource_spans:
+
+            def _get_resouce_span_attr(key: str) -> common_pb2.KeyValue | None:
+                for attr in resource_span.resource.attributes:
+                    if attr.key == key:
+                        return typing.cast(common_pb2.KeyValue, attr)
+                return None
+
+            service_name_attr = _get_resouce_span_attr("service.name")
+            assert service_name_attr is not None, "Missing service.name attribute in resource span."
+            assert service_name_attr.value.string_value == "pantsbuild"
+
+            for scope_span in resource_span.scope_spans:
+                for span in scope_span.spans:
+                    if not span.parent_span_id:
+                        assert root_span is None, "Found multiple candidate root spans."
+                        root_span = span
+
+                    workunit_level_attr = _get_span_attr(span, "pantsbuild.workunit.level")
+                    assert (
+                        workunit_level_attr is not None
+                    ), "Missing workunit.level attribute in span."
+
+                    workunit_span_id_attr = _get_span_attr(span, "pantsbuild.workunit.span_id")
+                    assert (
+                        workunit_span_id_attr is not None
+                    ), "Missing workunit.span_id attribute in span."
+
+    assert root_span is not None, "No root span found."
+    assert (
+        root_span.links[0].trace_id
+        == b"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
+    )
+    metrics_attr = _get_span_attr(root_span, "pantsbuild.metrics-v0")
+    assert metrics_attr is not None, "Missing metrics attribute in root span."
+
+
 def do_test_of_otlp_http_exporter(
     *,
     buildroot: Path,
@@ -120,6 +184,7 @@ def do_test_of_otlp_http_exporter(
                 "--shoalsoft-telemetry-enabled",
                 f"--shoalsoft-telemetry-exporter={TracingExporterId.OTLP_HTTP.value}",
                 f"--shoalsoft-telemetry-otel-exporter-endpoint=http://127.0.0.1:{server_port}/v1/traces",
+                "--shoalsoft-telemetry-otel-parent-trace-id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 "list",
                 "otlp-http::",
             ],
@@ -130,11 +195,19 @@ def do_test_of_otlp_http_exporter(
                 "PANTS_BUILDROOT_OVERRIDE": str(buildroot),
             },
             cwd=buildroot,
+            stream_output=True,
         )
         result.assert_success()
 
         # Assert that tracing spans were received over HTTP.
         assert len(recorded_requests) > 0
+
+        def _convert(body: bytes) -> trace_service_pb2.ExportTraceServiceRequest:
+            trace_request = trace_service_pb2.ExportTraceServiceRequest()
+            trace_request.ParseFromString(body)
+            return trace_request
+
+        _assert_trace_requests([_convert(request.body) for request in recorded_requests])
 
 
 class _TraceServiceImpl(trace_service_pb2_grpc.TraceServiceServicer):
@@ -176,6 +249,7 @@ def do_test_of_otlp_grpc_exporter(
                 f"--shoalsoft-telemetry-exporter={TracingExporterId.OTLP_GRPC.value}",
                 f"--shoalsoft-telemetry-otel-exporter-endpoint=http://127.0.0.1:{server_port}/",
                 "--shoalsoft-telemetry-otel-exporter-insecure",
+                "--shoalsoft-telemetry-otel-parent-trace-id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 "list",
                 "otlp-grpc::",
             ],
@@ -192,10 +266,7 @@ def do_test_of_otlp_grpc_exporter(
 
         # Assert that tracing spans were received over HTTP.
         assert len(received_requests) > 0
-        for request in received_requests:
-            assert (
-                request.resource_spans[0].resource.attributes[0].value.string_value == "pantsbuild"
-            )
+        _assert_trace_requests(received_requests)
 
 
 def do_test_of_otel_json_file_exporter(
@@ -219,6 +290,7 @@ def do_test_of_otel_json_file_exporter(
             [
                 "--shoalsoft-telemetry-enabled",
                 f"--shoalsoft-telemetry-exporter={TracingExporterId.OTEL_JSON_FILE.value}",
+                "--shoalsoft-telemetry-otel-parent-trace-id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 "list",
                 "otel-json::",
             ],
@@ -234,11 +306,21 @@ def do_test_of_otel_json_file_exporter(
 
         # Assert that tracing spans were output.
         traces_content = trace_file.read_text()
+        root_span_json: dict[Any, Any] | None = None
         for trace_line in traces_content.splitlines():
             trace_json = json.loads(trace_line)
             assert len(trace_json["context"]["trace_id"]) > 0
             assert len(trace_json["context"]["span_id"]) > 0
             assert trace_json["resource"]["attributes"]["service.name"] == "pantsbuild"
+            if trace_json.get("parent_id") is None:
+                assert root_span_json is None, "Found multiple candidate root spans."
+                root_span_json = trace_json
+
+        assert root_span_json is not None, "No root span found."
+        assert (
+            root_span_json["links"][0]["context"]["trace_id"]
+            == "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+        )
 
 
 @pytest.mark.parametrize("pants_version_str", ["2.25.1", "2.24.3", "2.23.2", "2.21.2"])
