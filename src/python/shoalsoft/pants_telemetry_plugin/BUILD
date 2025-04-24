@@ -10,6 +10,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+PLUGIN_VERSION="0.1.0"
+
 python_sources(
     **parametrize(
         "pants-2.25",
@@ -118,7 +120,7 @@ python_distribution(
         name="shoalsoft-pants-telemetry-plugin-pants2.25",
         description="Pants Telemetry Plugin from Shoal Software LLC [Pants v2.25.x]",
         python_requires="==3.11.*",
-        version="0.0.1",
+        version=PLUGIN_VERSION,
     ),
     dependencies=["./register.py@parametrize=pants-2.25"],
 )
@@ -130,7 +132,7 @@ python_distribution(
         name="shoalsoft-pants-telemetry-plugin-pants2.24",
         description="Pants Telemetry Plugin from Shoal Software LLC [Pants v2.24.x]",
         python_requires="==3.9.*",
-        version="0.0.1",
+        version=PLUGIN_VERSION,
     ),
     dependencies=["./register.py@parametrize=pants-2.24"],
 )
@@ -142,7 +144,7 @@ python_distribution(
         name="shoalsoft-pants-telemetry-plugin-pants2.23",
         description="Pants Telemetry Plugin from Shoal Software LLC [Pants v2.23.x]",
         python_requires="==3.9.*",
-        version="0.0.1",
+        version=PLUGIN_VERSION,
     ),
     dependencies=["./register.py@parametrize=pants-2.23"],
 )
@@ -154,7 +156,7 @@ python_distribution(
         name="shoalsoft-pants-telemetry-plugin-pants2.21",
         description="Pants Telemetry Plugin from Shoal Software LLC [Pants v2.21.x]",
         python_requires="==3.9.*",
-        version="0.0.1",
+        version=PLUGIN_VERSION,
     ),
     dependencies=["./register.py@parametrize=pants-2.21"],
 )
