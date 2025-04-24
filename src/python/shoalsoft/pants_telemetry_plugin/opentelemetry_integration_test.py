@@ -349,7 +349,7 @@ def test_opentelemetry_integration(subtests, pants_version_str: str) -> None:
         pants_version = "{pants_version}"
         backend_packages = ["pants.backend.python", "shoalsoft.pants_telemetry_plugin"]
         print_stacktrace = true
-        plugins = ["shoalsoft-pants-telemetry-plugin-pants{pants_major_minor}==0.0.1"]
+        plugins = ["shoalsoft-pants-telemetry-plugin-pants{pants_major_minor}"]
         pantsd = false
 
         [python-repos]
