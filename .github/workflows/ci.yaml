@@ -28,7 +28,7 @@ jobs:
         run: |
           pants package src/python/shoalsoft/pants_telemetry_plugin::
           for pants_version in 2.25 2.24 2.23 2.21; do
-            if [ ! -r "dist/dist/shoalsoft-pants-telemetry-plugin-pants${pants_version}-*.pex" ]; then
+            if [ ! -r "dist/shoalsoft-pants-telemetry-plugin-pants${pants_version}-*.pex" ]; then
               echo "ERROR: No PEX file found for plugin for Pants version $pants_version." 1>&2
               exit 1
             fi
