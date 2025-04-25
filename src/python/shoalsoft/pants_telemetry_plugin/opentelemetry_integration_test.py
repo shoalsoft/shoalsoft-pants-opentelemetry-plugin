@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import json
 import os
-import shutil
+import subprocess
 import tempfile
 import textwrap
 import threading
@@ -323,14 +323,27 @@ def test_opentelemetry_integration(subtests, pants_version_str: str) -> None:
         python_path
     ), f"Did not find a compatible Python interpreter for test: Pants v{pants_major_minor}"
 
-    # Move the plugin's wheels into a subdirectory. (The BUILD file arranges for the wheels to be materialized
-    # in the sandbox as a dependency.)
-    plugin_wheels_path = (Path.cwd() / f"wheels-{pants_major_minor}").resolve()
-    plugin_wheels_path.mkdir(parents=True)
-    for filename in [
-        p for p in os.listdir(Path.cwd()) if p.endswith(".whl") and pants_major_minor in p
-    ]:
-        shutil.copy(filename, plugin_wheels_path)
+    # Install a venv expanded from the plugin's pex file. (The BUILD file arranges for the pex files to be materialized
+    # in the sandbox as dependencies.)
+    plugin_venv_path = (Path.cwd() / f"plugin-venv-{pants_major_minor}").resolve()
+    plugin_venv_path.mkdir(parents=True)
+    plugin_pex_files = [
+        name
+        for name in os.listdir(Path.cwd())
+        if name.startswith(f"shoalsoft-pants-telemetry-plugin-pants{pants_major_minor}")
+        and name.endswith(".pex")
+    ]
+    assert (
+        len(plugin_pex_files) == 1
+    ), f"Expected to find exactly one pex file for Pants {pants_major_minor}."
+    subprocess.run(
+        [python_path, plugin_pex_files[0], "venv", str(plugin_venv_path)],
+        env={"PEX_TOOLS": "1"},
+        check=True,
+    )
+    site_packages_path = (
+        plugin_venv_path / "lib" / f"python{py_version_for_pants_major_minor}" / "site-packages"
+    )
 
     # A pex of the Pants version in this resolve is materialised as `pants-MAJOR.MINOR.pex` in the sandbox.
     # This is done to isolate the test environment's virtualenv from the Pants under test.
@@ -347,16 +360,10 @@ def test_opentelemetry_integration(subtests, pants_version_str: str) -> None:
             f"""\
         [GLOBAL]
         pants_version = "{pants_version}"
+        pythonpath = ["{site_packages_path}"]
         backend_packages = ["pants.backend.python", "shoalsoft.pants_telemetry_plugin"]
         print_stacktrace = true
-        plugins = ["shoalsoft-pants-telemetry-plugin-pants{pants_major_minor}"]
         pantsd = false
-
-        [python-repos]
-        find_links = [
-            "file://{plugin_wheels_path}/",
-            "https://wheels.pantsbuild.org/simple/",
-        ]
 
         [python]
         interpreter_constraints = "==3.9.*"

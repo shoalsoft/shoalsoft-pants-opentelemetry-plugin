@@ -24,11 +24,12 @@ jobs:
         run: "pants lint check ::"
       - name: Run tests
         run: "pants test ::"
-      - name: Package for 2.25.x
-        run: "pants package src/python/shoalsoft/pants_telemetry_plugin:wheel-2.25"
-      - name: Package for 2.24.x
-        run: "pants package src/python/shoalsoft/pants_telemetry_plugin:wheel-2.24"
-      - name: Package for 2.23.x
-        run: "pants package src/python/shoalsoft/pants_telemetry_plugin:wheel-2.23"
-      - name: Package for 2.21.x
-        run: "pants package src/python/shoalsoft/pants_telemetry_plugin:wheel-2.21"
+      - name: Package plugin as PEX for various Pants versions.
+        run: |
+          pants package src/python/shoalsoft/pants_telemetry_plugin::
+          for pants_version in 2.25 2.24 2.23 2.21; do
+            if [ ! -r dist/shoalsoft-pants-telemetry-plugin-pants${pants_version}-*.pex ]; then
+              echo "ERROR: No PEX file found for plugin for Pants version $pants_version." 1>&2
+              exit 1
+            fi
+          done

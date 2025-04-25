@@ -65,14 +65,11 @@ python_tests(
     sources=["*_integration_test.py"],
     interpreter_constraints=["==3.11.*"],
     runtime_package_dependencies=[
-        ":wheel-2.25",
-        ":wheel-2.24",
-        ":wheel-2.23",
-        ":wheel-2.21",
-        ":pants-for-tests@parametrize=pants-2.25",
-        ":pants-for-tests@parametrize=pants-2.24",
-        ":pants-for-tests@parametrize=pants-2.23",
-        ":pants-for-tests@parametrize=pants-2.21",
+        *(f":pex-{pants_version}" for pants_version in ["2.25", "2.24", "2.23", "2.21"]),
+        *(
+            f":pants-for-tests@parametrize=pants-{pants_version}"
+            for pants_version in ["2.25", "2.24", "2.23", "2.21"]
+        ),
     ],
     # Integration tests take forever given how they are run. :(
     timeout=600,
@@ -113,50 +110,22 @@ pex_binary(
     ),
 )
 
-python_distribution(
-    name="wheel-2.25",
-    interpreter_constraints=["==3.11.*"],
-    provides=setup_py(
-        name="shoalsoft-pants-telemetry-plugin-pants2.25",
-        description="Pants Telemetry Plugin from Shoal Software LLC [Pants v2.25.x]",
-        python_requires="==3.11.*",
-        version=PLUGIN_VERSION,
-    ),
-    dependencies=["./register.py@parametrize=pants-2.25"],
-)
 
-python_distribution(
-    name="wheel-2.24",
-    interpreter_constraints=["==3.9.*"],
-    provides=setup_py(
-        name="shoalsoft-pants-telemetry-plugin-pants2.24",
-        description="Pants Telemetry Plugin from Shoal Software LLC [Pants v2.24.x]",
-        python_requires="==3.9.*",
-        version=PLUGIN_VERSION,
-    ),
-    dependencies=["./register.py@parametrize=pants-2.24"],
-)
+def declare_pex_binary(version, python_version):
+    pex_binary(
+        name=f"pex-{version}",
+        output_path=f"shoalsoft-pants-telemetry-plugin-pants{version}-v{PLUGIN_VERSION}.pex",
+        interpreter_constraints=(f"=={python_version}.*",),
+        dependencies=[
+            f"./register.py@parametrize=pants-{version}",
+            f"!!3rdparty/python:pants-{version}#pantsbuild.pants",
+        ],
+        include_tools=True,
+        resolve=f"pants-{version}",
+    )
 
-python_distribution(
-    name="wheel-2.23",
-    interpreter_constraints=["==3.9.*"],
-    provides=setup_py(
-        name="shoalsoft-pants-telemetry-plugin-pants2.23",
-        description="Pants Telemetry Plugin from Shoal Software LLC [Pants v2.23.x]",
-        python_requires="==3.9.*",
-        version=PLUGIN_VERSION,
-    ),
-    dependencies=["./register.py@parametrize=pants-2.23"],
-)
 
-python_distribution(
-    name="wheel-2.21",
-    interpreter_constraints=["==3.9.*"],
-    provides=setup_py(
-        name="shoalsoft-pants-telemetry-plugin-pants2.21",
-        description="Pants Telemetry Plugin from Shoal Software LLC [Pants v2.21.x]",
-        python_requires="==3.9.*",
-        version=PLUGIN_VERSION,
-    ),
-    dependencies=["./register.py@parametrize=pants-2.21"],
-)
+declare_pex_binary("2.25", "3.11")
+declare_pex_binary("2.24", "3.9")
+declare_pex_binary("2.23", "3.9")
+declare_pex_binary("2.21", "3.9")
