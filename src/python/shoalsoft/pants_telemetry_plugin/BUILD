@@ -65,14 +65,11 @@ python_tests(
     sources=["*_integration_test.py"],
     interpreter_constraints=["==3.11.*"],
     runtime_package_dependencies=[
-        ":wheel-2.25",
-        ":wheel-2.24",
-        ":wheel-2.23",
-        ":wheel-2.21",
-        ":pants-for-tests@parametrize=pants-2.25",
-        ":pants-for-tests@parametrize=pants-2.24",
-        ":pants-for-tests@parametrize=pants-2.23",
-        ":pants-for-tests@parametrize=pants-2.21",
+        *(f":pex-{pants_version}" for pants_version in ["2.25", "2.24", "2.23", "2.21"]),
+        *(
+            f":pants-for-tests@parametrize=pants-{pants_version}"
+            for pants_version in ["2.25", "2.24", "2.23", "2.21"]
+        ),
     ],
     # Integration tests take forever given how they are run. :(
     timeout=600,
@@ -124,6 +121,7 @@ def declare_pex_binary(version, python_version):
             f"!!3rdparty/python:pants-{version}#pantsbuild.pants",
         ],
         include_tools=True,
+        resolve=f"pants-{version}",
     )
 
 
