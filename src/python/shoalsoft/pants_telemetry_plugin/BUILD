@@ -14,6 +14,11 @@ PLUGIN_VERSION = "0.1.1"
 
 python_sources(
     **parametrize(
+        "pants-2.26",
+        resolve="pants-2.26",
+        interpreter_constraints=["==3.11.*"],
+    ),
+    **parametrize(
         "pants-2.25",
         resolve="pants-2.25",
         interpreter_constraints=["==3.11.*"],
@@ -38,6 +43,11 @@ python_sources(
 python_tests(
     name="tests",
     sources=["*_test.py", "!*_integration_test.py"],
+    **parametrize(
+        "pants-2.26",
+        resolve="pants-2.26",
+        interpreter_constraints=["==3.11.*"],
+    ),
     **parametrize(
         "pants-2.25",
         resolve="pants-2.25",
@@ -65,10 +75,10 @@ python_tests(
     sources=["*_integration_test.py"],
     interpreter_constraints=["==3.11.*"],
     runtime_package_dependencies=[
-        *(f":pex-{pants_version}" for pants_version in ["2.25", "2.24", "2.23", "2.21"]),
+        *(f":pex-{pants_version}" for pants_version in ["2.26", "2.25", "2.24", "2.23", "2.21"]),
         *(
             f":pants-for-tests@parametrize=pants-{pants_version}"
-            for pants_version in ["2.25", "2.24", "2.23", "2.21"]
+            for pants_version in ["2.26", "2.25", "2.24", "2.23", "2.21"]
         ),
     ],
     # Integration tests take forever given how they are run. :(
@@ -80,6 +90,13 @@ pex_binary(
     entry_point="pants",
     execution_mode="venv",
     layout="zipapp",
+    **parametrize(
+        "pants-2.26",
+        resolve="pants-2.26",
+        interpreter_constraints=["==3.11.*"],
+        dependencies=["3rdparty/python:pants-2.26#pantsbuild.pants"],
+        output_path="pants-2.26.pex",
+    ),
     **parametrize(
         "pants-2.25",
         resolve="pants-2.25",
@@ -125,6 +142,7 @@ def declare_pex_binary(version, python_version):
     )
 
 
+declare_pex_binary("2.26", "3.11")
 declare_pex_binary("2.25", "3.11")
 declare_pex_binary("2.24", "3.9")
 declare_pex_binary("2.23", "3.9")
