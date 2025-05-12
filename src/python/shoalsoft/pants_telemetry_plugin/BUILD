@@ -78,7 +78,7 @@ python_tests(
         *(f":pex-{pants_version}" for pants_version in ["2.26", "2.25", "2.24", "2.23", "2.21"]),
         *(
             f":pants-for-tests@parametrize=pants-{pants_version}"
-            for pants_version in ["2.25", "2.24", "2.23", "2.21"]
+            for pants_version in ["2.26", "2.25", "2.24", "2.23", "2.21"]
         ),
     ],
     # Integration tests take forever given how they are run. :(
