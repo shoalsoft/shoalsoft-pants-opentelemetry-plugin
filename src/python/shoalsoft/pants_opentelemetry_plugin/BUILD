@@ -96,20 +96,38 @@ pex_binary(
 )
 
 
-def declare_pex_binary(version, python_version):
+def declare_artifacts(pants_major_minor_version, python_version):
     pex_binary(
-        name=f"pex-{version}",
-        output_path=f"shoalsoft-pants-opentelemetry-plugin-pants{version}-v{PLUGIN_VERSION}.pex",
+        name=f"pex-{pants_major_minor_version}",
+        output_path=f"shoalsoft-pants-opentelemetry-plugin-pants{pants_major_minor_version}-v{PLUGIN_VERSION}.pex",
         interpreter_constraints=(f"=={python_version}.*",),
         dependencies=[
-            f"./register.py@parametrize=pants-{version}",
-            f"!!3rdparty/python:pants-{version}#pantsbuild.pants",
+            f"./register.py@parametrize=pants-{pants_major_minor_version}",
+            # Exclude Pants and its transitive dependencies since the Pants will supply those
+            # dependencies itself from its own venv.
+            f"!!3rdparty/python:pants-{pants_major_minor_version}#pantsbuild.pants",
         ],
         include_tools=True,
-        resolve=f"pants-{version}",
+        resolve=f"pants-{pants_major_minor_version}",
+    )
+    python_distribution(
+        name=f"wheel-{pants_major_minor_version}",
+        interpreter_constraints=[f"=={python_version}.*"],
+        provides=setup_py(
+            name=f"shoalsoft-pants-opentelemetry-plugin-pants{pants_major_minor_version.replace('.', '')}",
+            description=f"Pants OpenTelemetry Plugin from Shoal Software LLC [Pants v{pants_major_minor_version}.x]",
+            python_requires=f"=={python_version}.*",
+            version=PLUGIN_VERSION,
+        ),
+        dependencies=[
+            f"./register.py@parametrize=pants-{pants_major_minor_version}",
+            # Exclude Pants and its transitive dependencies since the Pants will supply those
+            # dependencies itself from its own venv.
+            f"!!3rdparty/python:pants-{pants_major_minor_version}#pantsbuild.pants",
+        ],
     )
 
 
-declare_pex_binary("2.26", "3.11")
-declare_pex_binary("2.25", "3.11")
-declare_pex_binary("2.21", "3.9")
+declare_artifacts("2.26", "3.11")
+declare_artifacts("2.25", "3.11")
+declare_artifacts("2.21", "3.9")

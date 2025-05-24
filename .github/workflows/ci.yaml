@@ -29,7 +29,13 @@ jobs:
           pants package src/python/shoalsoft/pants_opentelemetry_plugin::
           for pants_version in 2.26 2.25 2.21; do
             if [ ! -r dist/shoalsoft-pants-opentelemetry-plugin-pants${pants_version}-*.pex ]; then
-              echo "ERROR: No PEX file found for plugin for Pants version $pants_version." 1>&2
+              echo "ERROR: No PEX file found for Pants version $pants_version." 1>&2
+              exit 1
+            fi
+
+            pants_version_nodot=$(echo $pants_version | tr -d '.')
+            if [ ! -r dist/shoalsoft_pants_opentelemetry_plugin_pants${pants_version_nodot}-*-py3-none-any.whl ]; then
+              echo "ERROR: No wheel found for Pants version $pants_version." 1>&2
               exit 1
             fi
           done
