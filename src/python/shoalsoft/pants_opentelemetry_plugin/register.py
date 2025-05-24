@@ -15,7 +15,8 @@ from __future__ import annotations
 import logging
 
 from pants.base.build_root import BuildRoot
-from pants.engine.rules import collect_rules, rule
+from pants.engine.env_vars import EnvironmentVars, EnvironmentVarsRequest
+from pants.engine.rules import Get, collect_rules, rule
 from pants.engine.streaming_workunit_handler import (
     WorkunitsCallbackFactory,
     WorkunitsCallbackFactoryRequest,
@@ -41,10 +42,16 @@ async def telemetry_workunits_callback_factory_request(
 ) -> WorkunitsCallbackFactory:
     processor: Processor | None = None
     if telemetry.enabled and telemetry.exporter:
+        traceparent_env_var: str | None = None
+        if telemetry.parse_traceparent:
+            env_vars = await Get(EnvironmentVars, EnvironmentVarsRequest(["TRACEPARENT"]))
+            traceparent_env_var = env_vars.get("TRACEPARENT")
+
         processor = get_processor(
             span_exporter_name=telemetry.exporter,
             telemetry=telemetry,
             build_root=build_root.pathlib_path,
+            traceparent_env_var=traceparent_env_var,
         )
     return WorkunitsCallbackFactory(
         lambda: TelemetryWorkunitsCallback(processor) if processor is not None else None

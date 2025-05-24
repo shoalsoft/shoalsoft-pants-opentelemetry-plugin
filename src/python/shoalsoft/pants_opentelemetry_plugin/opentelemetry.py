@@ -180,6 +180,7 @@ def get_processor(
     span_exporter_name: TracingExporterId,
     telemetry: TelemetrySubsystem,
     build_root: Path,
+    traceparent_env_var: str | None,
 ) -> Processor:
     resource = Resource(
         attributes={
@@ -212,7 +213,9 @@ def get_processor(
     span_processor = BatchSpanProcessor(span_exporter)
     trace.get_tracer_provider().add_span_processor(span_processor)  # type: ignore[attr-defined]
 
-    return OpenTelemetryProcessor(tracer, span_processor, telemetry.parent_trace_id)
+    return OpenTelemetryProcessor(
+        tracer=tracer, span_processor=span_processor, traceparent_env_var=traceparent_env_var
+    )
 
 
 class DummySpan(NonRecordingSpan):
@@ -229,23 +232,43 @@ class DummySpan(NonRecordingSpan):
         return f"DummySpan({self._context!r})"
 
 
-def _parse_trace_id(trace_id_hex: str) -> int:
+def _parse_id(id_hex: str, id_hex_chars_len: int) -> int:
     # Remove any potential formatting like hyphens or "0x" prefix
-    trace_id_hex = trace_id_hex.replace("-", "").replace("0x", "").lower()
+    id_hex = id_hex.replace("-", "").replace("0x", "").lower()
 
-    # Check if the length is correct (32 hex characters = 16 bytes)
-    if len(trace_id_hex) != 32:
+    # Check if the length is correct for the given ID type.
+    if len(id_hex) != id_hex_chars_len:
         raise ValueError(
-            f"Invalid trace ID length: expected 32 hex chars, got {len(trace_id_hex)}, for `--shoalsoft-telemetry-otel-parent-trace-id` option."
+            f"Invalid ID length: expected {id_hex_chars_len} hex chars, got {len(id_hex)} instead."
         )
 
     # Convert hex string to integer
-    return int(trace_id_hex, 16)
+    return int(id_hex, 16)
+
+
+def _parse_traceparent(value: str) -> tuple[int, int] | None:
+    parts = value.split("-")
+    if len(parts) < 3:
+        return None
+
+    try:
+        trace_id = _parse_id(parts[1], 32)
+    except ValueError as e:
+        logger.warning(f"Igorning TRACEPARENT due to failue to parse trace ID `{parts[1]}`: {e}")
+        return None
+
+    try:
+        span_id = _parse_id(parts[2], 16)
+    except ValueError as e:
+        logger.warning(f"Igorning TRACEPARENT due to failue to parse span ID `{parts[2]}`: {e}")
+        return None
+
+    return trace_id, span_id
 
 
 class OpenTelemetryProcessor(Processor):
     def __init__(
-        self, tracer: trace.Tracer, span_processor: SpanProcessor, parent_trace_id: str | None
+        self, tracer: trace.Tracer, span_processor: SpanProcessor, traceparent_env_var: str | None
     ) -> None:
         self._tracer = tracer
         self._trace_id: int | None = None
@@ -256,8 +279,12 @@ class OpenTelemetryProcessor(Processor):
         self._counters: dict[str, int] = {}
 
         self._parent_trace_id: int | None = None
-        if parent_trace_id:
-            self._parent_trace_id = _parse_trace_id(parent_trace_id)
+        self._parent_span_id: int | None = None
+        if traceparent_env_var is not None:
+            ids = _parse_traceparent(traceparent_env_var)
+            if ids is not None:
+                self._parent_trace_id = ids[0]
+                self._parent_span_id = ids[1]
 
     def _increment_counter(self, name: str, delta: int = 1) -> None:
         if name not in self._counters:
@@ -293,10 +320,10 @@ class OpenTelemetryProcessor(Processor):
             )
 
         links: list[Link] = []
-        if not workunit_parent_span_id and self._parent_trace_id:
+        if not workunit_parent_span_id and self._parent_trace_id and self._parent_span_id:
             parent_trace_id_context = SpanContext(
                 trace_id=self._parent_trace_id,
-                span_id=1,  # Using 1 as a placeholder since we don't have a specific span ID
+                span_id=self._parent_span_id,
                 is_remote=True,
                 trace_flags=TraceFlags(TraceFlags.SAMPLED),
             )
