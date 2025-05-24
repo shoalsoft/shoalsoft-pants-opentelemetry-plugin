@@ -133,6 +133,7 @@ def _assert_trace_requests(requests: Iterable[trace_service_pb2.ExportTraceServi
         root_span.links[0].trace_id
         == b"\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa\xaa"
     )
+    assert root_span.links[0].span_id == b"\xbb\xbb\xbb\xbb\xbb\xbb\xbb\xbb"
     metrics_attr = _get_span_attr(root_span, "pantsbuild.metrics-v0")
     assert metrics_attr is not None, "Missing metrics attribute in root span."
 
@@ -170,7 +171,6 @@ def do_test_of_otlp_http_exporter(
                 "--shoalsoft-opentelemetry-enabled",
                 f"--shoalsoft-opentelemetry-exporter={TracingExporterId.HTTP.value}",
                 f"--shoalsoft-opentelemetry-exporter-endpoint=http://127.0.0.1:{server_port}/v1/traces",
-                "--shoalsoft-opentelemetry-parent-trace-id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 "list",
                 "otlp-http::",
             ],
@@ -179,6 +179,7 @@ def do_test_of_otlp_http_exporter(
             extra_env={
                 **(extra_env if extra_env else {}),
                 "PANTS_BUILDROOT_OVERRIDE": str(buildroot),
+                "TRACEPARENT": "00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-00",
             },
             cwd=buildroot,
             stream_output=True,
@@ -235,7 +236,6 @@ def do_test_of_otlp_grpc_exporter(
                 f"--shoalsoft-opentelemetry-exporter={TracingExporterId.GRPC.value}",
                 f"--shoalsoft-opentelemetry-exporter-endpoint=http://127.0.0.1:{server_port}/",
                 "--shoalsoft-opentelemetry-exporter-insecure",
-                "--shoalsoft-opentelemetry-parent-trace-id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 "list",
                 "otlp-grpc::",
             ],
@@ -245,6 +245,7 @@ def do_test_of_otlp_grpc_exporter(
                 **(extra_env if extra_env else {}),
                 "PANTS_BUILDROOT_OVERRIDE": str(buildroot),
                 "GRPC_VERBOSITY": "DEBUG",
+                "TRACEPARENT": "00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-00",
             },
             cwd=buildroot,
         )
@@ -276,7 +277,6 @@ def do_test_of_json_file_exporter(
             [
                 "--shoalsoft-opentelemetry-enabled",
                 f"--shoalsoft-opentelemetry-exporter={TracingExporterId.JSON_FILE.value}",
-                "--shoalsoft-opentelemetry-parent-trace-id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 "list",
                 "otel-json::",
             ],
@@ -285,6 +285,7 @@ def do_test_of_json_file_exporter(
             extra_env={
                 **(extra_env if extra_env else {}),
                 "PANTS_BUILDROOT_OVERRIDE": str(buildroot),
+                "TRACEPARENT": "00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-00",
             },
             cwd=buildroot,
         )
