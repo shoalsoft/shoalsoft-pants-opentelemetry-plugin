@@ -115,7 +115,7 @@ def declare_artifacts(pants_major_minor_version, python_version):
         interpreter_constraints=[f"=={python_version}.*"],
         provides=setup_py(
             name=f"shoalsoft-pants-opentelemetry-plugin-pants{pants_major_minor_version.replace('.', '')}",
-            description=f"Pants Telemetry Plugin from Shoal Software LLC [Pants v{pants_major_minor_version}.x]",
+            description=f"Pants OpenTelemetry Plugin from Shoal Software LLC [Pants v{pants_major_minor_version}.x]",
             python_requires=f"=={python_version}.*",
             version=PLUGIN_VERSION,
         ),
