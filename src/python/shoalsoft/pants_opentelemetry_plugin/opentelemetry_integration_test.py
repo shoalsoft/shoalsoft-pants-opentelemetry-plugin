@@ -168,9 +168,9 @@ def do_test_of_otlp_http_exporter(
         result = run_pants_with_workdir(
             [
                 "--shoalsoft-opentelemetry-enabled",
-                f"--shoalsoft-opentelemetry-exporter={TracingExporterId.OTLP_HTTP.value}",
-                f"--shoalsoft-opentelemetry-otel-exporter-endpoint=http://127.0.0.1:{server_port}/v1/traces",
-                "--shoalsoft-opentelemetry-otel-parent-trace-id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                f"--shoalsoft-opentelemetry-exporter={TracingExporterId.HTTP.value}",
+                f"--shoalsoft-opentelemetry-exporter-endpoint=http://127.0.0.1:{server_port}/v1/traces",
+                "--shoalsoft-opentelemetry-parent-trace-id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 "list",
                 "otlp-http::",
             ],
@@ -232,10 +232,10 @@ def do_test_of_otlp_grpc_exporter(
         result = run_pants_with_workdir(
             [
                 "--shoalsoft-opentelemetry-enabled",
-                f"--shoalsoft-opentelemetry-exporter={TracingExporterId.OTLP_GRPC.value}",
-                f"--shoalsoft-opentelemetry-otel-exporter-endpoint=http://127.0.0.1:{server_port}/",
-                "--shoalsoft-opentelemetry-otel-exporter-insecure",
-                "--shoalsoft-opentelemetry-otel-parent-trace-id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                f"--shoalsoft-opentelemetry-exporter={TracingExporterId.GRPC.value}",
+                f"--shoalsoft-opentelemetry-exporter-endpoint=http://127.0.0.1:{server_port}/",
+                "--shoalsoft-opentelemetry-exporter-insecure",
+                "--shoalsoft-opentelemetry-parent-trace-id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 "list",
                 "otlp-grpc::",
             ],
@@ -255,7 +255,7 @@ def do_test_of_otlp_grpc_exporter(
         _assert_trace_requests(received_requests)
 
 
-def do_test_of_otel_json_file_exporter(
+def do_test_of_json_file_exporter(
     *,
     buildroot: Path,
     pants_exe_args: Iterable[str],
@@ -275,8 +275,8 @@ def do_test_of_otel_json_file_exporter(
         result = run_pants_with_workdir(
             [
                 "--shoalsoft-opentelemetry-enabled",
-                f"--shoalsoft-opentelemetry-exporter={TracingExporterId.OTEL_JSON_FILE.value}",
-                "--shoalsoft-opentelemetry-otel-parent-trace-id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                f"--shoalsoft-opentelemetry-exporter={TracingExporterId.JSON_FILE.value}",
+                "--shoalsoft-opentelemetry-parent-trace-id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 "list",
                 "otel-json::",
             ],
@@ -414,7 +414,7 @@ def test_opentelemetry_integration(subtests, pants_version_str: str) -> None:
         )
 
     with subtests.test(msg="OTEL/JSON file span exporter"):
-        do_test_of_otel_json_file_exporter(
+        do_test_of_json_file_exporter(
             buildroot=buildroot,
             pants_exe_args=pants_exe_args,
             workdir_base=workdir_base,

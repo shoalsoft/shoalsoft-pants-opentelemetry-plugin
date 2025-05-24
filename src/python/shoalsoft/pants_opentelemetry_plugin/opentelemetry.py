@@ -101,11 +101,11 @@ def _read_file(file_path: str, option_name: str) -> bytes:
 def _get_grpc_credentials(
     telemetry: TelemetrySubsystem,
 ) -> GrpcChannelCredentials:
-    certificate_file = telemetry.otel_exporter_certificate_file
+    certificate_file = telemetry.exporter_certificate_file
     if not certificate_file:
         return ssl_channel_credentials()
-    client_key_file = telemetry.otel_exporter_client_key_file
-    client_certificate_file = telemetry.otel_exporter_client_certificate_file
+    client_key_file = telemetry.exporter_client_key_file
+    client_certificate_file = telemetry.exporter_client_certificate_file
 
     root_certificates = (
         _read_file(certificate_file, "--shoalsoft-telemetry-otel-exporter-certificate-file")
@@ -134,49 +134,49 @@ def _get_grpc_credentials(
 
 
 def _make_span_exporter(name: TracingExporterId, telemetry: TelemetrySubsystem) -> SpanExporter:
-    if name == TracingExporterId.OTLP_HTTP:
+    if name == TracingExporterId.HTTP:
         return HttpOTLPSpanExporter(
-            endpoint=telemetry.otel_exporter_endpoint,
-            certificate_file=telemetry.otel_exporter_certificate_file,
-            client_key_file=telemetry.otel_exporter_client_key_file,
-            client_certificate_file=telemetry.otel_exporter_client_certificate_file,
-            headers=telemetry.otel_exporter_headers,
-            timeout=telemetry.otel_exporter_timeout,
-            compression=Compression(telemetry.otel_exporter_compression.value),
+            endpoint=telemetry.exporter_endpoint,
+            certificate_file=telemetry.exporter_certificate_file,
+            client_key_file=telemetry.exporter_client_key_file,
+            client_certificate_file=telemetry.exporter_client_certificate_file,
+            headers=telemetry.exporter_headers,
+            timeout=telemetry.exporter_timeout,
+            compression=Compression(telemetry.exporter_compression.value),
         )
-    elif name == TracingExporterId.OTLP_GRPC:
-        compression = telemetry.otel_exporter_compression
+    elif name == TracingExporterId.GRPC:
+        compression = telemetry.exporter_compression
         if compression not in _GRPC_COMPRESSION_MAP.keys():
             raise ValueError(
                 f"OpenTelemetry compression mode `{compression.value}` is not supported for OTLP/gRPC exports."
             )
 
         credentials: GrpcChannelCredentials | None = None
-        if not telemetry.otel_exporter_insecure:
+        if not telemetry.exporter_insecure:
             credentials = _get_grpc_credentials(telemetry)
-        elif telemetry.otel_exporter_endpoint:
-            parsed_endpoint = urllib.parse.urlparse(telemetry.otel_exporter_endpoint)
+        elif telemetry.exporter_endpoint:
+            parsed_endpoint = urllib.parse.urlparse(telemetry.exporter_endpoint)
             if parsed_endpoint.scheme == "https":
                 raise ValueError(
                     "`--shoalsoft-telemetry-otel-exporter-insecure` is enabled, but the endpoint "
-                    f"`{telemetry.otel_exporter_endpoint}` contains a `https` scheme which "
+                    f"`{telemetry.exporter_endpoint}` contains a `https` scheme which "
                     "requires secure mode. Please set `--no-shoalsoft-telemetry-otel-exporter-insecure` "
                     "instead."
                 )
 
         return GrpcOTLPSpanExporter(
-            endpoint=telemetry.otel_exporter_endpoint,
-            insecure=telemetry.otel_exporter_insecure,
+            endpoint=telemetry.exporter_endpoint,
+            insecure=telemetry.exporter_insecure,
             credentials=credentials,
-            headers=telemetry.otel_exporter_headers,
-            timeout=telemetry.otel_exporter_timeout,
+            headers=telemetry.exporter_headers,
+            timeout=telemetry.exporter_timeout,
             compression=_GRPC_COMPRESSION_MAP[compression],
         )
     else:
         raise AssertionError(f"Unknown OpenTelemetry tracing span exporter: {name}")
 
 
-def get_otel_processor(
+def get_processor(
     span_exporter_name: TracingExporterId,
     telemetry: TelemetrySubsystem,
     build_root: Path,
@@ -190,18 +190,18 @@ def get_otel_processor(
     tracer = trace.get_tracer(__name__)
 
     span_exporter: SpanExporter
-    if span_exporter_name == TracingExporterId.OTEL_JSON_FILE:
-        otel_json_file_path_str = telemetry.otel_json_file
-        if not otel_json_file_path_str:
+    if span_exporter_name == TracingExporterId.JSON_FILE:
+        json_file_path_str = telemetry.json_file
+        if not json_file_path_str:
             raise ValueError(
-                f"`--shoalsoft-telemetry-exporters` includes `{TracingExporterId.OTEL_JSON_FILE}` "
+                f"`--shoalsoft-telemetry-exporters` includes `{TracingExporterId.JSON_FILE}` "
                 "but the `--shoalsoft-telemetry-otel-json-file` option is not set."
             )
-        otel_json_file_path = build_root / otel_json_file_path_str
-        otel_json_file_path.parent.mkdir(parents=True, exist_ok=True)
-        span_exporter = JsonFileSpanExporter(open(otel_json_file_path, "w"))
-        logger.debug(f"Enabling OpenTelemetry JSON file span exporter: path={otel_json_file_path}")
-    elif span_exporter_name in {TracingExporterId.OTLP_HTTP, TracingExporterId.OTLP_GRPC}:
+        json_file_path = build_root / json_file_path_str
+        json_file_path.parent.mkdir(parents=True, exist_ok=True)
+        span_exporter = JsonFileSpanExporter(open(json_file_path, "w"))
+        logger.debug(f"Enabling OpenTelemetry JSON file span exporter: path={json_file_path}")
+    elif span_exporter_name in {TracingExporterId.HTTP, TracingExporterId.GRPC}:
         span_exporter = _make_span_exporter(span_exporter_name, telemetry=telemetry)
         logger.debug(f"Enabling OpenTelemetry span exporter `{span_exporter_name.value}`.")
     else:
@@ -212,7 +212,7 @@ def get_otel_processor(
     span_processor = BatchSpanProcessor(span_exporter)
     trace.get_tracer_provider().add_span_processor(span_processor)  # type: ignore[attr-defined]
 
-    return OpenTelemetryProcessor(tracer, span_processor, telemetry.otel_parent_trace_id)
+    return OpenTelemetryProcessor(tracer, span_processor, telemetry.parent_trace_id)
 
 
 class DummySpan(NonRecordingSpan):

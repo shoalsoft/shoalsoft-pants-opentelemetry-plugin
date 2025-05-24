@@ -21,7 +21,7 @@ from pants.engine.streaming_workunit_handler import (
     WorkunitsCallbackFactoryRequest,
 )
 from pants.engine.unions import UnionRule
-from shoalsoft.pants_opentelemetry_plugin.opentelemetry import get_otel_processor
+from shoalsoft.pants_opentelemetry_plugin.opentelemetry import get_processor
 from shoalsoft.pants_opentelemetry_plugin.processor import Processor
 from shoalsoft.pants_opentelemetry_plugin.subsystem import TelemetrySubsystem
 from shoalsoft.pants_opentelemetry_plugin.workunit_handler import TelemetryWorkunitsCallback
@@ -41,7 +41,7 @@ async def telemetry_workunits_callback_factory_request(
 ) -> WorkunitsCallbackFactory:
     processor: Processor | None = None
     if telemetry.enabled and telemetry.exporter:
-        processor = get_otel_processor(
+        processor = get_processor(
             span_exporter_name=telemetry.exporter,
             telemetry=telemetry,
             build_root=build_root.pathlib_path,
