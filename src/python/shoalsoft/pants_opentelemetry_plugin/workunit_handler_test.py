@@ -17,10 +17,10 @@ import pytest
 from pants.engine.rules import QueryRule
 from pants.engine.streaming_workunit_handler import WorkunitsCallbackFactory
 from pants.testutil.rule_runner import RuleRunner
-from shoalsoft.pants_telemetry_plugin import register
-from shoalsoft.pants_telemetry_plugin.register import TelemetryWorkunitsCallbackFactoryRequest
-from shoalsoft.pants_telemetry_plugin.subsystem import TracingExporterId
-from shoalsoft.pants_telemetry_plugin.workunit_handler import TelemetryWorkunitsCallback
+from shoalsoft.pants_opentelemetry_plugin import register
+from shoalsoft.pants_opentelemetry_plugin.register import TelemetryWorkunitsCallbackFactoryRequest
+from shoalsoft.pants_opentelemetry_plugin.subsystem import TracingExporterId
+from shoalsoft.pants_opentelemetry_plugin.workunit_handler import TelemetryWorkunitsCallback
 
 
 @pytest.fixture

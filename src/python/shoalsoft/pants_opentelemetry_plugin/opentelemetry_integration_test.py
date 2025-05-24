@@ -37,8 +37,8 @@ from packaging.version import Version
 
 from pants.testutil.python_interpreter_selection import python_interpreter_path
 from pants.util.dirutil import safe_file_dump
-from shoalsoft.pants_telemetry_plugin.pants_integration_testutil import run_pants_with_workdir
-from shoalsoft.pants_telemetry_plugin.subsystem import TracingExporterId
+from shoalsoft.pants_opentelemetry_plugin.pants_integration_testutil import run_pants_with_workdir
+from shoalsoft.pants_opentelemetry_plugin.subsystem import TracingExporterId
 
 
 def _safe_write_files(base_path: str | os.PathLike, files: Mapping[str, str | bytes]) -> None:
@@ -330,7 +330,7 @@ def test_opentelemetry_integration(subtests, pants_version_str: str) -> None:
     plugin_pex_files = [
         name
         for name in os.listdir(Path.cwd())
-        if name.startswith(f"shoalsoft-pants-telemetry-plugin-pants{pants_major_minor}")
+        if name.startswith(f"shoalsoft-pants-opentelemetry-plugin-pants{pants_major_minor}")
         and name.endswith(".pex")
     ]
     assert (
@@ -361,7 +361,7 @@ def test_opentelemetry_integration(subtests, pants_version_str: str) -> None:
         [GLOBAL]
         pants_version = "{pants_version}"
         pythonpath = ["{site_packages_path}"]
-        backend_packages = ["pants.backend.python", "shoalsoft.pants_telemetry_plugin"]
+        backend_packages = ["pants.backend.python", "shoalsoft.pants_opentelemetry_plugin"]
         print_stacktrace = true
         pantsd = false
 

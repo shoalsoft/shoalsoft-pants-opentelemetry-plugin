@@ -131,7 +131,7 @@ pex_binary(
 def declare_pex_binary(version, python_version):
     pex_binary(
         name=f"pex-{version}",
-        output_path=f"shoalsoft-pants-telemetry-plugin-pants{version}-v{PLUGIN_VERSION}.pex",
+        output_path=f"shoalsoft-pants-opentelemetry-plugin-pants{version}-v{PLUGIN_VERSION}.pex",
         interpreter_constraints=(f"=={python_version}.*",),
         dependencies=[
             f"./register.py@parametrize=pants-{version}",
