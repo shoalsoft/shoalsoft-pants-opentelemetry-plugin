@@ -18,7 +18,7 @@ To manually test export of tracing spans using OTLP/HTTP:
 
 2. Modify a Pants project to set the `[GLOBAL].pythonpath` option to include the path `"/BASE_PATH_FOR_THIS_REPOSITORY/src/python"` and then set `[GLOBAL].backend_packages` to include `shoalsoft.pants_telemetry_plugin`.
 
-3. Run Pants with `--shoalsoft-opentelemetry-enabled` and `--shoalsoft-opentelemetry-exporter=otlp-http`. The default endpoint configured in the OpenTelemetry library sends to http://localhost:4318 (on which the Docker image is listening).
+3. Run Pants with `--shoalsoft-opentelemetry-enabled` and `--shoalsoft-opentelemetry-exporter=http`. The default endpoint configured in the OpenTelemetry library sends to http://localhost:4318 (on which the Docker image is listening).
 
 4. View your traces in the Jaeger UI at http://localhost:16686.
 

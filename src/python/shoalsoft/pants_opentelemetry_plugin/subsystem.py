@@ -18,9 +18,9 @@ from pants.util.strutil import softwrap
 
 
 class TracingExporterId(enum.Enum):
-    OTLP_HTTP = "otlp-http"
-    OTLP_GRPC = "otlp-grpc"
-    OTEL_JSON_FILE = "otel-json-file"
+    HTTP = "http"
+    GRPC = "grpc"
+    JSON_FILE = "json-file"
 
 
 class OtelCompression(enum.Enum):
@@ -36,19 +36,19 @@ class TelemetrySubsystem(Subsystem):
     enabled = BoolOption(default=False, help="Whether to enable emitting OpenTelemetry spans.")
 
     exporter = EnumOption(
-        default=TracingExporterId.OTEL_JSON_FILE,
+        default=TracingExporterId.JSON_FILE,
         help=softwrap(
             f"""
             Set the exporter to use when exporting workunits to external tracing systems. Choices are
-            `{TracingExporterId.OTLP_HTTP.value}` (OpenTelemetry OTLP HTTP),
-            `{TracingExporterId.OTLP_GRPC.value}` (OpenTelemetry OTLP GRPC), and
-            `{TracingExporterId.OTEL_JSON_FILE.value}` (OpenTelemetry debug output to a file).
-            Default is `{TracingExporterId.OTEL_JSON_FILE.value}`.
+            `{TracingExporterId.HTTP.value}` (OpenTelemetry OTLP HTTP),
+            `{TracingExporterId.GRPC.value}` (OpenTelemetry OTLP GRPC), and
+            `{TracingExporterId.JSON_FILE.value}` (OpenTelemetry debug output to a file).
+            Default is `{TracingExporterId.JSON_FILE.value}`.
             """
         ),
     )
 
-    otel_parent_trace_id = StrOption(
+    parent_trace_id = StrOption(
         default="",
         help=softwrap(
             """
@@ -58,18 +58,18 @@ class TelemetrySubsystem(Subsystem):
         ),
     )
 
-    otel_json_file = StrOption(
+    json_file = StrOption(
         default="dist/otel-json-trace.jsonl",
         help=softwrap(
             f"""
             If set, Pants will write OpenTelemetry tracing spans to a local file for easier debugging. Each line
             will be a tracing span in OpenTelemetry's JSON format. The filename is relative to the build root. Export
-            will only occur if the `--shoalsoft-telemetry-exporters` option includes `{TracingExporterId.OTEL_JSON_FILE.value}`.
+            will only occur if the `--shoalsoft-opentelemetry-exporter` is set to `{TracingExporterId.JSON_FILE.value}`.
             """
         ),
     )
 
-    otel_exporter_endpoint = StrOption(
+    exporter_endpoint = StrOption(
         default=None,
         help=softwrap(
             f"""
@@ -78,7 +78,7 @@ class TelemetrySubsystem(Subsystem):
             connection and takes precedence over this configuration setting. Endpoint which will receive exported
             tracing spans.
 
-            This option is consumed by both the `{TracingExporterId.OTLP_HTTP.value}` and `{TracingExporterId.OTLP_GRPC.value}`
+            This option is consumed by both the `{TracingExporterId.HTTP.value}` and `{TracingExporterId.GRPC.value}`
             exporters.
 
             Corresponds to the `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT` and `OTEL_EXPORTER_OTLP_ENDPOINT`
@@ -87,7 +87,7 @@ class TelemetrySubsystem(Subsystem):
         ),
     )
 
-    otel_exporter_certificate_file = StrOption(
+    exporter_certificate_file = StrOption(
         default=None,
         advanced=True,
         help=softwrap(
@@ -101,7 +101,7 @@ class TelemetrySubsystem(Subsystem):
         ),
     )
 
-    otel_exporter_client_key_file = StrOption(
+    exporter_client_key_file = StrOption(
         default=None,
         advanced=True,
         help=softwrap(
@@ -114,7 +114,7 @@ class TelemetrySubsystem(Subsystem):
         ),
     )
 
-    otel_exporter_client_certificate_file = StrOption(
+    exporter_client_certificate_file = StrOption(
         default=None,
         advanced=True,
         help=softwrap(
@@ -128,13 +128,13 @@ class TelemetrySubsystem(Subsystem):
         ),
     )
 
-    otel_exporter_headers = DictOption[str](
+    exporter_headers = DictOption[str](
         advanced=True,
         help=softwrap(
             """
             The key-value pairs to be used as headers for spans associated with gRPC or HTTP requests.
 
-            This option is consumed by both the `{TracingExporterId.OTLP_HTTP.value}` and `{TracingExporterId.OTLP_GRPC.value}`
+            This option is consumed by both the `{TracingExporterId.HTTP.value}` and `{TracingExporterId.GRPC.value}`
             exporters.
 
             Corresponds to the `OTEL_EXPORTER_OTLP_TRACES_HEADERS` and `OTEL_EXPORTER_OTLP_HEADERS`
@@ -143,14 +143,14 @@ class TelemetrySubsystem(Subsystem):
         ),
     )
 
-    otel_exporter_timeout = IntOption(
+    exporter_timeout = IntOption(
         default=None,
         advanced=True,
         help=softwrap(
             f"""
             The maximum time the OTLP exporter will wait for each batch export for spans.
 
-            This option is consumed by both the `{TracingExporterId.OTLP_HTTP.value}` and `{TracingExporterId.OTLP_GRPC.value}`
+            This option is consumed by both the `{TracingExporterId.HTTP.value}` and `{TracingExporterId.GRPC.value}`
             exporters.
 
             Corresponds to the `OTEL_EXPORTER_OTLP_TRACES_TIMEOUT` and `OTEL_EXPORTER_OTLP_TIMEOUT`
@@ -159,7 +159,7 @@ class TelemetrySubsystem(Subsystem):
         ),
     )
 
-    otel_exporter_compression = EnumOption(
+    exporter_compression = EnumOption(
         default=OtelCompression.NONE,
         advanced=True,
         help=softwrap(
@@ -167,7 +167,7 @@ class TelemetrySubsystem(Subsystem):
             Specifies a gRPC compression method to be used in the OTLP exporters. Possible values are `gzip`,
             `deflate`, and `none`.
 
-            This option is consumed by both the `{TracingExporterId.OTLP_HTTP.value}` and `{TracingExporterId.OTLP_GRPC.value}`
+            This option is consumed by both the `{TracingExporterId.HTTP.value}` and `{TracingExporterId.GRPC.value}`
             exporters.
 
             Corresponds to the `OTEL_EXPORTER_OTLP_TRACES_COMPRESSION` and `OTEL_EXPORTER_OTLP_COMPRESSION`
@@ -176,7 +176,7 @@ class TelemetrySubsystem(Subsystem):
         ),
     )
 
-    otel_exporter_insecure = BoolOption(
+    exporter_insecure = BoolOption(
         default=None,
         advanced=True,
         help=softwrap(
@@ -184,7 +184,7 @@ class TelemetrySubsystem(Subsystem):
             Represents whether to enable client transport security for gRPC requests. An endpoint scheme of https
             will error if this option is in effect since `https` implies secure mode.
 
-            This option is consumed by the `{TracingExporterId.OTLP_GRPC.value}` exporter.
+            This option is consumed by the `{TracingExporterId.GRPC.value}` exporter.
 
             Corresponds to the `OTEL_EXPORTER_OTLP_TRACES_INSECURE` and `OTEL_EXPORTER_OTLP_INSECURE`
             environment variables.
