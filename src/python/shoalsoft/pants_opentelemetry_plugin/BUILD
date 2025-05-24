@@ -12,6 +12,8 @@
 
 PLUGIN_VERSION = "0.1.1"
 
+PANTS_MAJOR_MINOR_VERSIONS = ["2.26", "2.25", "2.21"]
+
 python_sources(
     **parametrize(
         "pants-2.26",
@@ -22,16 +24,6 @@ python_sources(
         "pants-2.25",
         resolve="pants-2.25",
         interpreter_constraints=["==3.11.*"],
-    ),
-    **parametrize(
-        "pants-2.24",
-        resolve="pants-2.24",
-        interpreter_constraints=["==3.9.*"],
-    ),
-    **parametrize(
-        "pants-2.23",
-        resolve="pants-2.23",
-        interpreter_constraints=["==3.9.*"],
     ),
     **parametrize(
         "pants-2.21",
@@ -54,16 +46,6 @@ python_tests(
         interpreter_constraints=["==3.11.*"],
     ),
     **parametrize(
-        "pants-2.24",
-        resolve="pants-2.24",
-        interpreter_constraints=["==3.9.*"],
-    ),
-    **parametrize(
-        "pants-2.23",
-        resolve="pants-2.23",
-        interpreter_constraints=["==3.9.*"],
-    ),
-    **parametrize(
         "pants-2.21",
         resolve="pants-2.21",
         interpreter_constraints=["==3.9.*"],
@@ -75,10 +57,10 @@ python_tests(
     sources=["*_integration_test.py"],
     interpreter_constraints=["==3.11.*"],
     runtime_package_dependencies=[
-        *(f":pex-{pants_version}" for pants_version in ["2.26", "2.25", "2.24", "2.23", "2.21"]),
+        *(f":pex-{pants_version}" for pants_version in PANTS_MAJOR_MINOR_VERSIONS),
         *(
             f":pants-for-tests@parametrize=pants-{pants_version}"
-            for pants_version in ["2.26", "2.25", "2.24", "2.23", "2.21"]
+            for pants_version in PANTS_MAJOR_MINOR_VERSIONS
         ),
     ],
     # Integration tests take forever given how they are run. :(
@@ -103,20 +85,6 @@ pex_binary(
         interpreter_constraints=["==3.11.*"],
         dependencies=["3rdparty/python:pants-2.25#pantsbuild.pants"],
         output_path="pants-2.25.pex",
-    ),
-    **parametrize(
-        "pants-2.24",
-        resolve="pants-2.24",
-        interpreter_constraints=["==3.9.*"],
-        dependencies=["3rdparty/python:pants-2.24#pantsbuild.pants"],
-        output_path="pants-2.24.pex",
-    ),
-    **parametrize(
-        "pants-2.23",
-        resolve="pants-2.23",
-        interpreter_constraints=["==3.9.*"],
-        dependencies=["3rdparty/python:pants-2.23#pantsbuild.pants"],
-        output_path="pants-2.23.pex",
     ),
     **parametrize(
         "pants-2.21",
@@ -144,6 +112,4 @@ def declare_pex_binary(version, python_version):
 
 declare_pex_binary("2.26", "3.11")
 declare_pex_binary("2.25", "3.11")
-declare_pex_binary("2.24", "3.9")
-declare_pex_binary("2.23", "3.9")
 declare_pex_binary("2.21", "3.9")
