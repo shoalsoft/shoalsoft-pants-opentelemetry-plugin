@@ -167,10 +167,10 @@ def do_test_of_otlp_http_exporter(
 
         result = run_pants_with_workdir(
             [
-                "--shoalsoft-telemetry-enabled",
-                f"--shoalsoft-telemetry-exporter={TracingExporterId.OTLP_HTTP.value}",
-                f"--shoalsoft-telemetry-otel-exporter-endpoint=http://127.0.0.1:{server_port}/v1/traces",
-                "--shoalsoft-telemetry-otel-parent-trace-id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "--shoalsoft-opentelemetry-enabled",
+                f"--shoalsoft-opentelemetry-exporter={TracingExporterId.OTLP_HTTP.value}",
+                f"--shoalsoft-opentelemetry-otel-exporter-endpoint=http://127.0.0.1:{server_port}/v1/traces",
+                "--shoalsoft-opentelemetry-otel-parent-trace-id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 "list",
                 "otlp-http::",
             ],
@@ -231,11 +231,11 @@ def do_test_of_otlp_grpc_exporter(
 
         result = run_pants_with_workdir(
             [
-                "--shoalsoft-telemetry-enabled",
-                f"--shoalsoft-telemetry-exporter={TracingExporterId.OTLP_GRPC.value}",
-                f"--shoalsoft-telemetry-otel-exporter-endpoint=http://127.0.0.1:{server_port}/",
-                "--shoalsoft-telemetry-otel-exporter-insecure",
-                "--shoalsoft-telemetry-otel-parent-trace-id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "--shoalsoft-opentelemetry-enabled",
+                f"--shoalsoft-opentelemetry-exporter={TracingExporterId.OTLP_GRPC.value}",
+                f"--shoalsoft-opentelemetry-otel-exporter-endpoint=http://127.0.0.1:{server_port}/",
+                "--shoalsoft-opentelemetry-otel-exporter-insecure",
+                "--shoalsoft-opentelemetry-otel-parent-trace-id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 "list",
                 "otlp-grpc::",
             ],
@@ -274,9 +274,9 @@ def do_test_of_otel_json_file_exporter(
 
         result = run_pants_with_workdir(
             [
-                "--shoalsoft-telemetry-enabled",
-                f"--shoalsoft-telemetry-exporter={TracingExporterId.OTEL_JSON_FILE.value}",
-                "--shoalsoft-telemetry-otel-parent-trace-id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "--shoalsoft-opentelemetry-enabled",
+                f"--shoalsoft-opentelemetry-exporter={TracingExporterId.OTEL_JSON_FILE.value}",
+                "--shoalsoft-opentelemetry-otel-parent-trace-id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                 "list",
                 "otel-json::",
             ],
