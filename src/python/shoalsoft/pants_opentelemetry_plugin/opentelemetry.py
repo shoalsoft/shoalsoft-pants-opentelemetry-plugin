@@ -40,14 +40,14 @@ from opentelemetry.trace import Link, TraceFlags
 from opentelemetry.trace.span import NonRecordingSpan, Span, SpanContext
 from opentelemetry.trace.status import StatusCode
 
-from shoalsoft.pants_telemetry_plugin.processor import (
+from shoalsoft.pants_opentelemetry_plugin.processor import (
     IncompleteWorkunit,
     Level,
     Processor,
     ProcessorContext,
     Workunit,
 )
-from shoalsoft.pants_telemetry_plugin.subsystem import (
+from shoalsoft.pants_opentelemetry_plugin.subsystem import (
     OtelCompression,
     TelemetrySubsystem,
     TracingExporterId,

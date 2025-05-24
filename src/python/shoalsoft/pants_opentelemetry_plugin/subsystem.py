@@ -30,10 +30,10 @@ class OtelCompression(enum.Enum):
 
 
 class TelemetrySubsystem(Subsystem):
-    options_scope = "shoalsoft-telemetry"
-    help = "Pants Telemetry plugin from Shoal Software"
+    options_scope = "shoalsoft-opentelemetry"
+    help = "Pants OpenTelemetry plugin from Shoal Software LLC"
 
-    enabled = BoolOption(default=False, help="Whether to enable the telemetry plugin.")
+    enabled = BoolOption(default=False, help="Whether to enable emitting OpenTelemetry spans.")
 
     exporter = EnumOption(
         default=TracingExporterId.OTEL_JSON_FILE,

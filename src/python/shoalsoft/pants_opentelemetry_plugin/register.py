@@ -21,10 +21,10 @@ from pants.engine.streaming_workunit_handler import (
     WorkunitsCallbackFactoryRequest,
 )
 from pants.engine.unions import UnionRule
-from shoalsoft.pants_telemetry_plugin.opentelemetry import get_otel_processor
-from shoalsoft.pants_telemetry_plugin.processor import Processor
-from shoalsoft.pants_telemetry_plugin.subsystem import TelemetrySubsystem
-from shoalsoft.pants_telemetry_plugin.workunit_handler import TelemetryWorkunitsCallback
+from shoalsoft.pants_opentelemetry_plugin.opentelemetry import get_otel_processor
+from shoalsoft.pants_opentelemetry_plugin.processor import Processor
+from shoalsoft.pants_opentelemetry_plugin.subsystem import TelemetrySubsystem
+from shoalsoft.pants_opentelemetry_plugin.workunit_handler import TelemetryWorkunitsCallback
 
 logger = logging.getLogger(__name__)
 

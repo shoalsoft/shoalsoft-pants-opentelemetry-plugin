@@ -19,7 +19,7 @@ from pants.engine.internals.native_engine import all_counter_names
 from pants.engine.internals.scheduler import Workunit as RawWorkunit
 from pants.engine.streaming_workunit_handler import StreamingWorkunitContext, WorkunitsCallback
 from pants.util.frozendict import FrozenDict
-from shoalsoft.pants_telemetry_plugin.processor import (
+from shoalsoft.pants_opentelemetry_plugin.processor import (
     IncompleteWorkunit,
     Level,
     Processor,
