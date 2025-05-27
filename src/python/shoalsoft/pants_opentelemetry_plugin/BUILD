@@ -12,28 +12,20 @@
 
 PLUGIN_VERSION = "0.1.1"
 
-PANTS_MAJOR_MINOR_VERSIONS = ["2.27", "2.26", "2.25", "2.21"]
+PANTS_MAJOR_MINOR_VERSIONS = ["2.27", "2.26", "2.25"]
 
 python_sources(
     **parametrize(
         "pants-2.27",
         resolve="pants-2.27",
-        interpreter_constraints=["==3.11.*"],
     ),
     **parametrize(
         "pants-2.26",
         resolve="pants-2.26",
-        interpreter_constraints=["==3.11.*"],
     ),
     **parametrize(
         "pants-2.25",
         resolve="pants-2.25",
-        interpreter_constraints=["==3.11.*"],
-    ),
-    **parametrize(
-        "pants-2.21",
-        resolve="pants-2.21",
-        interpreter_constraints=["==3.9.*"],
     ),
 )
 
@@ -43,29 +35,20 @@ python_tests(
     **parametrize(
         "pants-2.27",
         resolve="pants-2.27",
-        interpreter_constraints=["==3.11.*"],
     ),
     **parametrize(
         "pants-2.26",
         resolve="pants-2.26",
-        interpreter_constraints=["==3.11.*"],
     ),
     **parametrize(
         "pants-2.25",
         resolve="pants-2.25",
-        interpreter_constraints=["==3.11.*"],
-    ),
-    **parametrize(
-        "pants-2.21",
-        resolve="pants-2.21",
-        interpreter_constraints=["==3.9.*"],
     ),
 )
 
 python_tests(
     name="integration_tests",
     sources=["*_integration_test.py"],
-    interpreter_constraints=["==3.11.*"],
     runtime_package_dependencies=[
         *(f":pex-{pants_version}" for pants_version in PANTS_MAJOR_MINOR_VERSIONS),
         *(
@@ -85,39 +68,29 @@ pex_binary(
     **parametrize(
         "pants-2.27",
         resolve="pants-2.27",
-        interpreter_constraints=["==3.11.*"],
         dependencies=["3rdparty/python:pants-2.27#pantsbuild.pants"],
         output_path="pants-2.27.pex",
     ),
     **parametrize(
         "pants-2.26",
         resolve="pants-2.26",
-        interpreter_constraints=["==3.11.*"],
         dependencies=["3rdparty/python:pants-2.26#pantsbuild.pants"],
         output_path="pants-2.26.pex",
     ),
     **parametrize(
         "pants-2.25",
         resolve="pants-2.25",
-        interpreter_constraints=["==3.11.*"],
         dependencies=["3rdparty/python:pants-2.25#pantsbuild.pants"],
         output_path="pants-2.25.pex",
-    ),
-    **parametrize(
-        "pants-2.21",
-        resolve="pants-2.21",
-        interpreter_constraints=["==3.9.*"],
-        dependencies=["3rdparty/python:pants-2.21#pantsbuild.pants"],
-        output_path="pants-2.21.pex",
     ),
 )
 
 
-def declare_pex_artifact(pants_major_minor_version, python_version):
+def declare_pex_artifact(pants_major_minor_version):
     pex_binary(
         name=f"pex-{pants_major_minor_version}",
         output_path=f"shoalsoft-pants-opentelemetry-plugin-pants{pants_major_minor_version}-v{PLUGIN_VERSION}.pex",
-        interpreter_constraints=(f"=={python_version}.*",),
+        interpreter_constraints=(f"==3.11.*",),
         dependencies=[
             f"./register.py@parametrize=pants-{pants_major_minor_version}",
             # Exclude Pants and its transitive dependencies since the Pants will supply those
@@ -129,10 +102,9 @@ def declare_pex_artifact(pants_major_minor_version, python_version):
     )
 
 
-declare_pex_artifact("2.27", "3.11")
-declare_pex_artifact("2.26", "3.11")
-declare_pex_artifact("2.25", "3.11")
-declare_pex_artifact("2.21", "3.9")
+for pants_version in PANTS_MAJOR_MINOR_VERSIONS:
+    declare_pex_artifact(pants_version)
+
 
 # Add a single wheel which is not specific to any particular Pants version.
 python_distribution(

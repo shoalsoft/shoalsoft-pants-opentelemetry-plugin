@@ -12,7 +12,7 @@ backend_packages.add = [
 ]
 
 [python]
-interpreter_constraints = ["==3.9.*", "==3.11.*"]
+interpreter_constraints = ["==3.11.*"]
 enable_resolves = true
 pip_version = "25.0"
 default_resolve = "pants-2.27"
@@ -21,15 +21,13 @@ default_resolve = "pants-2.27"
 "pants-2.27" = "3rdparty/python/pants-2.27.lock"
 "pants-2.26" = "3rdparty/python/pants-2.26.lock"
 "pants-2.25" = "3rdparty/python/pants-2.25.lock"
-"pants-2.21" = "3rdparty/python/pants-2.21.lock"
 pytest = "3rdparty/python/pytest.lock"
 
 [python.resolves_to_interpreter_constraints]
 "pants-2.27" = ["==3.11.*"]
 "pants-2.26" = ["==3.11.*"]
 "pants-2.25" = ["==3.11.*"]
-"pants-2.21" = ["==3.9.*"]
-pytest = ["==3.11.*", "==3.9.*"]
+pytest = ["==3.11.*"]
 
 [python-bootstrap]
 search_path = ["<PYENV>"]
