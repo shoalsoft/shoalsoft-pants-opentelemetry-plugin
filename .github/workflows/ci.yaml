@@ -27,7 +27,7 @@ jobs:
       - name: Package plugin as PEX for various Pants versions.
         run: |
           pants package src/python/shoalsoft/pants_opentelemetry_plugin::
-          if [ ! -r dist/shoalsoft_pants_opentelemetry_plugin-0.1.1-py3-none-any.whl ]; then
+          if [ ! -r dist/shoalsoft_pants_opentelemetry_plugin-*-py3-none-any.whl ]; then
             echo "ERROR: No wheel found in dist." 1>&2
             exit 1
           fi
