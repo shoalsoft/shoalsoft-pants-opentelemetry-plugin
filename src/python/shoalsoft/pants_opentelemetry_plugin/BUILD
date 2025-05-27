@@ -12,9 +12,14 @@
 
 PLUGIN_VERSION = "0.1.1"
 
-PANTS_MAJOR_MINOR_VERSIONS = ["2.26", "2.25", "2.21"]
+PANTS_MAJOR_MINOR_VERSIONS = ["2.27", "2.26", "2.25", "2.21"]
 
 python_sources(
+    **parametrize(
+        "pants-2.27",
+        resolve="pants-2.27",
+        interpreter_constraints=["==3.11.*"],
+    ),
     **parametrize(
         "pants-2.26",
         resolve="pants-2.26",
@@ -35,6 +40,11 @@ python_sources(
 python_tests(
     name="tests",
     sources=["*_test.py", "!*_integration_test.py"],
+    **parametrize(
+        "pants-2.27",
+        resolve="pants-2.27",
+        interpreter_constraints=["==3.11.*"],
+    ),
     **parametrize(
         "pants-2.26",
         resolve="pants-2.26",
@@ -72,6 +82,13 @@ pex_binary(
     entry_point="pants",
     execution_mode="venv",
     layout="zipapp",
+    **parametrize(
+        "pants-2.27",
+        resolve="pants-2.27",
+        interpreter_constraints=["==3.11.*"],
+        dependencies=["3rdparty/python:pants-2.27#pantsbuild.pants"],
+        output_path="pants-2.27.pex",
+    ),
     **parametrize(
         "pants-2.26",
         resolve="pants-2.26",
@@ -128,6 +145,7 @@ def declare_artifacts(pants_major_minor_version, python_version):
     )
 
 
+declare_artifacts("2.27", "3.11")
 declare_artifacts("2.26", "3.11")
 declare_artifacts("2.25", "3.11")
 declare_artifacts("2.21", "3.9")

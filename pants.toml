@@ -1,5 +1,5 @@
 [GLOBAL]
-pants_version = "2.26.0"
+pants_version = "2.27.0rc0"
 backend_packages.add = [
   "pants.backend.build_files.fmt.black",
   "pants.backend.plugin_development",
@@ -15,15 +15,17 @@ backend_packages.add = [
 interpreter_constraints = ["==3.9.*", "==3.11.*"]
 enable_resolves = true
 pip_version = "25.0"
-default_resolve = "pants-2.26"
+default_resolve = "pants-2.27"
 
 [python.resolves]
+"pants-2.27" = "3rdparty/python/pants-2.27.lock"
 "pants-2.26" = "3rdparty/python/pants-2.26.lock"
 "pants-2.25" = "3rdparty/python/pants-2.25.lock"
 "pants-2.21" = "3rdparty/python/pants-2.21.lock"
 pytest = "3rdparty/python/pytest.lock"
 
 [python.resolves_to_interpreter_constraints]
+"pants-2.27" = ["==3.11.*"]
 "pants-2.26" = ["==3.11.*"]
 "pants-2.25" = ["==3.11.*"]
 "pants-2.21" = ["==3.9.*"]
