@@ -113,7 +113,7 @@ pex_binary(
 )
 
 
-def declare_artifacts(pants_major_minor_version, python_version):
+def declare_pex_artifact(pants_major_minor_version, python_version):
     pex_binary(
         name=f"pex-{pants_major_minor_version}",
         output_path=f"shoalsoft-pants-opentelemetry-plugin-pants{pants_major_minor_version}-v{PLUGIN_VERSION}.pex",
@@ -127,25 +127,28 @@ def declare_artifacts(pants_major_minor_version, python_version):
         include_tools=True,
         resolve=f"pants-{pants_major_minor_version}",
     )
-    python_distribution(
-        name=f"wheel-{pants_major_minor_version}",
-        interpreter_constraints=[f"=={python_version}.*"],
-        provides=setup_py(
-            name=f"shoalsoft-pants-opentelemetry-plugin-pants{pants_major_minor_version.replace('.', '')}",
-            description=f"Pants OpenTelemetry Plugin from Shoal Software LLC [Pants v{pants_major_minor_version}.x]",
-            python_requires=f"=={python_version}.*",
-            version=PLUGIN_VERSION,
-        ),
-        dependencies=[
-            f"./register.py@parametrize=pants-{pants_major_minor_version}",
-            # Exclude Pants and its transitive dependencies since the Pants will supply those
-            # dependencies itself from its own venv.
-            f"!!3rdparty/python:pants-{pants_major_minor_version}#pantsbuild.pants",
-        ],
-    )
 
 
-declare_artifacts("2.27", "3.11")
-declare_artifacts("2.26", "3.11")
-declare_artifacts("2.25", "3.11")
-declare_artifacts("2.21", "3.9")
+declare_pex_artifact("2.27", "3.11")
+declare_pex_artifact("2.26", "3.11")
+declare_pex_artifact("2.25", "3.11")
+declare_pex_artifact("2.21", "3.9")
+
+# Add a single wheel which is not specific to any particular Pants version.
+python_distribution(
+    name=f"wheel",
+    interpreter_constraints=[f"==3.11.*"],
+    provides=setup_py(
+        name="shoalsoft-pants-opentelemetry-plugin",
+        description=f"Pantsbuild OpenTelemetry Plugin from Shoal Software LLC",
+        python_requires=f"==3.11.*",
+        version=PLUGIN_VERSION,
+    ),
+    dependencies=[
+        f"./register.py@parametrize=pants-2.27",
+        # Exclude Pants and its transitive dependencies since the Pants will supply those
+        # dependencies itself from its own venv. This should also allow the plugin to be used
+        # with any Pants version from Pants v2.25 and later.
+        f"!!3rdparty/python:pants-2.27#pantsbuild.pants",
+    ],
+)
