@@ -57,15 +57,26 @@ jobs:
         uses: actions/github-script@v7
         env:
           PLUGIN_VERSION: ${{ github.event.inputs.version }}
+          REF: ${{ github.event.inputs.ref }}
         with:
           script: |
-            const plugin_version = process.env.PLUGIN_VERSION;
+            const pluginVersion = process.env.PLUGIN_VERSION;
+            const ref = process.env.REF;
+
+            const isPrerelease = pluginVersion.includes("dev") || pluginVersion.includes("rc");
+
             const release = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              tag_name: `v${plugin_version}`,
-              name: `Release v${plugin_version}`,
-              body: `Release of version ${version} of the Pants OpenTelemetry Plugin.`,
+              tag_name: ref,
+              name: `v${pluginVersion}`,
+              body: `Release of version ${pluginVersion} of the Pants OpenTelemetry Plugin.`,
               draft: true,
+              prerelease: isPrerelease,
             });
+
             return release.data;
+      - name: Upload the wheel to the draft release.
+        run: gh release upload ${{ github.event.inputs.ref }} ${{ steps.package.outputs.wheel-local-path }}
+        env:
+          GH_TOKEN: ${{ github.token }}
