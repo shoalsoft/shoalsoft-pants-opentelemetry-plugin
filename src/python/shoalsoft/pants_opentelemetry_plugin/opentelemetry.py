@@ -420,4 +420,6 @@ class OpenTelemetryProcessor(Processor):
     def finish(self, *, context: ProcessorContext) -> None:
         logger.debug("OpenTelemetryProcessor requested to finish workunit transmission.")
         logger.debug(f"OpenTelemetry processing counters: {self._counters.items()}")
+        if len(self._otel_spans) > 0:
+            logger.warning("Multiple spans were not completed by the core rules.")
         self._span_processor.shutdown()
