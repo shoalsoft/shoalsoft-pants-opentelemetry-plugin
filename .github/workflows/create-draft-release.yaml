@@ -1,4 +1,4 @@
-name: Release
+name: Create draft release
 on:
   push:
     tags:
@@ -26,21 +26,23 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.inputs.ref || github.ref }}
-      - name: Setup Python 3.9.x
+      - name: Setup Python 3.11.x
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.11'
       - name: Initialize Pants launcher
         uses: pantsbuild/actions/init-pants@56efcdb79721bc7726edf542e324468033e4e21c
         with:
           # cache0 makes it easy to bust the cache if needed
-          gha-cache-key: cache0-py3.9
-          named-caches-hash: ${{ hashFiles('python-default.lock') }}
+          gha-cache-key: cache0-py3.11
+          named-caches-hash: ${{ hashFiles('3rdparty/python/pants-2.27.lock') }}
+      - name: Run tests
+        run: "pants test ::"
       - name: Package the plugin as a wheel
         id: package
         run: |
-          pants package src/python/shoalsoft/pants_telemetry_plugin:wheel
-          wheel_file="dist/shoalsoft_pants_telemetry_plugin_pants-${{github.event.inputs.version}}-py3-none-any.whl"
+          pants package src/python/shoalsoft/pants_opentelemetry_plugin:wheel
+          wheel_file="dist/shoalsoft_pants_opentelemetry_plugin_pants-${{github.event.inputs.version}}-py3-none-any.whl"
           if [ ! -r "$wheel_file" ]; then
             echo "ERROR: No wheel file found at $wheel_file." 1>&2
             exit 1

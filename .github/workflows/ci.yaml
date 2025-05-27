@@ -1,3 +1,5 @@
+name: CI
+
 on:
   pull_request: {}
   push:
@@ -19,7 +21,7 @@ jobs:
         with:
           # cache0 makes it easy to bust the cache if needed
           gha-cache-key: cache0-py3.11
-          named-caches-hash: ${{ hashFiles('python-default.lock') }}
+          named-caches-hash: ${{ hashFiles('3rdparty/python/pants-2.27.lock') }}
       - name: Lint and typecheck the code
         run: "pants lint check ::"
       - name: Run tests
