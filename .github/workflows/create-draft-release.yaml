@@ -69,7 +69,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: ref,
-              name: `Release v${pluginVersion}`,
+              name: `v${pluginVersion}`,
               body: `Release of version ${pluginVersion} of the Pants OpenTelemetry Plugin.`,
               draft: true,
               prerelease: isPrerelease,
