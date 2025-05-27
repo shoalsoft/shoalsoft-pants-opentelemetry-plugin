@@ -367,16 +367,16 @@ def test_opentelemetry_integration(subtests, pants_version_str: str) -> None:
         pantsd = false
 
         [python]
-        interpreter_constraints = "==3.9.*"
+        interpreter_constraints = "==3.11.*"
         pip_version = "25.0"
 
         [pex-cli]
-        version = "v2.32.1"
+        version = "v2.33.9"
         known_versions = [
-          "v2.32.1|macos_arm64|1e953b668ae930e0472e8a40709adbf7c342de9ad249d8bbbc719dce7e50e0f7|4450314",
-          "v2.32.1|macos_x86_64|1e953b668ae930e0472e8a40709adbf7c342de9ad249d8bbbc719dce7e50e0f7|4450314",
-          "v2.32.1|linux_x86_64|1e953b668ae930e0472e8a40709adbf7c342de9ad249d8bbbc719dce7e50e0f7|4450314",
-          "v2.32.1|linux_arm64|1e953b668ae930e0472e8a40709adbf7c342de9ad249d8bbbc719dce7e50e0f7|4450314",
+        "v2.33.9|macos_arm64|cfd9eb9bed9ac3c33d7da632a38973b42d2d77afe9fdef65dd43b53d0eeb4a98|4678343",
+        "v2.33.9|macos_x86_64|cfd9eb9bed9ac3c33d7da632a38973b42d2d77afe9fdef65dd43b53d0eeb4a98|4678343",
+        "v2.33.9|linux_x86_64|cfd9eb9bed9ac3c33d7da632a38973b42d2d77afe9fdef65dd43b53d0eeb4a98|4678343",
+        "v2.33.9|linux_arm64|cfd9eb9bed9ac3c33d7da632a38973b42d2d77afe9fdef65dd43b53d0eeb4a98|4678343",
         ]
         """
         ),
