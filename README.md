@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a closed-source source-available plugin for the [Pantsbuild](https://pantsbuild.org/) build orchestration tool which emit tracing spans to OpenTelemetry-compatible systems.
+This is an open source plugin for the [Pantsbuild](https://pantsbuild.org/) build orchestration tool which emits tracing spans to OpenTelemetry-compatible systems. It is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
 Formating and type checks: `pants fmt lint check ::`
 
