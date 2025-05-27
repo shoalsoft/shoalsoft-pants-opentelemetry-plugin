@@ -42,8 +42,9 @@ jobs:
         id: package
         run: |
           pants package src/python/shoalsoft/pants_opentelemetry_plugin:wheel
-          wheel_file="dist/shoalsoft_pants_opentelemetry_plugin_pants-${{github.event.inputs.version}}-py3-none-any.whl"
+          wheel_file="dist/shoalsoft_pants_opentelemetry_plugin-${{github.event.inputs.version}}-py3-none-any.whl"
           if [ ! -r "$wheel_file" ]; then
+           ls dist/* || true
             echo "ERROR: No wheel file found at $wheel_file." 1>&2
             exit 1
           fi
