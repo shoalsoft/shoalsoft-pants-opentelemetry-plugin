@@ -78,3 +78,5 @@ jobs:
             return release.data;
       - name: Upload the wheel to the draft release.
         run: gh release upload ${{ github.event.inputs.version }} ${{ steps.package.outputs.wheel-local-path }}
+        env:
+          GH_TOKEN: ${{ github.token }}
