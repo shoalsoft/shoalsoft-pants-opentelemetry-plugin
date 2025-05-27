@@ -7,7 +7,7 @@ on:
       - main
 
 jobs:
-  lint_and_test:
+  lint_test_package:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
