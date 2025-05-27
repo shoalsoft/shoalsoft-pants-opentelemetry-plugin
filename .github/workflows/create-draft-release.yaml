@@ -1,0 +1,68 @@
+name: Release
+on:
+  push:
+    tags:
+      - v*.*.*
+  workflow_dispatch:
+    inputs:
+      ref:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+        description: 'The version of the plugin to release, e.g., 0.1.0'
+
+jobs:
+  create-draft-release:
+    runs-on: ubuntu-24.04
+    permissions:
+      attestations: write
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
+      - name: Setup Python 3.9.x
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - name: Initialize Pants launcher
+        uses: pantsbuild/actions/init-pants@56efcdb79721bc7726edf542e324468033e4e21c
+        with:
+          # cache0 makes it easy to bust the cache if needed
+          gha-cache-key: cache0-py3.9
+          named-caches-hash: ${{ hashFiles('python-default.lock') }}
+      - name: Package the plugin as a wheel
+        id: package
+        run: |
+          pants package src/python/shoalsoft/pants_telemetry_plugin:wheel
+          wheel_file="dist/shoalsoft_pants_telemetry_plugin_pants-${{github.event.inputs.version}}-py3-none-any.whl"
+          if [ ! -r "$wheel_file" ]; then
+            echo "ERROR: No wheel file found at $wheel_file." 1>&2
+            exit 1
+          fi
+          echo "wheel-local-path=$wheel_file" >> $GITHUB_OUTPUT
+      - name: Attest provenance of the wheel.
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: ${{ github.steps.package.outputs.wheel-local-path }}
+      - name: Create the draft release.
+        uses: actions/github-script@v7
+        env:
+          PLUGIN_VERSION: ${{ github.event.inputs.version }}
+        with:
+          script: |
+            const plugin_version = process.env.PLUGIN_VERSION;
+            const release = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: `v${plugin_version}`,
+              name: `Release v${plugin_version}`,
+              body: `Release of version ${version} of the Pants OpenTelemetry Plugin.`,
+              draft: true,
+            });
+            return release.data;
