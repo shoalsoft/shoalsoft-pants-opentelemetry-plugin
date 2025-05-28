@@ -45,11 +45,12 @@ class _FinishDetails:
 
 class SingleThreadedProcessor(Processor):
     """This is a `Processor` implementation which pushes all received workunits
-    onto a queeue for processing on a single thread.
+    onto a queeue for processing on a separate thread.
 
-    This is useful to prevent race conditions with the fact that the
-    Pants workunits systenm can invoke a streaming workunit handler on
-    multiple threads.
+    This is useful for moving workunit operations off the engine's
+    thread. Also, it allows working around any concurrency issues in an
+    underlying `Processor` implementation since all operations will
+    occur on a single, separate thread.
     """
 
     def __init__(self, processor: Processor) -> None:
