@@ -14,9 +14,10 @@
 
 from __future__ import annotations
 
+import queue
+import time
 from enum import Enum
-from queue import Queue
-from threading import Event, Thread
+from threading import Event, Lock, Thread
 
 from shoalsoft.pants_opentelemetry_plugin.processor import (
     IncompleteWorkunit,
@@ -33,37 +34,74 @@ class _MessageType(Enum):
 
 
 class SingleThreadedProcessor(Processor):
-    def __init__(self, inner: Processor) -> None:
-        self._inner = inner
+    """This is a `Processor` implementation which pushes all received workunits
+    onto a queeue for processing on a single thread.
+
+    This is useful to prevent race conditions with the fact that the
+    Pants workunits systenm can invoke a streaming workunit handler on
+    multiple threads.
+    """
+
+    def __init__(self, processor: Processor) -> None:
+        self._processor = processor
+
         self._initialize_completed_event = Event()
         self._finish_completed_event = Event()
-        self._queue: Queue[
+
+        self._queue_lock = Lock()
+        self._queue: queue.Queue[
             tuple[_MessageType, Workunit | IncompleteWorkunit | None, ProcessorContext]
-        ] = Queue()
-        self._thread = Thread(target=self._start_processor)
+        ] = queue.Queue()
+
+        self._thread = Thread(target=self._processing_loop)
         self._thread.daemon = True
 
-    def _start_processor(self) -> None:
-        self._inner.initialize()
+    def _handle_message(
+        self, msg: tuple[_MessageType, Workunit | IncompleteWorkunit | None, ProcessorContext]
+    ) -> ProcessorContext | None:
+        """Processes messages.
+
+        Returns a `ProcessorContext` to use for shutdown if finish was
+        triggered.
+        """
+        msg_type: _MessageType = msg[0]
+        if msg_type == _MessageType.START_WORKUNIT:
+            incomplete_workunit = msg[1]
+            assert isinstance(incomplete_workunit, IncompleteWorkunit)
+            self._processor.start_workunit(workunit=incomplete_workunit, context=msg[2])
+            return None
+        elif msg_type == _MessageType.COMPLETE_WORKUNIT:
+            workunit = msg[1]
+            assert isinstance(workunit, Workunit)
+            self._processor.complete_workunit(workunit=workunit, context=msg[2])
+            return None
+        elif msg_type == _MessageType.FINISH:
+            # Finish signalled. Let caller know what context to use for it.
+            return msg[2]
+        else:
+            raise AssertionError("Received unknown message type in SingleThreadedProcessor.")
+
+    def _processing_loop(self) -> None:
+        self._processor.initialize()
         self._initialize_completed_event.set()
 
+        finish_context: ProcessorContext | None
         while msg := self._queue.get():
-            msg_type: _MessageType = msg[0]
-            if msg_type == _MessageType.START_WORKUNIT:
-                incomplete_workunit = msg[1]
-                assert incomplete_workunit is not None and isinstance(
-                    incomplete_workunit, IncompleteWorkunit
-                )
-                self._inner.start_workunit(workunit=incomplete_workunit, context=msg[2])
-            elif msg_type == _MessageType.COMPLETE_WORKUNIT:
-                workunit = msg[1]
-                assert workunit is not None and isinstance(workunit, Workunit)
-                self._inner.complete_workunit(workunit=workunit, context=msg[2])
-            elif msg_type == _MessageType.FINISH:
-                assert msg[1] is None
-                self._inner.finish(context=msg[2])
-                self._finish_completed_event.set()
+            finish_context = self._handle_message(msg)
+            if finish_context:
                 break
+
+        # Once "finish" has been signalled, we set a deadline and continue processing workunit messages
+        # until the deadline is reached.
+        deadline = time.time() + 0.25
+        try:
+            while msg := self._queue.get(timeout=deadline - time.time()):
+                _ = self._handle_message(msg)
+        except queue.Empty:
+            pass
+
+        self._processor.finish(context=finish_context)
+        self._finish_completed_event.set()
 
     def initialize(self) -> None:
         self._thread.start()
