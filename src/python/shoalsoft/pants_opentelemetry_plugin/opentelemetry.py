@@ -111,19 +111,19 @@ def _get_grpc_credentials(
     client_certificate_file = telemetry.exporter_client_certificate_file
 
     root_certificates = (
-        _read_file(certificate_file, "--shoalsoft-telemetry-otel-exporter-certificate-file")
+        _read_file(certificate_file, "--shoalsoft-opentelemetry-exporter-certificate-file")
         if certificate_file
         else None
     )
     private_key = (
-        _read_file(client_key_file, "--shoalsoft-telemetry-otel-exporter-client-key-file")
+        _read_file(client_key_file, "--shoalsoft-opentelemetry-exporter-client-key-file")
         if client_key_file
         else None
     )
     certificate_chain = (
         _read_file(
             client_certificate_file,
-            "--shoalsoft-telemetry-otel-exporter-client-certificate-file",
+            "--shoalsoft-opentelemetry-exporter-client-certificate-file",
         )
         if client_certificate_file
         else None
@@ -161,7 +161,7 @@ def _make_span_exporter(name: TracingExporterId, telemetry: TelemetrySubsystem) 
             parsed_endpoint = urllib.parse.urlparse(telemetry.exporter_endpoint)
             if parsed_endpoint.scheme == "https":
                 raise ValueError(
-                    "`--shoalsoft-telemetry-otel-exporter-insecure` is enabled, but the endpoint "
+                    "`--shoalsoft-opentelemetry-exporter-insecure` is enabled, but the endpoint "
                     f"`{telemetry.exporter_endpoint}` contains a `https` scheme which "
                     "requires secure mode. Please set `--no-shoalsoft-telemetry-otel-exporter-insecure` "
                     "instead."
@@ -198,8 +198,8 @@ def get_processor(
         json_file_path_str = telemetry.json_file
         if not json_file_path_str:
             raise ValueError(
-                f"`--shoalsoft-telemetry-exporters` includes `{TracingExporterId.JSON_FILE}` "
-                "but the `--shoalsoft-telemetry-otel-json-file` option is not set."
+                f"`--shoalsoft-opentelemetry-exporter` is set to `{TracingExporterId.JSON_FILE}` "
+                "but the `--shoalsoft-opentelemetry-json-file` option is not set."
             )
         json_file_path = build_root / json_file_path_str
         json_file_path.parent.mkdir(parents=True, exist_ok=True)
