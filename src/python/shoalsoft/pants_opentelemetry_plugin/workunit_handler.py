@@ -44,12 +44,13 @@ class _TelemetryContext(ProcessorContext):
 
 
 class TelemetryWorkunitsCallback(WorkunitsCallback):
-    def __init__(self, processor: Processor) -> None:
+    def __init__(self, processor: Processor, *, finish_timeout: datetime.timedelta) -> None:
         self.processor: Processor = processor
+        self.finish_timeout = finish_timeout
 
     @property
     def can_finish_async(self) -> bool:
-        return False
+        return True
 
     def _convert_time(self, seconds: int, nanoseconds: int) -> datetime.datetime:
         t = datetime.datetime(year=1970, month=1, day=1, tzinfo=datetime.timezone.utc)
@@ -105,4 +106,4 @@ class TelemetryWorkunitsCallback(WorkunitsCallback):
             )
 
         if finished:
-            self.processor.finish(context=telemetry_context)
+            self.processor.finish(timeout=self.finish_timeout, context=telemetry_context)

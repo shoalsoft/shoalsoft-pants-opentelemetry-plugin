@@ -14,7 +14,14 @@
 
 import enum
 
-from pants.option.option_types import BoolOption, DictOption, EnumOption, IntOption, StrOption
+from pants.option.option_types import (
+    BoolOption,
+    DictOption,
+    EnumOption,
+    FloatOption,
+    IntOption,
+    StrOption,
+)
 from pants.option.subsystem import Subsystem
 from pants.util.strutil import softwrap
 
@@ -46,6 +53,16 @@ class TelemetrySubsystem(Subsystem):
             `{TracingExporterId.GRPC.value}` (OpenTelemetry OTLP GRPC), and
             `{TracingExporterId.JSON_FILE.value}` (OpenTelemetry debug output to a file).
             Default is `{TracingExporterId.JSON_FILE.value}`.
+            """
+        ),
+    )
+
+    finish_timeout = FloatOption(
+        default=2.0,
+        help=softwrap(
+            """
+            The number of seconds to wait at the end of a session for export of all tracing spans to OpenTelemetry
+            to complete.
             """
         ),
     )
