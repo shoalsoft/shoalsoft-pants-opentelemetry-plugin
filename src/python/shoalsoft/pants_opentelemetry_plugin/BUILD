@@ -107,6 +107,33 @@ def declare_pex_artifact(pants_major_minor_version):
 for pants_version in PANTS_MAJOR_MINOR_VERSIONS:
     declare_pex_artifact(pants_version)
 
+# This is a partial copy of the README.md geared more for the PyPI UX.
+LONG_DESCRIPTION = """\
+# Pantsbuild OpenTelemetry Plugin
+
+## Overview
+
+This is a plugin to the [Pantsbuild](https://pantsbuild.org/) build orchestration tool to emit tracing spans to OpenTelemetry-compatible systems for the build workflows orchestrated by Pants. The plugin is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+
+## Installation
+
+From PyPI:
+
+1. In the relevant Pants project, edit `pants.toml` to set the `[GLOBAL].plugins` option to include `shoalsoft-pants-opentelemetry-plugin` and the `[GLOBAL].backend_packages` option to include `shoalsoft.pants_opentelemetry_plugin`.
+
+2. For basic export to a local OTLP/GRPC OpenTelemetry agent on its default port, configure the plugin as follows in `pants.toml`:
+
+   ```toml
+   [shoalsoft-opentelemetry]
+   enabled = true
+   exporter = "grpc"
+   ```
+
+3. The plugin exposes many other options (which correspnd to `OTEL_` environment variables in other systems).  Run `pants help-advanced shoalsoft-opentelemetry` to see all of the plugin's available configuration options.
+
+Note: The plugin respects any `TRACEPARENT` environment variable and will link generated traces to the parent trace and span referenced in the `TRACEPARENT`.
+
+"""
 
 # Add a single wheel which is not specific to any particular Pants version.
 python_distribution(
@@ -115,8 +142,12 @@ python_distribution(
     provides=setup_py(
         name="shoalsoft-pants-opentelemetry-plugin",
         description=f"Pantsbuild OpenTelemetry Plugin from Shoal Software LLC",
+        long_description=LONG_DESCRIPTION,
         python_requires=f"==3.11.*",
         version=PLUGIN_VERSION,
+        author="Tom Dyas",
+        author_email="tom@shoalsoftware.com",
+        url="https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin",
     ),
     dependencies=[
         f"./register.py@parametrize=pants-2.27",

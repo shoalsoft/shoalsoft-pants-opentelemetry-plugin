@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is an open source plugin for the [Pantsbuild](https://pantsbuild.org/) build orchestration tool which emits tracing spans to OpenTelemetry-compatible systems. It is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+This is a plugin to the [Pantsbuild](https://pantsbuild.org/) build orchestration tool to emit tracing spans to OpenTelemetry-compatible systems for the build workflows orchestrated by Pants. The plugin is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 
 ## Installation
 
@@ -10,7 +10,7 @@ From PyPI:
 
 1. In the relevant Pants project, edit `pants.toml` to set the `[GLOBAL].plugins` option to include `shoalsoft-pants-opentelemetry-plugin` and the `[GLOBAL].backend_packages` option to include `shoalsoft.pants_opentelemetry_plugin`.
 
-2. For basic export to a local OTLP/GRPC OpenTelemetry agent on its default port, configure the following in `pants.toml`:
+2. For basic export to a local OTLP/GRPC OpenTelemetry agent on its default port, configure the plugin as follows in `pants.toml`:
 
    ```toml
    [shoalsoft-opentelemetry]
@@ -20,9 +20,7 @@ From PyPI:
 
 3. The plugin exposes many other options (which correspnd to `OTEL_` environment variables in other systems).  Run `pants help-advanced shoalsoft-opentelemetry` to see all of the plugin's available configuration options.
 
-From a PEX file:
-
-1. TODO: Instructions coming on how to install directly from a PEX file. (This is much faster in practice than waiting for Pants to resolve the PyPI distribution.)
+Note: The plugin respects any `TRACEPARENT` environment variable and will link generated traces to the parent trace and span referenced in the `TRACEPARENT`.
 
 ## Development
 
@@ -34,7 +32,7 @@ From a PEX file:
 
 - Build the wheel: `pants package src/python/shoalsoft/pants_opentelemetry_plugin:wheel`
 
-### Manual Testing with 
+### Manual Testing with Jaeger
 
 To manually test export of tracing spans using OTLP/HTTP:
 
