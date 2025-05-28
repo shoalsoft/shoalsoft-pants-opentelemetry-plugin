@@ -14,6 +14,7 @@
 
 from __future__ import annotations
 
+import datetime
 import logging
 
 from pants.base.build_root import BuildRoot
@@ -56,8 +57,14 @@ async def telemetry_workunits_callback_factory_request(
             traceparent_env_var=traceparent_env_var,
         )
         processor.initialize()
+
+    finish_timeout = datetime.timedelta(seconds=telemetry.finish_timeout)
     return WorkunitsCallbackFactory(
-        lambda: TelemetryWorkunitsCallback(processor) if processor is not None else None
+        lambda: (
+            TelemetryWorkunitsCallback(processor=processor, finish_timeout=finish_timeout)
+            if processor is not None
+            else None
+        )
     )
 
 

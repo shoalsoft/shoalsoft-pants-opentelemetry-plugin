@@ -423,9 +423,15 @@ class OpenTelemetryProcessor(Processor):
         del self._otel_spans[otel_span_id]
         self._span_count += 1
 
-    def finish(self, *, context: ProcessorContext) -> None:
+    def finish(
+        self, timeout: datetime.timedelta | None = None, *, context: ProcessorContext
+    ) -> None:
         logger.debug("OpenTelemetryProcessor requested to finish workunit transmission.")
         logger.debug(f"OpenTelemetry processing counters: {self._counters.items()}")
         if len(self._otel_spans) > 0:
-            logger.warning("Multiple spans were not completed by the core rules.")
+            logger.warning(
+                "Multiple OpenTelemetry spans have not been submitted as completed to the library."
+            )
+        timeout_millis: int = int(timeout.total_seconds() * 1000.0) if timeout is not None else 2000
+        self._span_processor.force_flush(timeout_millis)
         self._span_processor.shutdown()

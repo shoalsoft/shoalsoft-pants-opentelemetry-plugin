@@ -14,8 +14,10 @@
 
 from __future__ import annotations
 
+import datetime
+import logging
 import queue
-import time
+from dataclasses import dataclass
 from enum import Enum
 from threading import Event, Lock, Thread
 
@@ -26,11 +28,19 @@ from shoalsoft.pants_opentelemetry_plugin.processor import (
     Workunit,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class _MessageType(Enum):
     START_WORKUNIT = "start_workunit"
     COMPLETE_WORKUNIT = "complete_workunit"
     FINISH = "finish"
+
+
+@dataclass
+class _FinishDetails:
+    timeout: datetime.timedelta | None
+    context: ProcessorContext
 
 
 class SingleThreadedProcessor(Processor):
@@ -50,15 +60,20 @@ class SingleThreadedProcessor(Processor):
 
         self._queue_lock = Lock()
         self._queue: queue.Queue[
-            tuple[_MessageType, Workunit | IncompleteWorkunit | None, ProcessorContext]
+            tuple[
+                _MessageType,
+                Workunit | IncompleteWorkunit | _FinishDetails,
+                ProcessorContext,
+            ]
         ] = queue.Queue()
 
         self._thread = Thread(target=self._processing_loop)
         self._thread.daemon = True
 
     def _handle_message(
-        self, msg: tuple[_MessageType, Workunit | IncompleteWorkunit | None, ProcessorContext]
-    ) -> ProcessorContext | None:
+        self,
+        msg: tuple[_MessageType, Workunit | IncompleteWorkunit | _FinishDetails, ProcessorContext],
+    ) -> _FinishDetails | None:
         """Processes messages.
 
         Returns a `ProcessorContext` to use for shutdown if finish was
@@ -77,7 +92,9 @@ class SingleThreadedProcessor(Processor):
             return None
         elif msg_type == _MessageType.FINISH:
             # Finish signalled. Let caller know what context to use for it.
-            return msg[2]
+            finish_details = msg[1]
+            assert isinstance(finish_details, _FinishDetails)
+            return finish_details
         else:
             raise AssertionError("Received unknown message type in SingleThreadedProcessor.")
 
@@ -85,22 +102,18 @@ class SingleThreadedProcessor(Processor):
         self._processor.initialize()
         self._initialize_completed_event.set()
 
-        finish_context: ProcessorContext | None
+        finish_details: _FinishDetails | None
         while msg := self._queue.get():
-            finish_context = self._handle_message(msg)
-            if finish_context:
+            finish_details = self._handle_message(msg)
+            if finish_details is not None:
                 break
 
-        # Once "finish" has been signalled, we set a deadline and continue processing workunit messages
-        # until the deadline is reached.
-        deadline = time.time() + 0.25
-        try:
-            while msg := self._queue.get(timeout=deadline - time.time()):
-                _ = self._handle_message(msg)
-        except queue.Empty:
-            pass
+        if self._queue.qsize() > 0:
+            logger.warning(
+                "Completion of workunit export was signalled before all workunits in flight were processed!"
+            )
 
-        self._processor.finish(context=finish_context)
+        self._processor.finish(timeout=finish_details.timeout, context=finish_details.context)
         self._finish_completed_event.set()
 
     def initialize(self) -> None:
@@ -113,7 +126,13 @@ class SingleThreadedProcessor(Processor):
     def complete_workunit(self, workunit: Workunit, *, context: ProcessorContext) -> None:
         self._queue.put_nowait((_MessageType.COMPLETE_WORKUNIT, workunit, context))
 
-    def finish(self, *, context: ProcessorContext) -> None:
-        self._queue.put_nowait((_MessageType.FINISH, None, context))
-        self._finish_completed_event.wait()
+    def finish(
+        self, timeout: datetime.timedelta | None = None, *, context: ProcessorContext
+    ) -> None:
+        self._queue.put_nowait(
+            (_MessageType.FINISH, _FinishDetails(timeout=timeout, context=context), context)
+        )
+        self._finish_completed_event.wait(
+            timeout=timeout.total_seconds() * 1000.0 if timeout is not None else None
+        )
         self._thread.join()
