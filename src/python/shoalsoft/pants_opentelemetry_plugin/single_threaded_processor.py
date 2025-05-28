@@ -19,7 +19,7 @@ import logging
 import queue
 from dataclasses import dataclass
 from enum import Enum
-from threading import Event, Lock, Thread
+from threading import Event, Thread
 
 from shoalsoft.pants_opentelemetry_plugin.processor import (
     IncompleteWorkunit,
@@ -59,7 +59,6 @@ class SingleThreadedProcessor(Processor):
         self._initialize_completed_event = Event()
         self._finish_completed_event = Event()
 
-        self._queue_lock = Lock()
         self._queue: queue.Queue[
             tuple[
                 _MessageType,
@@ -77,8 +76,8 @@ class SingleThreadedProcessor(Processor):
     ) -> _FinishDetails | None:
         """Processes messages.
 
-        Returns a `ProcessorContext` to use for shutdown if finish was
-        triggered.
+        Returns a `_FinishDetals` to use for shutdown if the finish
+        message was received, else None.
         """
         msg_type: _MessageType = msg[0]
         if msg_type == _MessageType.START_WORKUNIT:
