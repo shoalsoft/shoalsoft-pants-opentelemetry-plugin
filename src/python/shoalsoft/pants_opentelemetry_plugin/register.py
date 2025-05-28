@@ -55,6 +55,7 @@ async def telemetry_workunits_callback_factory_request(
             build_root=build_root.pathlib_path,
             traceparent_env_var=traceparent_env_var,
         )
+        processor.initialize()
     return WorkunitsCallbackFactory(
         lambda: TelemetryWorkunitsCallback(processor) if processor is not None else None
     )

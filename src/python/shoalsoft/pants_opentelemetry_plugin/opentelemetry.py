@@ -49,6 +49,7 @@ from shoalsoft.pants_opentelemetry_plugin.processor import (
     ProcessorContext,
     Workunit,
 )
+from shoalsoft.pants_opentelemetry_plugin.single_threaded_processor import SingleThreadedProcessor
 from shoalsoft.pants_opentelemetry_plugin.subsystem import (
     OtelCompression,
     TelemetrySubsystem,
@@ -215,9 +216,11 @@ def get_processor(
     span_processor = BatchSpanProcessor(span_exporter)
     trace.get_tracer_provider().add_span_processor(span_processor)  # type: ignore[attr-defined]
 
-    return OpenTelemetryProcessor(
+    otel_processor = OpenTelemetryProcessor(
         tracer=tracer, span_processor=span_processor, traceparent_env_var=traceparent_env_var
     )
+
+    return SingleThreadedProcessor(otel_processor)
 
 
 class DummySpan(NonRecordingSpan):
@@ -287,6 +290,9 @@ class OpenTelemetryProcessor(Processor):
             if ids is not None:
                 self._parent_trace_id = ids[0]
                 self._parent_span_id = ids[1]
+
+    def initialize(self) -> None:
+        pass
 
     def _increment_counter(self, name: str, delta: int = 1) -> None:
         if name not in self._counters:

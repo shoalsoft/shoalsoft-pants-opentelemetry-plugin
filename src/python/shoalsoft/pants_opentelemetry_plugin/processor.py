@@ -63,6 +63,8 @@ class ProcessorContext(Protocol):
 class Processor(Protocol):
     """Protocol for emitter implementations."""
 
+    def initialize(self) -> None: ...
+
     def start_workunit(
         self, workunit: IncompleteWorkunit, *, context: ProcessorContext
     ) -> None: ...
