@@ -190,8 +190,8 @@ def get_processor(
             SERVICE_NAME: "pantsbuild",
         }
     )
-    trace.set_tracer_provider(TracerProvider(sampler=sampling.ALWAYS_ON, resource=resource))
-    tracer = trace.get_tracer(__name__)
+    tracer_provider = TracerProvider(sampler=sampling.ALWAYS_ON, resource=resource)
+    tracer = tracer_provider.get_tracer(__name__)
 
     span_exporter: SpanExporter
     if span_exporter_name == TracingExporterId.JSON_FILE:
@@ -214,7 +214,7 @@ def get_processor(
         )
 
     span_processor = BatchSpanProcessor(span_exporter)
-    trace.get_tracer_provider().add_span_processor(span_processor)  # type: ignore[attr-defined]
+    tracer_provider.add_span_processor(span_processor)
 
     otel_processor = OpenTelemetryProcessor(
         tracer=tracer, span_processor=span_processor, traceparent_env_var=traceparent_env_var
