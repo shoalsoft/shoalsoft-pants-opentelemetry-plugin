@@ -15,7 +15,7 @@ From PyPI:
    ```toml
    [shoalsoft-opentelemetry]
    enabled = true
-   exporter = grpc
+   exporter = "grpc"
    ```
 
 3. The plugin exposes many other options (which correspnd to `OTEL_` environment variables in other systems).  Run `pants help-advanced shoalsoft-opentelemetry` to see all of the plugin's available configuration options.
