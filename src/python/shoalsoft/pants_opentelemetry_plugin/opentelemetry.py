@@ -49,7 +49,6 @@ from shoalsoft.pants_opentelemetry_plugin.processor import (
     ProcessorContext,
     Workunit,
 )
-from shoalsoft.pants_opentelemetry_plugin.single_threaded_processor import SingleThreadedProcessor
 from shoalsoft.pants_opentelemetry_plugin.subsystem import (
     OtelCompression,
     TelemetrySubsystem,
@@ -220,7 +219,7 @@ def get_processor(
         tracer=tracer, span_processor=span_processor, traceparent_env_var=traceparent_env_var
     )
 
-    return SingleThreadedProcessor(otel_processor)
+    return otel_processor
 
 
 class DummySpan(NonRecordingSpan):
