@@ -25,8 +25,12 @@ from pants.engine.streaming_workunit_handler import (
     WorkunitsCallbackFactoryRequest,
 )
 from pants.engine.unions import UnionRule
+from shoalsoft.pants_opentelemetry_plugin.exception_logging_processor import (
+    ExceptionLoggingProcessor,
+)
 from shoalsoft.pants_opentelemetry_plugin.opentelemetry import get_processor
 from shoalsoft.pants_opentelemetry_plugin.processor import Processor
+from shoalsoft.pants_opentelemetry_plugin.single_threaded_processor import SingleThreadedProcessor
 from shoalsoft.pants_opentelemetry_plugin.subsystem import TelemetrySubsystem
 from shoalsoft.pants_opentelemetry_plugin.workunit_handler import TelemetryWorkunitsCallback
 
@@ -50,12 +54,14 @@ async def telemetry_workunits_callback_factory_request(
             env_vars = await Get(EnvironmentVars, EnvironmentVarsRequest(["TRACEPARENT"]))
             traceparent_env_var = env_vars.get("TRACEPARENT")
 
-        processor = get_processor(
+        otel_processor = get_processor(
             span_exporter_name=telemetry.exporter,
             telemetry=telemetry,
             build_root=build_root.pathlib_path,
             traceparent_env_var=traceparent_env_var,
         )
+
+        processor = SingleThreadedProcessor(ExceptionLoggingProcessor(otel_processor))
         processor.initialize()
 
     finish_timeout = datetime.timedelta(seconds=telemetry.finish_timeout)
