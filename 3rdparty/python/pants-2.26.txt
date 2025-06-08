@@ -1,6 +1,6 @@
 # Pants dependencies
-pantsbuild.pants==2.26.0
-pantsbuild.pants.testutil==2.26.0
+pantsbuild.pants==2.26.1
+pantsbuild.pants.testutil==2.26.1
 
 # OpenTelemetry dependencies
 opentelemetry-api==1.33.1

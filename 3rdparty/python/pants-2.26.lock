@@ -16,8 +16,8 @@
 //     "opentelemetry-proto==1.33.1",
 //     "opentelemetry-sdk==1.33.1",
 //     "packaging",
-//     "pantsbuild.pants.testutil==2.26.0",
-//     "pantsbuild.pants==2.26.0",
+//     "pantsbuild.pants.testutil==2.26.1",
+//     "pantsbuild.pants==2.26.1",
 //     "pytest",
 //     "toml==0.10.2"
 //   ],
@@ -873,23 +873,23 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "3ee838bc750f4de86c641f2e16d354bf938bfe47f6f9051a3195375da9ff7d13",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.26.0/pantsbuild.pants-2.26.0-cp311-cp311-manylinux2014_x86_64.whl"
+              "hash": "f3fe52b308b670c3981482aa5c605d045d62e330fbffa9aec39ce46e46b70696",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.26.1/pantsbuild.pants-2.26.1-cp311-cp311-manylinux2014_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "785ba46992b5bc3c70a241d42405031f2be110205b4f0aa5b5222a9957544804",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.26.0/pantsbuild.pants-2.26.0-cp311-cp311-macosx_13_0_x86_64.whl"
+              "hash": "16df6e7fae7ec1917025cc7e5ffbf8612bb65a25689156abce5d187f6d70b5f3",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.26.1/pantsbuild.pants-2.26.1-cp311-cp311-macosx_13_0_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "14be7d81491537d180f51468f79e9b63b8653375ce9adf38c5891e07b04af358",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.26.0/pantsbuild.pants-2.26.0-cp311-cp311-macosx_14_0_arm64.whl"
+              "hash": "1f91f67f3199b84be98d239f8824cdad25bd8e0dcbe8a12eb23c75b0fd2f6b7d",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.26.1/pantsbuild.pants-2.26.1-cp311-cp311-macosx_14_0_arm64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "e54e7cbee4c81c3b12a4d518aed0a14732bbc406ee075cc4a3688e04601842d2",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.26.0/pantsbuild.pants-2.26.0-cp311-cp311-manylinux2014_aarch64.whl"
+              "hash": "80893c2a4cc46c8ebf9d87ec3670c0bb268982a49607a164f25c4aac6142e9ed",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.26.1/pantsbuild.pants-2.26.1-cp311-cp311-manylinux2014_aarch64.whl"
             }
           ],
           "project_name": "pantsbuild-pants",
@@ -913,25 +913,25 @@
             "typing-extensions~=4.12"
           ],
           "requires_python": "==3.11.*",
-          "version": "2.26.0"
+          "version": "2.26.1"
         },
         {
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "5aec657725616a2c71a2e45d2bd6c026563351792ad2c60df2f1052e8b2522e2",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.26.0/pantsbuild.pants.testutil-2.26.0-py3-none-any.whl"
+              "hash": "93e4d48f644af65a411e586df68a558882efb0131852178bde9ee27c0b009c27",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.26.1/pantsbuild.pants.testutil-2.26.1-py3-none-any.whl"
             }
           ],
           "project_name": "pantsbuild-pants-testutil",
           "requires_dists": [
-            "pantsbuild.pants==2.26.0",
+            "pantsbuild.pants==2.26.1",
             "pytest<7.1.0,>=6.2.4",
             "toml==0.10.2",
             "types-toml==0.10.8"
           ],
           "requires_python": "==3.11.*",
-          "version": "2.26.0"
+          "version": "2.26.1"
         },
         {
           "artifacts": [
@@ -961,34 +961,34 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "3fde11b505e1597f71b875ef2fc52062b6a9740e5f7c8997ce878b6009145862",
-              "url": "https://files.pythonhosted.org/packages/12/fb/a586e0c973c95502e054ac5f81f88394f24ccc7982dac19c515acd9e2c93/protobuf-5.29.4-py3-none-any.whl"
+              "hash": "6cf42630262c59b2d8de33954443d94b746c952b01434fc58a417fdbd2e84bd5",
+              "url": "https://files.pythonhosted.org/packages/7e/cc/7e77861000a0691aeea8f4566e5d3aa716f2b1dece4a24439437e41d3d25/protobuf-5.29.5-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "4f1dfcd7997b31ef8f53ec82781ff434a28bf71d9102ddde14d076adcfc78c99",
-              "url": "https://files.pythonhosted.org/packages/17/7d/b9dca7365f0e2c4fa7c193ff795427cfa6290147e5185ab11ece280a18e7/protobuf-5.29.4.tar.gz"
+              "hash": "bc1463bafd4b0929216c35f437a8e28731a2b7fe3d98bb77a600efced5a15c84",
+              "url": "https://files.pythonhosted.org/packages/43/29/d09e70352e4e88c9c7a198d5645d7277811448d76c23b00345670f7c8a38/protobuf-5.29.5.tar.gz"
             },
             {
               "algorithm": "sha256",
-              "hash": "d7d3f7d1d5a66ed4942d4fefb12ac4b14a29028b209d4bfb25c68ae172059922",
-              "url": "https://files.pythonhosted.org/packages/46/88/b01ed2291aae68b708f7d334288ad5fb3e7aa769a9c309c91a0d55cb91b0/protobuf-5.29.4-cp38-abi3-manylinux2014_x86_64.whl"
+              "hash": "fa18533a299d7ab6c55a238bf8629311439995f2e7eca5caaff08663606e9015",
+              "url": "https://files.pythonhosted.org/packages/6c/04/98f6f8cf5b07ab1294c13f34b4e69b3722bb609c5b701d6c169828f9f8aa/protobuf-5.29.5-cp38-abi3-manylinux2014_aarch64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "307ecba1d852ec237e9ba668e087326a67564ef83e45a0189a772ede9e854dd0",
-              "url": "https://files.pythonhosted.org/packages/46/de/7c126bbb06aa0f8a7b38aaf8bd746c514d70e6a2a3f6dd460b3b7aad7aae/protobuf-5.29.4-cp38-abi3-macosx_10_9_universal2.whl"
+              "hash": "63848923da3325e1bf7e9003d680ce6e14b07e55d0473253a690c3a8b8fd6e61",
+              "url": "https://files.pythonhosted.org/packages/85/e4/07c80521879c2d15f321465ac24c70efe2381378c00bf5e56a0f4fbac8cd/protobuf-5.29.5-cp38-abi3-manylinux2014_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "aec4962f9ea93c431d5714ed1be1c93f13e1a8618e70035ba2b0564d9e633f2e",
-              "url": "https://files.pythonhosted.org/packages/a2/b5/bade14ae31ba871a139aa45e7a8183d869efe87c34a4850c87b936963261/protobuf-5.29.4-cp38-abi3-manylinux2014_aarch64.whl"
+              "hash": "e38c5add5a311f2a6eb0340716ef9b039c1dfa428b28f25a7838ac329204a671",
+              "url": "https://files.pythonhosted.org/packages/dd/73/10e1661c21f139f2c6ad9b23040ff36fee624310dc28fba20d33fdae124c/protobuf-5.29.5-cp38-abi3-macosx_10_9_universal2.whl"
             }
           ],
           "project_name": "protobuf",
           "requires_dists": [],
           "requires_python": ">=3.8",
-          "version": "5.29.4"
+          "version": "5.29.5"
         },
         {
           "artifacts": [
@@ -1479,19 +1479,19 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "a439e7c04b49fec3e5d3e2beaa21755cadbbdc391694e28ccdd36ca4a1408f8c",
-              "url": "https://files.pythonhosted.org/packages/8b/54/b1ae86c0973cc6f0210b53d508ca3641fb6d0c56823f288d108bc7ab3cc8/typing_extensions-4.13.2-py3-none-any.whl"
+              "hash": "a1514509136dd0b477638fc68d6a91497af5076466ad0fa6c338e44e359944af",
+              "url": "https://files.pythonhosted.org/packages/69/e0/552843e0d356fbb5256d21449fa957fa4eff3bbc135a74a691ee70c7c5da/typing_extensions-4.14.0-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "e6c81219bd689f51865d9e372991c540bda33a0379d5573cddb9a3a23f7caaef",
-              "url": "https://files.pythonhosted.org/packages/f6/37/23083fcd6e35492953e8d2aaaa68b860eb422b34627b13f2ce3eb6106061/typing_extensions-4.13.2.tar.gz"
+              "hash": "8676b788e32f02ab42d9e7c61324048ae4c6d844a399eebace3d4979d75ceef4",
+              "url": "https://files.pythonhosted.org/packages/d1/bc/51647cd02527e87d05cb083ccc402f93e441606ff1f01739a62c8ad09ba5/typing_extensions-4.14.0.tar.gz"
             }
           ],
           "project_name": "typing-extensions",
           "requires_dists": [],
-          "requires_python": ">=3.8",
-          "version": "4.13.2"
+          "requires_python": ">=3.9",
+          "version": "4.14.0"
         },
         {
           "artifacts": [
@@ -1690,8 +1690,8 @@
     "opentelemetry-proto==1.33.1",
     "opentelemetry-sdk==1.33.1",
     "packaging",
-    "pantsbuild.pants.testutil==2.26.0",
-    "pantsbuild.pants==2.26.0",
+    "pantsbuild.pants.testutil==2.26.1",
+    "pantsbuild.pants==2.26.1",
     "pytest",
     "toml==0.10.2"
   ],
