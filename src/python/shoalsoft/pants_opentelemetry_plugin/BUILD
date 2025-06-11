@@ -143,6 +143,7 @@ python_distribution(
         name="shoalsoft-pants-opentelemetry-plugin",
         description=f"Pantsbuild OpenTelemetry Plugin from Shoal Software LLC",
         long_description=LONG_DESCRIPTION,
+        long_description_content_type="text/markdown",
         python_requires=f"==3.11.*",
         version=PLUGIN_VERSION,
         author="Tom Dyas",
