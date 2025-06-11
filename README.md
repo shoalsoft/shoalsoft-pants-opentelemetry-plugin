@@ -22,6 +22,20 @@ From PyPI:
 
 Note: The plugin respects any `TRACEPARENT` environment variable and will link generated traces to the parent trace and span referenced in the `TRACEPARENT`.
 
+### Sample configuration: Honeycomb.io
+
+To configure the plugin to send to [Honeycomb](https://www.honeycomb.io/), use the following configuration and replace `MY_HONEYCOMB_API_KEY` with your actual Honeycomb API key:
+
+```toml
+[shoalsoft-opentelemetry]
+enabled = true
+exporter = "grpc"
+exporter_endpoint = "https://api.honeycomb.io"
+
+[shoalsoft-opentelemetry.exporter_headers]
+"x-honeycomb-team" = "MY_HONEYCOMB_API_KEY"
+```
+
 ## Development
 
 ### Workflow
