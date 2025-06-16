@@ -91,7 +91,7 @@ def test_exception_logging_proessor(
     assert len(caplog.record_tuples) == 1
     assert caplog.record_tuples[0][1] == logging.WARNING
     assert caplog.record_tuples[0][2] == (
-        "Ignored an exception from the OpenTelemetry tracing handler. These esceptions will be logged "
+        "Ignored an exception from the test workunit tracing handler. These exceptions will be logged "
         "at DEBUG level. No further warnings will be logged."
     )
 
@@ -108,7 +108,7 @@ def test_exception_logging_proessor(
     assert len(caplog.record_tuples) == 1
     assert caplog.record_tuples[0][1] == logging.WARNING
     assert (
-        caplog.record_tuples[0][2] == "Ignored 4 exceptions from the OpenTelemetry tracing handler."
+        caplog.record_tuples[0][2] == "Ignored 4 exceptions from the test workunit tracing handler."
     )
 
     assert processor._exception_count == 4
