@@ -83,7 +83,7 @@ def workunit(incomplete_workunit: IncompleteWorkunit) -> Workunit:
 def test_exception_logging_proessor(
     incomplete_workunit: IncompleteWorkunit, workunit: Workunit, caplog
 ) -> None:
-    processor = ExceptionLoggingProcessor(AlwaysRaisesExceptionProcessor())
+    processor = ExceptionLoggingProcessor(AlwaysRaisesExceptionProcessor(), name="test")
     context = MockProcessorContext()
 
     assert len(caplog.record_tuples) == 0
@@ -120,7 +120,7 @@ def test_exceptions_logged_at_debug_level(
     """With logging level set to DEBUG, exceptions should now be logged at
     DEBUG level."""
 
-    processor = ExceptionLoggingProcessor(AlwaysRaisesExceptionProcessor())
+    processor = ExceptionLoggingProcessor(AlwaysRaisesExceptionProcessor(), name="test")
     context = MockProcessorContext()
 
     with caplog.at_level(logging.DEBUG):
