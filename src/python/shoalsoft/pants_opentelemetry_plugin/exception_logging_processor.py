@@ -30,8 +30,9 @@ logger = logging.getLogger(__name__)
 
 
 class ExceptionLoggingProcessor(Processor):
-    def __init__(self, processor: Processor) -> None:
+    def __init__(self, processor: Processor, *, name: str) -> None:
         self._processor = processor
+        self._name = name
         self._exception_count = 0
 
     @contextmanager
@@ -40,12 +41,12 @@ class ExceptionLoggingProcessor(Processor):
             return (yield)
         except Exception as ex:
             logger.debug(
-                f"An exception occurred while processing a workunit in the OpenTelemetry handler: {ex}",
+                f"An exception occurred while processing a workunit in the {self._name} workunit tracing handler: {ex}",
                 exc_info=True,
             )
             if self._exception_count == 0:
                 logger.warning(
-                    "Ignored an exception from the OpenTelemetry tracing handler. These esceptions will be logged "
+                    f"Ignored an exception from the {self._name} workunit tracing handler. These exceptions will be logged "
                     "at DEBUG level. No further warnings will be logged."
                 )
             self._exception_count += 1
@@ -69,5 +70,5 @@ class ExceptionLoggingProcessor(Processor):
             self._processor.finish(timeout=timeout, context=context)
         if self._exception_count > 1:
             logger.warning(
-                f"Ignored {self._exception_count} exceptions from the OpenTelemetry tracing handler."
+                f"Ignored {self._exception_count} exceptions from the {self._name} workunit tracing handler."
             )

@@ -61,7 +61,9 @@ async def telemetry_workunits_callback_factory_request(
             traceparent_env_var=traceparent_env_var,
         )
 
-        processor = SingleThreadedProcessor(ExceptionLoggingProcessor(otel_processor))
+        processor = SingleThreadedProcessor(
+            ExceptionLoggingProcessor(otel_processor, name="OpenTelemetry")
+        )
         processor.initialize()
 
     finish_timeout = datetime.timedelta(seconds=telemetry.finish_timeout)
