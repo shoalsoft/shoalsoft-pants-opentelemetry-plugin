@@ -39,12 +39,12 @@ unowned_dependency_behavior = "error"
 find_links = ["https://wheels.pantsbuild.org/simple"]
 
 [pex-cli]
-version = "v2.33.9"
+version = "v2.40.2"
 known_versions = [
-  "v2.33.9|macos_arm64|cfd9eb9bed9ac3c33d7da632a38973b42d2d77afe9fdef65dd43b53d0eeb4a98|4678343",
-  "v2.33.9|macos_x86_64|cfd9eb9bed9ac3c33d7da632a38973b42d2d77afe9fdef65dd43b53d0eeb4a98|4678343",
-  "v2.33.9|linux_x86_64|cfd9eb9bed9ac3c33d7da632a38973b42d2d77afe9fdef65dd43b53d0eeb4a98|4678343",
-  "v2.33.9|linux_arm64|cfd9eb9bed9ac3c33d7da632a38973b42d2d77afe9fdef65dd43b53d0eeb4a98|4678343",
+  "v2.40.2|macos_arm64|75bca8edf2232225cc1707b794ebfb9517aa50ca1c7143420186ad02b14ecaf6|4825223",
+  "v2.40.2|macos_x86_64|75bca8edf2232225cc1707b794ebfb9517aa50ca1c7143420186ad02b14ecaf6|4825223",
+  "v2.40.2|linux_x86_64|75bca8edf2232225cc1707b794ebfb9517aa50ca1c7143420186ad02b14ecaf6|4825223",
+  "v2.40.2|linux_arm64|75bca8edf2232225cc1707b794ebfb9517aa50ca1c7143420186ad02b14ecaf6|4825223",
 ]
 
 [pytest]
