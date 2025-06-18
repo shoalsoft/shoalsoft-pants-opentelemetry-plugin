@@ -9,9 +9,11 @@ on:
         description: 'The release to publish to PyPI'
       publish_to_pypi:
         required: true
+        default: false
         type: boolean
       publish_to_testpypi:
         required: true
+        default: false
         type: boolean
 
 jobs:
@@ -49,6 +51,7 @@ jobs:
         run: |
           mkdir -p assets
           gh release download --dir=assets --pattern='shoalsoft*' ${{ github.event.inputs.release_tag }}
+          ls -l assets
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
@@ -73,6 +76,7 @@ jobs:
         run: |
           mkdir -p assets
           gh release download --dir=assets --pattern='shoalsoft*' ${{ github.event.inputs.release_tag }}
+          ls -l assets
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
