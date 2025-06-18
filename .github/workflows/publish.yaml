@@ -1,0 +1,81 @@
+name: Publish to PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        required: true
+        type: string
+        description: 'The release to publish to PyPI'
+      publish_to_pypi:
+        required: true
+        type: boolean
+      publish_to_testpypi:
+        required: true
+        type: boolean
+
+jobs:
+  validate-release:
+    name: Validate the release before distribution.
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Validate the release.
+        run: |
+          gh release view "$RELEASE_TAG" --json=assets,isDraft > release-info.json
+          if [ "$(jq .isDraft release-info.json)" != "false" ]; then
+            echo "ERROR: Release $RELEASE_TAG is still in draft mode." 1>&2
+            exit 1
+          fi
+          if [ "$(jq '[.assets[] | select(.name | startswith("shoalsoft_"))] | length' release-info.json)" != "2" ]; then
+            echo "ERROR: Release $RELEASE_TAG does not have contain all of the expected assets." 1>&2
+            exit 1
+          fi
+          echo "SUCCESS: Release $RELEASE_TAG appears to be ready for distribution."
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.inputs.release_tag }}
+
+  testpypi-publish:
+    name: Upload release to TestPyPI
+    if: github.event.inputs.publish_to_testpypi
+    needs: validate-release
+    runs-on: ubuntu-24.04
+    environment: testpypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Download the wheel and source archive from the draft release.
+        run: |
+          mkdir -p assets
+          gh release download --dir=assets --pattern='shoalsoft*' ${{ github.event.inputs.release_tag }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Publish package distributions to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: assets/
+          repository-url: https://test.pypi.org/legacy/
+          verbose: true
+          print-hash: true
+
+  pypi-publish:
+    name: Upload release to PyPI
+    if: github.event.inputs.publish_to_pypi
+    needs: validate-release
+    runs-on: ubuntu-24.04
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Download the wheel and source archive from the draft release.
+        run: |
+          mkdir -p assets
+          gh release download --dir=assets --pattern='shoalsoft*' ${{ github.event.inputs.release_tag }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: assets/
+          verbose: true
+          print-hash: true
