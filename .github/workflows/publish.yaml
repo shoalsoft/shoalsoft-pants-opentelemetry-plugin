@@ -1,0 +1,52 @@
+name: Publish to PyPI
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        required: true
+        type: string
+        description: 'The release to publish to PyPI'
+      publish_to_pypi:
+        required: true
+        type: boolean
+      publish_to_testpypi:
+        required: true
+        type: boolean
+
+jobs:
+  testpypi-publish:
+    name: Upload release to TestPyPI
+    if: github.event.inputs.publish_to_testpypi
+    runs-on: ubuntu-24.04
+    environment: testpypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Download the wheel and source archive from the draft release.
+        run: |
+          mkdir -p assets
+          gh release download --dir=assets --pattern='shoalsoft' ${{ github.event.inputs.release_tag }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        - name: Publish package distributions to TestPyPI
+          uses: pypa/gh-action-pypi-publish@release/v1
+          with:
+            repository-url: https://test.pypi.org/legacy/
+
+  pypi-publish:
+    name: Upload release to PyPI
+    if: github.event.inputs.publish_to_pypi
+    runs-on: ubuntu-24.04
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Download the wheel and source archive from the draft release.
+        run: |
+          mkdir -p assets
+          gh release download --dir=assets --pattern='shoalsoft' ${{ github.event.inputs.release_tag }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        - name: Publish package distributions to TestPyPI
+          uses: pypa/gh-action-pypi-publish@release/v1
