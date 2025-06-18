@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Validate the release.
         run: |
-          gh release view --repo="$GH_REPO" "$RELEASE_TAG" --json=assets,isDraft > release-info.json
+          gh release view "$RELEASE_TAG" --json=assets,isDraft > release-info.json
           if [ "$(jq .isDraft release-info.json)" != "false" ]; then
             echo "ERROR: Release $RELEASE_TAG is still in draft mode." 1>&2
             exit 1
@@ -51,6 +51,7 @@ jobs:
           gh release download --dir=assets --pattern='shoalsoft*' ${{ github.event.inputs.release_tag }}
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
       - name: Publish package distributions to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
@@ -74,6 +75,7 @@ jobs:
           gh release download --dir=assets --pattern='shoalsoft*' ${{ github.event.inputs.release_tag }}
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
