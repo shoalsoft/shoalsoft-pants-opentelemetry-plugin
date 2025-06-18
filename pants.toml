@@ -22,12 +22,7 @@ default_resolve = "pants-2.27"
 "pants-2.26" = "3rdparty/python/pants-2.26.lock"
 "pants-2.25" = "3rdparty/python/pants-2.25.lock"
 pytest = "3rdparty/python/pytest.lock"
-
-[python.resolves_to_interpreter_constraints]
-"pants-2.27" = ["==3.11.*"]
-"pants-2.26" = ["==3.11.*"]
-"pants-2.25" = ["==3.11.*"]
-pytest = ["==3.11.*"]
+mypy = "3rdparty/python/mypy.lock"
 
 [python-bootstrap]
 search_path = ["<PYENV>"]
@@ -51,6 +46,9 @@ known_versions = [
 args = ["--no-header", "-vv"]
 install_from_resolve = "pytest"
 requirements = ["//3rdparty/python:pytest"]
+
+[mypy]
+install_from_resolve = "mypy"
 
 [source]
 root_patterns = ["/src/python"]
