@@ -21,7 +21,7 @@ jobs:
     steps:
       - name: Validate the release.
         run: |
-          gh release view "$RELEASE_TAG" --json=assets,isDraft > release-info.json
+          gh release view --repo="$GH_REPO" "$RELEASE_TAG" --json=assets,isDraft > release-info.json
           if [ "$(jq .isDraft release-info.json)" != "false" ]; then
             echo "ERROR: Release $RELEASE_TAG is still in draft mode." 1>&2
             exit 1
@@ -33,6 +33,7 @@ jobs:
           echo "SUCCESS: Release $RELEASE_TAG appears to be ready for distribution."
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ github.event.inputs.release_tag }}
 
   testpypi-publish:
