@@ -55,6 +55,7 @@ jobs:
           packages-dir: assets/
           repository-url: https://test.pypi.org/legacy/
           verbose: true
+          print-hash: true
 
   pypi-publish:
     name: Upload release to PyPI
@@ -76,3 +77,4 @@ jobs:
         with:
           packages-dir: assets/
           verbose: true
+          print-hash: true
