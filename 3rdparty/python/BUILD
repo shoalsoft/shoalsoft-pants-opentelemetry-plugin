@@ -36,3 +36,9 @@ python_requirements(
     source="pytest-requirements.txt",
     resolve="pytest",
 )
+
+python_requirements(
+    name="mypy",
+    source="mypy-requirements.txt",
+    resolve="mypy",
+)
