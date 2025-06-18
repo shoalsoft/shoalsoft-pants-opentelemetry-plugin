@@ -15,9 +15,29 @@ on:
         type: boolean
 
 jobs:
+  validate-release:
+    name: Validate the release before distribution.
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Validate the release.
+        run: |
+          gh release view "$RELEASE_TAG" --json=assets,isDraft > release-info.json
+          if [ "$(cat release-info.json | jq .isDraft)" != "false" ]; then
+            echo "ERROR: Release $RELEASE_TAG is still in draft mode." 1>&2
+            exit 1
+          fi
+          if [ "$(cat release-info.json | jq '[.assets[] | select(.name | startswith("shoalsoft_"))] | length')"" != "2" ]; then
+            echo "ERROR: Release $RELEASE_TAG does not have contain all of the expected assets." 1>&2
+            exit 1
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.inputs.release_tag }}
+
   testpypi-publish:
     name: Upload release to TestPyPI
     if: github.event.inputs.publish_to_testpypi
+    needs: validate-release
     runs-on: ubuntu-24.04
     environment: testpypi
     permissions:
@@ -38,6 +58,7 @@ jobs:
   pypi-publish:
     name: Upload release to PyPI
     if: github.event.inputs.publish_to_pypi
+    needs: validate-release
     runs-on: ubuntu-24.04
     environment: pypi
     permissions:
