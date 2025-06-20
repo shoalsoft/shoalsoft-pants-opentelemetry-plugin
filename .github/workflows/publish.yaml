@@ -7,14 +7,14 @@ on:
         required: true
         type: string
         description: 'The release to publish to PyPI'
-      publish_to_pypi:
+      publish_scope:
         required: true
-        default: false
-        type: boolean
-      publish_to_testpypi:
-        required: true
-        default: false
-        type: boolean
+        default: 'test-only'
+        type: choice
+        description: 'Publishing scope'
+        options:
+          - 'test-only'
+          - 'full'
 
 jobs:
   validate-release:
@@ -40,7 +40,7 @@ jobs:
 
   testpypi-publish:
     name: Upload release to TestPyPI
-    if: ${{ github.event.inputs.publish_to_testpypi == 'true' }}
+    if: ${{ github.event.inputs.publish_scope == 'test-only' || github.event.inputs.publish_scope == 'full' }}
     needs: validate-release
     runs-on: ubuntu-24.04
     environment: testpypi
@@ -65,8 +65,8 @@ jobs:
 
   pypi-publish:
     name: Upload release to PyPI
-    if: ${{ github.event.inputs.publish_to_pypi == 'true' }}
-    needs: validate-release
+    if: ${{ github.event.inputs.publish_scope == 'full' }}
+    needs: [validate-release, testpypi-publish]
     runs-on: ubuntu-24.04
     environment: pypi
     permissions:
