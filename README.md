@@ -24,7 +24,7 @@ Note: The plugin respects any `TRACEPARENT` environment variable and will link g
 
 ### Sample configuration: Honeycomb.io
 
-To configure the plugin to send to [Honeycomb](https://www.honeycomb.io/), use the following configuration and replace `MY_HONEYCOMB_API_KEY` with your actual Honeycomb API key:
+To configure the plugin to send to [Honeycomb](https://www.honeycomb.io/), use the following configuration:
 
 ```toml
 [shoalsoft-opentelemetry]
@@ -33,8 +33,12 @@ exporter = "grpc"
 exporter_endpoint = "https://api.honeycomb.io"
 
 [shoalsoft-opentelemetry.exporter_headers]
-"x-honeycomb-team" = "MY_HONEYCOMB_API_KEY"
+"x-honeycomb-team" = "%(env.HONEYCOMB_API_KEY)s"
 ```
+
+**Security notes:**
+1. **Use an Ingestion-Only API key**: You should prefer to use an ingestion-only API key in your Honeycomb settings for better security. Ingestion-only keys can only send data to Honeycomb and cannot read existing data. See [Honeycomb's API key documentation](https://docs.honeycomb.io/configure/environments/manage-api-keys/) for further details.
+2. **Do not store the API key directly in Pant configuration**: Set `HONEYCOMB_API_KEY` (or your preferred name) as an environment variable rather than hardcoding it in `pants.toml`. The `%(env.HONEYCOMB_API_KEY)s` syntax in `pants.toml` tells Pants to substitute the environment variable's value.
 
 ## Development
 
