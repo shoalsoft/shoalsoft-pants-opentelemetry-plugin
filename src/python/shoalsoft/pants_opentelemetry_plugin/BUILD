@@ -129,7 +129,7 @@ From PyPI:
    exporter = "grpc"
    ```
 
-3. The plugin exposes many other options (which correspnd to `OTEL_` environment variables in other systems).  Run `pants help-advanced shoalsoft-opentelemetry` to see all of the plugin's available configuration options.
+3. The plugin exposes many other options (which correspond to `OTEL_` environment variables in other systems).  Run `pants help-advanced shoalsoft-opentelemetry` to see all of the plugin's available configuration options.
 
 Note: The plugin respects any `TRACEPARENT` environment variable and will link generated traces to the parent trace and span referenced in the `TRACEPARENT`.
 

@@ -258,13 +258,13 @@ def _parse_traceparent(value: str) -> tuple[int, int] | None:
     try:
         trace_id = _parse_id(parts[1], 32)
     except ValueError as e:
-        logger.warning(f"Igorning TRACEPARENT due to failue to parse trace ID `{parts[1]}`: {e}")
+        logger.warning(f"Ignoring TRACEPARENT due to failure to parse trace ID `{parts[1]}`: {e}")
         return None
 
     try:
         span_id = _parse_id(parts[2], 16)
     except ValueError as e:
-        logger.warning(f"Igorning TRACEPARENT due to failue to parse span ID `{parts[2]}`: {e}")
+        logger.warning(f"Ignoring TRACEPARENT due to failure to parse span ID `{parts[2]}`: {e}")
         return None
 
     return trace_id, span_id

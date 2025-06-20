@@ -45,7 +45,7 @@ class _FinishDetails:
 
 class SingleThreadedProcessor(Processor):
     """This is a `Processor` implementation which pushes all received workunits
-    onto a queeue for processing on a separate thread.
+    onto a queue for processing on a separate thread.
 
     This is useful for moving workunit operations off the engine's
     thread. Also, it allows working around any concurrency issues in an
@@ -76,7 +76,7 @@ class SingleThreadedProcessor(Processor):
     ) -> _FinishDetails | None:
         """Processes messages.
 
-        Returns a `_FinishDetals` to use for shutdown if the finish
+        Returns a `_FinishDetails` to use for shutdown if the finish
         message was received, else None.
         """
         msg_type: _MessageType = msg[0]
