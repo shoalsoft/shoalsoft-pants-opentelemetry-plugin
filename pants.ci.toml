@@ -3,7 +3,7 @@ plugins.add = ["shoalsoft-pants-opentelemetry-plugin==0.2.1"]
 backend_packages.add = ["shoalsoft.pants_opentelemetry_plugin"]
 
 [shoalsoft-opentelemetry]
-enabled = true
+enabled = false
 exporter = "grpc"
 exporter_endpoint = "https://api.honeycomb.io"
 
