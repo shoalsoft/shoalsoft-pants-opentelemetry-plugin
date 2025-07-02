@@ -2,7 +2,7 @@
 plugins.add = ["shoalsoft-pants-opentelemetry-plugin==0.2.1"]
 backend_packages.add = ["shoalsoft.pants_opentelemetry_plugin"]
 print_stacktrace = true
-level = "DEBUG"
+level = "debug"
 log_show_rust_3rdparty = true
 
 [shoalsoft-opentelemetry]
