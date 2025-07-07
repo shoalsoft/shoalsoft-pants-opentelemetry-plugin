@@ -212,7 +212,13 @@ def get_processor(
             f"Asked to construct an unknown span exporter: {span_exporter_name.value}"
         )
 
-    span_processor = BatchSpanProcessor(span_exporter)
+    span_processor = BatchSpanProcessor(
+        span_exporter=span_exporter,
+        max_queue_size=512,
+        max_export_batch_size=100,
+        export_timeout_millis=5000,
+        schedule_delay_millis=30000,
+    )
     tracer_provider.add_span_processor(span_processor)
 
     otel_processor = OpenTelemetryProcessor(
