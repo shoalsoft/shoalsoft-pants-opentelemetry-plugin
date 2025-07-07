@@ -14,6 +14,7 @@
 
 """Standalone gRPC server for testing - runs in separate process to avoid fork safety issues."""
 
+import logging
 import multiprocessing
 import signal
 import time
@@ -75,12 +76,11 @@ class GrpcTestServerManager:
 
     def __init__(self, port: int = 0):
         self.port = port
-        self.process: "multiprocessing.Process | None" = None
-        self.results_queue: "multiprocessing.Queue[Union[Tuple[str, int], bytes]]" = (
-            multiprocessing.Queue()
-        )
+        self.process: multiprocessing.Process | None = None
+        self.results_queue: multiprocessing.Queue[tuple[str, int] | bytes] = multiprocessing.Queue()
         self.ready_event = multiprocessing.Event()
         self.actual_port: int | None = None
+        multiprocessing.log_to_stderr(logging.DEBUG)
 
     def start(self) -> int:
         """Start the gRPC server process and return the actual port."""

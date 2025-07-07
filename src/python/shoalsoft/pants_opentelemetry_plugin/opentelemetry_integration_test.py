@@ -208,7 +208,7 @@ def do_test_of_otlp_grpc_exporter(
     # Start gRPC server in separate process to avoid fork safety issues
     grpc_server_manager = GrpcTestServerManager()
     server_port = grpc_server_manager.start()
-    
+
     try:
         sources = {
             "otlp-grpc/BUILD": "python_sources(name='src')\n",
@@ -223,6 +223,7 @@ def do_test_of_otlp_grpc_exporter(
                     f"--shoalsoft-opentelemetry-exporter={TracingExporterId.GRPC.value}",
                     f"--shoalsoft-opentelemetry-exporter-endpoint=http://127.0.0.1:{server_port}/",
                     "--shoalsoft-opentelemetry-exporter-insecure",
+                    "-ldebug",
                     "list",
                     "otlp-grpc::",
                 ],
@@ -241,7 +242,7 @@ def do_test_of_otlp_grpc_exporter(
 
             # Get received requests from the separate process
             received_requests = grpc_server_manager.get_received_requests()
-            
+
             # Assert that tracing spans were received over gRPC
             assert len(received_requests) > 0
             _assert_trace_requests(received_requests)

@@ -22,24 +22,24 @@ from shoalsoft.pants_opentelemetry_plugin.grpc_test_server import GrpcTestServer
 def test_grpc_test_server_manager():
     """Test that the gRPC test server manager can start and stop cleanly."""
     manager = GrpcTestServerManager()
-    
+
     # Test starting the server
     port = manager.start()
     assert port > 0
     assert manager.actual_port == port
     assert manager.process is not None
     assert manager.process.is_alive()
-    
+
     # Give server a moment to fully initialize
     time.sleep(0.1)
-    
+
     # Test getting requests (should be empty initially)
     requests = manager.get_received_requests()
     assert len(requests) == 0
-    
+
     # Test stopping the server
     manager.stop()
-    
+
     # Server process should be stopped
     if manager.process:
         assert not manager.process.is_alive()
@@ -50,7 +50,7 @@ def test_grpc_test_server_manager_error_handling():
     # This test is mainly to ensure the manager handles errors gracefully
     # In practice, the server should always start successfully on port 0
     manager = GrpcTestServerManager()
-    
+
     try:
         port = manager.start()
         assert port > 0

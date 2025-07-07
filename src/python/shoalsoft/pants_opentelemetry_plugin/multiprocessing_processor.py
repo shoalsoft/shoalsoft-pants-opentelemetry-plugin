@@ -89,29 +89,43 @@ def _subprocess_worker(
     operations."""
     processor: Processor | None = None
 
-    # Ignore SIGINT in the subprocess - let the parent handle it
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    # Set up logging for subprocess
+    logging.basicConfig(level=logging.DEBUG, format='[SUBPROCESS] %(levelname)s: %(message)s')
+    logger.debug("_subprocess_worker: Entry point reached")
 
     try:
-        logger.debug("OpenTelemetry subprocess worker started")
-        response_queue.put("started")
+        # Ignore SIGINT in the subprocess - let the parent handle it
+        logger.debug("_subprocess_worker: Setting up signal handler")
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        logger.debug("_subprocess_worker: Signal handler set up")
 
+        logger.debug("_subprocess_worker: About to send 'started' message")
+        response_queue.put("started")
+        logger.debug("_subprocess_worker: 'started' message sent")
+
+        logger.debug("_subprocess_worker: Entering main message loop")
         while True:
             try:
+                logger.debug("_subprocess_worker: Waiting for message...")
                 message = request_queue.get(timeout=1.0)
-                logger.debug(f"Subprocess received message: {message.type}")
+                logger.debug(f"_subprocess_worker: Received message: {message.type}")
 
                 if message.type == MessageType.SHUTDOWN:
-                    logger.debug("Subprocess received shutdown signal")
+                    logger.debug("_subprocess_worker: Received shutdown signal")
                     break
 
                 elif message.type == MessageType.INITIALIZE:
+                    logger.debug("_subprocess_worker: Processing INITIALIZE message")
                     init_data: InitializeData = message.data
 
                     # Use the provided factory to create the processor
+                    logger.debug("_subprocess_worker: Creating processor with factory")
                     processor = processor_factory(init_data.processor_factory_data)
+                    logger.debug("_subprocess_worker: Processor created, initializing...")
                     processor.initialize()
+                    logger.debug("_subprocess_worker: Processor initialized, sending confirmation")
                     response_queue.put("initialized")
+                    logger.debug("_subprocess_worker: Initialization confirmation sent")
 
                 elif message.type == MessageType.START_WORKUNIT:
                     if processor is None:
@@ -142,16 +156,34 @@ def _subprocess_worker(
                     response_queue.put("finished")
 
             except queue.Empty:
+                logger.debug("_subprocess_worker: Queue timeout, continuing...")
                 continue
             except Exception as e:
-                logger.exception(f"Error in subprocess worker: {e}")
+                logger.exception(f"_subprocess_worker: Error in message loop: {e}")
                 response_queue.put(f"error: {e}")
 
     except Exception as e:
-        logger.exception(f"Fatal error in subprocess worker: {e}")
-        response_queue.put(f"fatal_error: {e}")
+        logger.exception(f"_subprocess_worker: Fatal error in subprocess worker: {e}")
+        try:
+            response_queue.put(f"fatal_error: {e}")
+        except:
+            pass  # Queue might be broken
     finally:
-        logger.debug("OpenTelemetry subprocess worker exiting")
+        logger.debug("_subprocess_worker: Exiting subprocess worker")
+
+
+class _DummyStdio:
+    def __init__(self, fd):
+        self._fd = fd
+
+    def close(self):
+        pass
+
+    def __getattr__(self, name):
+        if name == "close":
+            return self.close
+        else:
+            return getattr(self._fd, name)
 
 
 class MultiprocessingProcessor(Processor):
@@ -175,37 +207,53 @@ class MultiprocessingProcessor(Processor):
 
     def initialize(self) -> None:
         """Start the subprocess and initialize the OpenTelemetry processor."""
-        logger.debug("Starting OpenTelemetry subprocess")
+        logger.debug("MultiprocessingProcessor.initialize: Starting OpenTelemetry subprocess")
 
         # Install dummy stdio handlers to work around Pants-installed ones.
+        logger.debug("MultiprocessingProcessor.initialize: Saving original stdio")
         saved_stdin = sys.stdin
         saved_stdout = sys.stdout
         saved_stderr = sys.stderr
         try:
-            sys.stdin = open("/dev/null", "r")
-            sys.stdout = open("/dev/null", "w")
-            sys.stderr = open("/dev/null", "w")
+            logger.debug("MultiprocessingProcessor.initialize: Installing dummy stdio handlers")
+            sys.stdin = _DummyStdio(sys.stdin)
+            sys.stdout = _DummyStdio(sys.stdout)
+            sys.stderr = _DummyStdio(sys.stderr)
 
             # Start the subprocess
+            logger.debug("MultiprocessingProcessor.initialize: Configuring multiprocessing logging")
+            multiprocessing.log_to_stderr(logging.DEBUG)
+            
+            logger.debug("MultiprocessingProcessor.initialize: Creating subprocess")
             self._subprocess = multiprocessing.Process(
                 target=_subprocess_worker,
                 args=(self._request_queue, self._response_queue, self._processor_factory),
             )
+            logger.debug("MultiprocessingProcessor.initialize: Starting subprocess")
             self._subprocess.start()
+            logger.debug(f"MultiprocessingProcessor.initialize: Subprocess started with PID {self._subprocess.pid}")
         finally:
+            logger.debug("MultiprocessingProcessor.initialize: Restoring original stdio")
             sys.stdin = saved_stdin
             sys.stdout = saved_stdout
             sys.stderr = saved_stderr
 
         # Wait for subprocess to start
+        logger.debug("MultiprocessingProcessor.initialize: Waiting for subprocess startup confirmation")
         try:
             response = self._response_queue.get(timeout=10.0)
+            logger.debug(f"MultiprocessingProcessor.initialize: Received startup response: {response}")
             if response != "started":
                 raise RuntimeError(f"Subprocess failed to start: {response}")
         except queue.Empty:
+            logger.error("MultiprocessingProcessor.initialize: Subprocess startup timeout")
+            if self._subprocess:
+                logger.error(f"MultiprocessingProcessor.initialize: Subprocess is_alive: {self._subprocess.is_alive()}")
+                logger.error(f"MultiprocessingProcessor.initialize: Subprocess exitcode: {self._subprocess.exitcode}")
             raise RuntimeError("Subprocess failed to start within timeout")
 
         # Send initialization message
+        logger.debug("MultiprocessingProcessor.initialize: Sending initialization message")
         init_data = InitializeData(
             processor_factory_data=self._processor_factory_data,
         )
@@ -213,14 +261,20 @@ class MultiprocessingProcessor(Processor):
         self._send_message(MessageType.INITIALIZE, init_data)
 
         # Wait for initialization confirmation
+        logger.debug("MultiprocessingProcessor.initialize: Waiting for initialization confirmation")
         try:
             response = self._response_queue.get(timeout=30.0)
+            logger.debug(f"MultiprocessingProcessor.initialize: Received initialization response: {response}")
             if response != "initialized":
                 raise RuntimeError(f"Subprocess initialization failed: {response}")
         except queue.Empty:
+            logger.error("MultiprocessingProcessor.initialize: Subprocess initialization timeout")
+            if self._subprocess:
+                logger.error(f"MultiprocessingProcessor.initialize: Subprocess is_alive: {self._subprocess.is_alive()}")
+                logger.error(f"MultiprocessingProcessor.initialize: Subprocess exitcode: {self._subprocess.exitcode}")
             raise RuntimeError("Subprocess initialization timeout")
 
-        logger.debug("OpenTelemetry subprocess initialized successfully")
+        logger.debug("MultiprocessingProcessor.initialize: OpenTelemetry subprocess initialized successfully")
         self._initialized = True
 
     def start_workunit(self, workunit: IncompleteWorkunit, *, context: ProcessorContext) -> None:
@@ -308,14 +362,22 @@ class MultiprocessingProcessor(Processor):
 
     def _send_message(self, message_type: MessageType, data: Any) -> None:
         """Send a message to the subprocess."""
-        if self._subprocess is None or not self._subprocess.is_alive():
-            logger.warning(f"Cannot send {message_type} - subprocess not running")
+        logger.debug(f"MultiprocessingProcessor._send_message: Attempting to send {message_type}")
+        
+        if self._subprocess is None:
+            logger.warning(f"MultiprocessingProcessor._send_message: Cannot send {message_type} - subprocess is None")
+            return
+            
+        if not self._subprocess.is_alive():
+            logger.warning(f"MultiprocessingProcessor._send_message: Cannot send {message_type} - subprocess not alive (exitcode: {self._subprocess.exitcode})")
             return
 
         try:
             message = ProcessorMessage(type=message_type, data=data)
+            logger.debug(f"MultiprocessingProcessor._send_message: Putting message {message_type} in queue")
             self._request_queue.put(message, timeout=1.0)
+            logger.debug(f"MultiprocessingProcessor._send_message: Message {message_type} sent successfully")
         except queue.Full:
-            logger.warning(f"Failed to send {message_type} - queue full")
+            logger.warning(f"MultiprocessingProcessor._send_message: Failed to send {message_type} - queue full")
         except Exception as e:
-            logger.exception(f"Error sending {message_type}: {e}")
+            logger.exception(f"MultiprocessingProcessor._send_message: Error sending {message_type}: {e}")
