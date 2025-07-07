@@ -16,6 +16,9 @@ from __future__ import annotations
 
 import datetime
 import logging
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 from pants.base.build_root import BuildRoot
 from pants.engine.env_vars import EnvironmentVars, EnvironmentVarsRequest
@@ -28,13 +31,98 @@ from pants.engine.unions import UnionRule
 from shoalsoft.pants_opentelemetry_plugin.exception_logging_processor import (
     ExceptionLoggingProcessor,
 )
+from shoalsoft.pants_opentelemetry_plugin.multiprocessing_processor import MultiprocessingProcessor
 from shoalsoft.pants_opentelemetry_plugin.opentelemetry import get_processor
 from shoalsoft.pants_opentelemetry_plugin.processor import Processor
 from shoalsoft.pants_opentelemetry_plugin.single_threaded_processor import SingleThreadedProcessor
-from shoalsoft.pants_opentelemetry_plugin.subsystem import TelemetrySubsystem
+from shoalsoft.pants_opentelemetry_plugin.subsystem import (
+    OtelCompression,
+    TelemetrySubsystem,
+    TracingExporterId,
+)
 from shoalsoft.pants_opentelemetry_plugin.workunit_handler import TelemetryWorkunitsCallback
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ProcessorFactoryData:
+    """Data class for creating processors in subprocess - must be picklable."""
+
+    span_exporter_name: TracingExporterId
+    build_root: Path
+    traceparent_env_var: str | None
+    # Telemetry config as dict to ensure pickle compatibility
+    telemetry_config: dict[str, Any]
+
+
+def _create_otel_processor(factory_data: ProcessorFactoryData):
+    """Module-level factory function for creating OpenTelemetry processors.
+
+    This function must be at module level to be picklable for
+    multiprocessing.
+    """
+    from shoalsoft.pants_opentelemetry_plugin.opentelemetry import get_processor
+
+    # Reconstruct telemetry subsystem from config
+    telemetry = _reconstruct_telemetry_subsystem(factory_data.telemetry_config)
+
+    return get_processor(
+        span_exporter_name=factory_data.span_exporter_name,
+        telemetry=telemetry,
+        build_root=factory_data.build_root,
+        traceparent_env_var=factory_data.traceparent_env_var,
+    )
+
+
+def _reconstruct_telemetry_subsystem(config: dict[str, Any]) -> Any:
+    """Reconstruct a TelemetrySubsystem-like object from config dict."""
+
+    class MockTelemetrySubsystem:
+        def __init__(self, config: dict[str, Any]):
+            for key, value in config.items():
+                # Handle enum reconstruction
+                if key == "exporter" and isinstance(value, str):
+                    value = TracingExporterId(value)
+                elif key == "exporter_compression" and isinstance(value, str):
+                    value = OtelCompression(value)
+                setattr(self, key, value)
+
+    return MockTelemetrySubsystem(config)
+
+
+def _serialize_telemetry_config(telemetry: TelemetrySubsystem) -> dict[str, Any]:
+    """Extract serializable configuration from TelemetrySubsystem."""
+    config = {}
+
+    # Extract all relevant attributes
+    attrs_to_serialize = [
+        "enabled",
+        "exporter",
+        "exporter_endpoint",
+        "exporter_headers",
+        "exporter_timeout",
+        "exporter_compression",
+        "exporter_insecure",
+        "exporter_certificate_file",
+        "exporter_client_key_file",
+        "exporter_client_certificate_file",
+        "json_file",
+        "parse_traceparent",
+        "finish_timeout",
+        "async_completion",
+    ]
+
+    for attr in attrs_to_serialize:
+        if hasattr(telemetry, attr):
+            value = getattr(telemetry, attr)
+            # Handle enum serialization
+            if hasattr(value, "value"):
+                config[attr] = value.value
+            else:
+                config[attr] = value
+
+    return config
 
 
 class TelemetryWorkunitsCallbackFactoryRequest(WorkunitsCallbackFactoryRequest):
@@ -61,16 +149,34 @@ async def telemetry_workunits_callback_factory_request(
             traceparent_env_var = env_vars.get("TRACEPARENT")
             logger.debug(f"Found TRACEPARENT: {traceparent_env_var}")
 
-        otel_processor = get_processor(
-            span_exporter_name=telemetry.exporter,
-            telemetry=telemetry,
-            build_root=build_root.pathlib_path,
-            traceparent_env_var=traceparent_env_var,
-        )
+        # Use multiprocessing processor for gRPC to avoid fork safety issues
+        if telemetry.exporter == TracingExporterId.GRPC:
+            logger.debug("Using multiprocessing processor for gRPC exporter")
 
-        processor = SingleThreadedProcessor(
-            ExceptionLoggingProcessor(otel_processor, name="OpenTelemetry")
-        )
+            # Create factory data using dataclass for pickle compatibility
+            factory_data = ProcessorFactoryData(
+                span_exporter_name=telemetry.exporter,
+                build_root=build_root.pathlib_path,
+                traceparent_env_var=traceparent_env_var,
+                telemetry_config=_serialize_telemetry_config(telemetry),
+            )
+
+            processor = MultiprocessingProcessor(
+                processor_factory=_create_otel_processor,
+                processor_factory_data=factory_data,
+            )
+        else:
+            logger.debug("Using single-threaded processor for non-gRPC exporter")
+            otel_processor = get_processor(
+                span_exporter_name=telemetry.exporter,
+                telemetry=telemetry,
+                build_root=build_root.pathlib_path,
+                traceparent_env_var=traceparent_env_var,
+            )
+            processor = SingleThreadedProcessor(
+                ExceptionLoggingProcessor(otel_processor, name="OpenTelemetry")
+            )
+
         processor.initialize()
 
     finish_timeout = datetime.timedelta(seconds=telemetry.finish_timeout)
