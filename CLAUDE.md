@@ -8,6 +8,8 @@ This is a Pants plugin that enables OpenTelemetry tracing for Pantsbuild workflo
 
 ## Development Commands
 
+**Important**: When running `pants` commands, use the globally-installed Pants launcher at `/usr/local/bin/pants` instead of any virtual environment executable.
+
 - **Format and lint**: `pants fmt lint check ::`
 - **Run tests**: `pants test ::`  
 - **Run integration tests**: `pants test src/python/shoalsoft/pants_opentelemetry_plugin:integration_tests`
@@ -17,6 +19,15 @@ This is a Pants plugin that enables OpenTelemetry tracing for Pantsbuild workflo
 ## Multi-Version Support
 
 The plugin supports multiple Pants versions (2.25, 2.26, 2.27) using Pants' parametrize feature. Each version has its own lockfile in `3rdparty/python/pants-*.lock` and separate build targets. These lockfiles are mainly for integration testing. The distribution wheel is agnostic to Pants version.
+
+### Updating Pants Versions
+
+To update Pants versions or regenerate lockfiles:
+
+1. Update the version constraints in `3rdparty/python/pants-*.txt` files
+2. Regenerate the corresponding lockfiles: `pants generate-lockfiles --resolve=pants-X.XX`
+3. For all resolves: `pants generate-lockfiles`
+4. Update the integration test to include the new version in the parametrize decorator
 
 ## Architecture
 
