@@ -69,7 +69,11 @@ async def telemetry_workunits_callback_factory_request(
     finish_timeout = datetime.timedelta(seconds=telemetry.finish_timeout)
     return WorkunitsCallbackFactory(
         lambda: (
-            TelemetryWorkunitsCallback(processor=processor, finish_timeout=finish_timeout)
+            TelemetryWorkunitsCallback(
+                processor=processor,
+                finish_timeout=finish_timeout,
+                async_completion=telemetry.async_completion,
+            )
             if processor is not None
             else None
         )
