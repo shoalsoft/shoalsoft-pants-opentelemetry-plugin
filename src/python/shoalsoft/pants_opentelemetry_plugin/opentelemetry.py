@@ -419,9 +419,9 @@ class OpenTelemetryProcessor(Processor):
         self._apply_workunit_attributes(workunit=workunit, otel_span=otel_span)
 
         # Set the metrics for the session as an attribute of the root span.
-        if not workunit.primary_parent_id:
-            metrics = context.get_metrics()
-            otel_span.set_attribute("pantsbuild.metrics-v0", json.dumps(metrics, sort_keys=True))
+        # if not workunit.primary_parent_id:
+        #     metrics = context.get_metrics()
+        #     otel_span.set_attribute("pantsbuild.metrics-v0", json.dumps(metrics, sort_keys=True))
 
         otel_span.end(end_time=_datetime_to_otel_timestamp(workunit.end_time))
 
