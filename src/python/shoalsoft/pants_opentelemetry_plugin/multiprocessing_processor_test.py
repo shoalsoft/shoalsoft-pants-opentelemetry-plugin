@@ -14,14 +14,12 @@
 
 import datetime
 import tempfile
-import time
 from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
 
 from shoalsoft.pants_opentelemetry_plugin.multiprocessing_processor import MultiprocessingProcessor
-from shoalsoft.pants_opentelemetry_plugin.opentelemetry import get_processor
 from shoalsoft.pants_opentelemetry_plugin.processor import IncompleteWorkunit, Level, Workunit
 from shoalsoft.pants_opentelemetry_plugin.register import (
     ProcessorFactoryData,

@@ -23,7 +23,6 @@ import signal
 import sys
 import threading
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any, Callable, Mapping
 
 from shoalsoft.pants_opentelemetry_plugin.processor import (
