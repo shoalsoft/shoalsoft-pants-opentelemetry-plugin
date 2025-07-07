@@ -48,6 +48,10 @@ async def telemetry_workunits_callback_factory_request(
     build_root: BuildRoot,
 ) -> WorkunitsCallbackFactory:
     processor: Processor | None = None
+    logger.debug(
+        f"telemetry_workunits_callback_factory_request: telemetry.enabled={telemetry.enabled}; telemetry.exporter={telemetry.exporter}; "
+        f"bool(telemetry.exporter)={bool(telemetry.exporter)}"
+    )
     if telemetry.enabled and telemetry.exporter:
         logger.debug("Enabling OpenTelemetry work unit handler.")
 
