@@ -25,34 +25,41 @@ from opentelemetry.proto.collector.trace.v1 import trace_service_pb2, trace_serv
 
 
 class TestTraceServiceImpl(trace_service_pb2_grpc.TraceServiceServicer):
-    def __init__(self, results_queue: "multiprocessing.Queue[Union[Tuple[str, int], bytes]]") -> None:
+    def __init__(
+        self, results_queue: "multiprocessing.Queue[Union[Tuple[str, int], bytes]]"
+    ) -> None:
         self.results_queue = results_queue
 
     def Export(
         self, request: trace_service_pb2.ExportTraceServiceRequest, context: Any
     ) -> trace_service_pb2.ExportTraceServiceResponse:
         # Send the serialized request to the test process
+        del context  # Unused parameter
         serialized_request = request.SerializeToString()
         self.results_queue.put(serialized_request)
         return trace_service_pb2.ExportTraceServiceResponse()
 
 
-def run_grpc_test_server(port: int, results_queue: "multiprocessing.Queue[Union[Tuple[str, int], bytes]]", ready_event: "multiprocessing.Event") -> None:
+def run_grpc_test_server(
+    port: int,
+    results_queue: "multiprocessing.Queue[Union[Tuple[str, int], bytes]]",
+    ready_event: Any,
+) -> None:
     """Run a gRPC server in a separate process."""
     # Ignore SIGINT to let parent handle shutdown
     signal.signal(signal.SIGINT, signal.SIG_IGN)
-    
+
     server_impl = TestTraceServiceImpl(results_queue)
     grpc_server = grpc.server(futures.ThreadPoolExecutor(max_workers=2))
     trace_service_pb2_grpc.add_TraceServiceServicer_to_server(server_impl, grpc_server)
-    
+
     actual_port = grpc_server.add_insecure_port(f"127.0.0.1:{port}")
     grpc_server.start()
-    
+
     # Signal that server is ready and provide actual port
     results_queue.put(("READY", actual_port))
     ready_event.set()
-    
+
     try:
         # Keep server running until told to stop
         while True:
@@ -65,40 +72,41 @@ def run_grpc_test_server(port: int, results_queue: "multiprocessing.Queue[Union[
 
 class GrpcTestServerManager:
     """Manager for running gRPC test server in separate process."""
-    
+
     def __init__(self, port: int = 0):
         self.port = port
         self.process: "multiprocessing.Process | None" = None
-        self.results_queue: "multiprocessing.Queue[Union[Tuple[str, int], bytes]]" = multiprocessing.Queue()
+        self.results_queue: "multiprocessing.Queue[Union[Tuple[str, int], bytes]]" = (
+            multiprocessing.Queue()
+        )
         self.ready_event = multiprocessing.Event()
         self.actual_port: int | None = None
-        
+
     def start(self) -> int:
         """Start the gRPC server process and return the actual port."""
         self.process = multiprocessing.Process(
-            target=run_grpc_test_server,
-            args=(self.port, self.results_queue, self.ready_event)
+            target=run_grpc_test_server, args=(self.port, self.results_queue, self.ready_event)
         )
         self.process.start()
-        
+
         # Wait for server to be ready
         if not self.ready_event.wait(timeout=10.0):
             self.stop()
             raise RuntimeError("gRPC test server failed to start within timeout")
-            
+
         # Get the actual port
         message = self.results_queue.get(timeout=5.0)
         if not isinstance(message, tuple) or message[0] != "READY":
             self.stop()
-            raise RuntimeError(f"Unexpected message from server: {message}")
-            
+            raise RuntimeError(f"Unexpected message from server: {message!r}")
+
         self.actual_port = message[1]
         return self.actual_port
-        
+
     def get_received_requests(self) -> list[trace_service_pb2.ExportTraceServiceRequest]:
         """Get all received trace requests."""
         requests = []
-        
+
         # Drain all available messages
         while True:
             try:
@@ -108,11 +116,11 @@ class GrpcTestServerManager:
                     request = trace_service_pb2.ExportTraceServiceRequest()
                     request.ParseFromString(message)
                     requests.append(request)
-            except:
+            except Exception:
                 break
-                
+
         return requests
-        
+
     def stop(self) -> None:
         """Stop the gRPC server process."""
         if self.process and self.process.is_alive():
@@ -126,22 +134,23 @@ class GrpcTestServerManager:
 if __name__ == "__main__":
     # For standalone testing
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, default=0)
     args = parser.parse_args()
-    
+
     manager = GrpcTestServerManager(args.port)
     try:
         port = manager.start()
         print(f"gRPC server started on port {port}")
-        
+
         # Keep running until interrupted
         while True:
             time.sleep(1)
             requests = manager.get_received_requests()
             if requests:
                 print(f"Received {len(requests)} trace requests")
-                
+
     except KeyboardInterrupt:
         print("Shutting down...")
     finally:
