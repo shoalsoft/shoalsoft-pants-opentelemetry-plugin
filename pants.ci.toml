@@ -9,6 +9,7 @@ log_show_rust_3rdparty = true
 enabled = true
 exporter = "grpc"
 exporter_endpoint = "https://api.honeycomb.io"
+async_completion = false
 
 [shoalsoft-opentelemetry.exporter_headers]
 "x-honeycomb-team" = "%(env.HONEYCOMB_API_KEY)s"
