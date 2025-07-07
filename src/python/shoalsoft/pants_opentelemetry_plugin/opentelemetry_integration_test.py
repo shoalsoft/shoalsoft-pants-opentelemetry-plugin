@@ -22,23 +22,22 @@ import textwrap
 import threading
 import time
 import typing
-from concurrent import futures
 from dataclasses import dataclass
 from functools import partial
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
-import grpc  # type: ignore[import-untyped]
 import httpx
 import pytest
-from opentelemetry.proto.collector.trace.v1 import trace_service_pb2, trace_service_pb2_grpc
+from opentelemetry.proto.collector.trace.v1 import trace_service_pb2
 from opentelemetry.proto.common.v1 import common_pb2
 from opentelemetry.proto.trace.v1 import trace_pb2
 from packaging.version import Version
 
 from pants.testutil.python_interpreter_selection import python_interpreter_path
 from pants.util.dirutil import safe_file_dump
+from shoalsoft.pants_opentelemetry_plugin.grpc_test_server import GrpcTestServerManager
 from shoalsoft.pants_opentelemetry_plugin.pants_integration_testutil import run_pants_with_workdir
 from shoalsoft.pants_opentelemetry_plugin.subsystem import TracingExporterId
 
@@ -199,17 +198,6 @@ def do_test_of_otlp_http_exporter(
         _assert_trace_requests([_convert(request.body) for request in recorded_requests])
 
 
-class _TraceServiceImpl(trace_service_pb2_grpc.TraceServiceServicer):
-    def __init__(self, requests: list[trace_service_pb2.ExportTraceServiceRequest]) -> None:
-        self.requests = requests
-
-    def Export(
-        self, request: trace_service_pb2.ExportTraceServiceRequest, context
-    ) -> trace_service_pb2.ExportTraceServiceResponse:
-        self.requests.append(request)
-        return trace_service_pb2.ExportTraceServiceResponse()
-
-
 def do_test_of_otlp_grpc_exporter(
     *,
     buildroot: Path,
@@ -217,45 +205,48 @@ def do_test_of_otlp_grpc_exporter(
     workdir_base: Path,
     extra_env: Mapping[str, str] | None = None,
 ) -> None:
-    received_requests: list[trace_service_pb2.ExportTraceServiceRequest] = []
-    server_impl = _TraceServiceImpl(received_requests)
+    # Start gRPC server in separate process to avoid fork safety issues
+    grpc_server_manager = GrpcTestServerManager()
+    server_port = grpc_server_manager.start()
+    
+    try:
+        sources = {
+            "otlp-grpc/BUILD": "python_sources(name='src')\n",
+            "otlp-grpc/main.py": "print('Hello World!)\n",
+        }
+        with tempfile.TemporaryDirectory(dir=workdir_base) as workdir:
+            _safe_write_files(buildroot, sources)
 
-    grpc_server = grpc.server(futures.ThreadPoolExecutor(max_workers=2))
-    trace_service_pb2_grpc.add_TraceServiceServicer_to_server(server_impl, grpc_server)
-    server_port = grpc_server.add_insecure_port("127.0.0.1:0")
-    grpc_server.start()
+            result = run_pants_with_workdir(
+                [
+                    "--shoalsoft-opentelemetry-enabled",
+                    f"--shoalsoft-opentelemetry-exporter={TracingExporterId.GRPC.value}",
+                    f"--shoalsoft-opentelemetry-exporter-endpoint=http://127.0.0.1:{server_port}/",
+                    "--shoalsoft-opentelemetry-exporter-insecure",
+                    "list",
+                    "otlp-grpc::",
+                ],
+                pants_exe_args=pants_exe_args,
+                workdir=workdir,
+                extra_env={
+                    **(extra_env if extra_env else {}),
+                    "PANTS_BUILDROOT_OVERRIDE": str(buildroot),
+                    "GRPC_VERBOSITY": "DEBUG",
+                    "TRACEPARENT": "00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-00",
+                },
+                cwd=buildroot,
+                stream_output=True,
+            )
+            result.assert_success()
 
-    sources = {
-        "otlp-grpc/BUILD": "python_sources(name='src')\n",
-        "otlp-grpc/main.py": "print('Hello World!)\n",
-    }
-    with tempfile.TemporaryDirectory(dir=workdir_base) as workdir:
-        _safe_write_files(buildroot, sources)
-
-        result = run_pants_with_workdir(
-            [
-                "--shoalsoft-opentelemetry-enabled",
-                f"--shoalsoft-opentelemetry-exporter={TracingExporterId.GRPC.value}",
-                f"--shoalsoft-opentelemetry-exporter-endpoint=http://127.0.0.1:{server_port}/",
-                "--shoalsoft-opentelemetry-exporter-insecure",
-                "list",
-                "otlp-grpc::",
-            ],
-            pants_exe_args=pants_exe_args,
-            workdir=workdir,
-            extra_env={
-                **(extra_env if extra_env else {}),
-                "PANTS_BUILDROOT_OVERRIDE": str(buildroot),
-                "GRPC_VERBOSITY": "DEBUG",
-                "TRACEPARENT": "00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-00",
-            },
-            cwd=buildroot,
-        )
-        result.assert_success()
-
-        # Assert that tracing spans were received over HTTP.
-        assert len(received_requests) > 0
-        _assert_trace_requests(received_requests)
+            # Get received requests from the separate process
+            received_requests = grpc_server_manager.get_received_requests()
+            
+            # Assert that tracing spans were received over gRPC
+            assert len(received_requests) > 0
+            _assert_trace_requests(received_requests)
+    finally:
+        grpc_server_manager.stop()
 
 
 def do_test_of_json_file_exporter(
@@ -400,16 +391,16 @@ def test_opentelemetry_integration(subtests, pants_version_str: str) -> None:
         )
         result.assert_success()
 
-    with subtests.test(msg="OTLP/HTTP span exporter"):
-        do_test_of_otlp_http_exporter(
+    with subtests.test(msg="OTLP/GRPC span exporter"):
+        do_test_of_otlp_grpc_exporter(
             buildroot=buildroot,
             pants_exe_args=pants_exe_args,
             workdir_base=workdir_base,
             extra_env=extra_env,
         )
 
-    with subtests.test(msg="OTLP/GRPC span exporter"):
-        do_test_of_otlp_grpc_exporter(
+    with subtests.test(msg="OTLP/HTTP span exporter"):
+        do_test_of_otlp_http_exporter(
             buildroot=buildroot,
             pants_exe_args=pants_exe_args,
             workdir_base=workdir_base,
