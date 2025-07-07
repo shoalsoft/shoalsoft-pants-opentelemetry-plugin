@@ -49,10 +49,13 @@ async def telemetry_workunits_callback_factory_request(
 ) -> WorkunitsCallbackFactory:
     processor: Processor | None = None
     if telemetry.enabled and telemetry.exporter:
+        logger.debug("Enabling OpenTelemetry work unit handler.")
+
         traceparent_env_var: str | None = None
         if telemetry.parse_traceparent:
             env_vars = await Get(EnvironmentVars, EnvironmentVarsRequest(["TRACEPARENT"]))
             traceparent_env_var = env_vars.get("TRACEPARENT")
+            logger.debug(f"Found TRACEPARENT: {traceparent_env_var}")
 
         otel_processor = get_processor(
             span_exporter_name=telemetry.exporter,

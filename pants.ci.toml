@@ -1,5 +1,5 @@
 [GLOBAL]
-plugins.add = ["shoalsoft-pants-opentelemetry-plugin==0.2.2"]
+pythonpath.add = ["%(buildroot)s/src/python"]
 backend_packages.add = ["shoalsoft.pants_opentelemetry_plugin"]
 print_stacktrace = true
 level = "debug"

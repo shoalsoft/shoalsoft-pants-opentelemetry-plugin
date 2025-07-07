@@ -297,7 +297,7 @@ class OpenTelemetryProcessor(Processor):
                 self._parent_span_id = ids[1]
 
     def initialize(self) -> None:
-        pass
+        logger.debug("OpenTelemetryProcessor.initialize called")
 
     def _increment_counter(self, name: str, delta: int = 1) -> None:
         if name not in self._counters:
