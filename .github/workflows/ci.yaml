@@ -32,10 +32,12 @@ jobs:
         run: "pants lint check ::"
         env:
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
+          GRPC_VERBOSITY: DEBUG
       - name: Run tests
         run: "pants test ::"
         env:
           HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
+          GRPC_VERBOSITY: DEBUG
       - name: Package plugin as PEX for various Pants versions.
         run: |
           pants package src/python/shoalsoft/pants_opentelemetry_plugin::
