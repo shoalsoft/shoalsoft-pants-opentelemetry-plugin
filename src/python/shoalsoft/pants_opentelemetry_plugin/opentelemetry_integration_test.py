@@ -224,6 +224,7 @@ def do_test_of_otlp_grpc_exporter(
                     f"--shoalsoft-opentelemetry-exporter-endpoint=http://127.0.0.1:{server_port}/",
                     "--shoalsoft-opentelemetry-exporter-insecure",
                     "-ldebug",
+                    "--no-pantsd",
                     "list",
                     "otlp-grpc::",
                 ],

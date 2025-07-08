@@ -35,10 +35,6 @@ from shoalsoft.pants_opentelemetry_plugin.processor import (
 
 logger = logging.getLogger(__name__)
 
-# Module-level queues that will be set before subprocess creation
-_global_request_queue: multiprocessing.Queue[ProcessorMessage] | None = None
-_global_response_queue: multiprocessing.Queue[str] | None = None
-
 
 class MessageType(enum.Enum):
     INITIALIZE = "initialize"
@@ -54,8 +50,14 @@ class ProcessorMessage:
     data: Any = None
 
 
+# Module-level queues that will be set before subprocess creation
+_global_request_queue: multiprocessing.Queue[ProcessorMessage] = multiprocessing.Queue()
+_global_response_queue: multiprocessing.Queue[str] = multiprocessing.Queue()
+
+
 @dataclass
 class InitializeData:
+    processor_factory: Callable[[Any], Processor]
     processor_factory_data: Any
 
 
@@ -85,77 +87,95 @@ class _SerializableContext(ProcessorContext):
         return self._metrics
 
 
-def _subprocess_worker(
-    processor_factory: Callable[[Any], Processor],
-) -> None:
+def _subprocess_worker() -> None:
     """Worker function that runs in a separate process to handle OpenTelemetry
     operations."""
     processor: Processor | None = None
+    processor_factory: Callable[[Any], Processor] | None = None
 
-    # Set up logging for subprocess to write to file
+    # Set up manual logging to file
+    import datetime
     import os
+    import sys
+
     pid = os.getpid()
-    log_file = f"/tmp/subprocess-{pid}.log"
-    
-    # Configure logging to write to file
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format='[SUBPROCESS-%(process)d] %(asctime)s %(levelname)s: %(message)s',
-        handlers=[
-            logging.FileHandler(log_file, mode='w'),
-            logging.StreamHandler()  # Also log to stderr for backup
-        ]
-    )
-    logger.debug(f"_subprocess_worker: Entry point reached, logging to {log_file}")
-    logger.debug(f"_subprocess_worker: PID is {pid}")
+    log_file_path = f"/tmp/subprocess-{pid}.log"
+
+    def log_message(level: str, message: str) -> None:
+        timestamp = datetime.datetime.now().isoformat()
+        log_line = f"[SUBPROCESS-{pid}] {timestamp} {level}: {message}\n"
+
+        # Write to file
+        try:
+            with open(log_file_path, "a") as f:
+                f.write(log_line)
+                f.flush()
+        except Exception:
+            pass  # Ignore file write errors
+
+        # Also write to stderr as backup
+        try:
+            sys.stderr.write(log_line)
+            sys.stderr.flush()
+        except Exception:
+            pass  # Ignore stderr write errors
+
+    log_message("DEBUG", f"_subprocess_worker: Entry point reached, logging to {log_file_path}")
+    log_message("DEBUG", f"_subprocess_worker: PID is {pid}")
 
     # Access the global queues
     global _global_request_queue, _global_response_queue
-    if _global_request_queue is None or _global_response_queue is None:
-        logger.error("_subprocess_worker: Global queues not initialized")
-        return
-    
+    # if _global_request_queue is None or _global_response_queue is None:
+    #     log_message("ERROR", "_subprocess_worker: Global queues not initialized")
+    #     return
+
     request_queue = _global_request_queue
     response_queue = _global_response_queue
-    logger.debug("_subprocess_worker: Accessed global queues successfully")
+    log_message("DEBUG", "_subprocess_worker: Accessed global queues successfully")
 
     try:
         # Ignore SIGINT in the subprocess - let the parent handle it
-        logger.debug("_subprocess_worker: Setting up signal handler")
+        log_message("DEBUG", "_subprocess_worker: Setting up signal handler")
         signal.signal(signal.SIGINT, signal.SIG_IGN)
-        logger.debug("_subprocess_worker: Signal handler set up")
+        log_message("DEBUG", "_subprocess_worker: Signal handler set up")
 
-        logger.debug("_subprocess_worker: About to send 'started' message")
+        log_message("DEBUG", "_subprocess_worker: About to send 'started' message")
         response_queue.put("started")
-        logger.debug("_subprocess_worker: 'started' message sent")
+        log_message("DEBUG", "_subprocess_worker: 'started' message sent")
 
-        logger.debug("_subprocess_worker: Entering main message loop")
+        log_message("DEBUG", "_subprocess_worker: Entering main message loop")
         while True:
             try:
-                logger.debug("_subprocess_worker: Waiting for message...")
+                log_message("DEBUG", "_subprocess_worker: Waiting for message...")
                 message = request_queue.get(timeout=1.0)
-                logger.debug(f"_subprocess_worker: Received message: {message.type}")
+                log_message("DEBUG", f"_subprocess_worker: Received message: {message.type}")
 
                 if message.type == MessageType.SHUTDOWN:
-                    logger.debug("_subprocess_worker: Received shutdown signal")
+                    log_message("DEBUG", "_subprocess_worker: Received shutdown signal")
                     break
 
                 elif message.type == MessageType.INITIALIZE:
-                    logger.debug("_subprocess_worker: Processing INITIALIZE message")
+                    log_message("DEBUG", "_subprocess_worker: Processing INITIALIZE message")
                     init_data: InitializeData = message.data
 
+                    # Get the factory from the initialize message
+                    log_message("DEBUG", "_subprocess_worker: Getting factory from initialize data")
+                    processor_factory = init_data.processor_factory
+
                     # Use the provided factory to create the processor
-                    logger.debug("_subprocess_worker: Creating processor with factory")
+                    log_message("DEBUG", "_subprocess_worker: Creating processor with factory")
                     processor = processor_factory(init_data.processor_factory_data)
-                    logger.debug("_subprocess_worker: Processor created, initializing...")
+                    log_message("DEBUG", "_subprocess_worker: Processor created, initializing...")
                     processor.initialize()
-                    logger.debug("_subprocess_worker: Processor initialized, sending confirmation")
+                    log_message(
+                        "DEBUG", "_subprocess_worker: Processor initialized, sending confirmation"
+                    )
                     response_queue.put("initialized")
-                    logger.debug("_subprocess_worker: Initialization confirmation sent")
+                    log_message("DEBUG", "_subprocess_worker: Initialization confirmation sent")
 
                 elif message.type == MessageType.START_WORKUNIT:
                     if processor is None:
-                        logger.error("Processor not initialized")
+                        log_message("ERROR", "Processor not initialized")
                         continue
 
                     start_data: StartWorkunitData = message.data
@@ -164,7 +184,7 @@ def _subprocess_worker(
 
                 elif message.type == MessageType.COMPLETE_WORKUNIT:
                     if processor is None:
-                        logger.error("Processor not initialized")
+                        log_message("ERROR", "Processor not initialized")
                         continue
 
                     complete_data: CompleteWorkunitData = message.data
@@ -173,7 +193,7 @@ def _subprocess_worker(
 
                 elif message.type == MessageType.FINISH:
                     if processor is None:
-                        logger.error("Processor not initialized")
+                        log_message("ERROR", "Processor not initialized")
                         continue
 
                     finish_data: FinishData = message.data
@@ -182,23 +202,38 @@ def _subprocess_worker(
                     response_queue.put("finished")
 
             except queue.Empty:
-                logger.debug("_subprocess_worker: Queue timeout, continuing...")
+                log_message("DEBUG", "_subprocess_worker: Queue timeout, continuing...")
                 continue
             except Exception as e:
-                logger.exception(f"_subprocess_worker: Error in message loop: {e}")
+                log_message("ERROR", f"_subprocess_worker: Error in message loop: {e}")
+                try:
+                    import traceback
+
+                    log_message("ERROR", f"_subprocess_worker: Traceback: {traceback.format_exc()}")
+                except Exception:
+                    pass
                 response_queue.put(f"error: {e}")
 
     except Exception as e:
-        logger.exception(f"_subprocess_worker: Fatal error in subprocess worker: {e}")
+        log_message("ERROR", f"_subprocess_worker: Fatal error in subprocess worker: {e}")
+        try:
+            import traceback
+
+            log_message("ERROR", f"_subprocess_worker: Fatal traceback: {traceback.format_exc()}")
+        except Exception:
+            pass
         try:
             response_queue.put(f"fatal_error: {e}")
-        except:
+        except Exception:
             pass  # Queue might be broken
     finally:
-        logger.debug("_subprocess_worker: Exiting subprocess worker")
-        # Flush all log handlers to ensure everything is written to file
-        for handler in logging.getLogger().handlers:
-            handler.flush()
+        log_message("DEBUG", "_subprocess_worker: Exiting subprocess worker")
+        # Final flush to ensure log file is written
+        try:
+            with open(log_file_path, "a") as f:
+                f.flush()
+        except Exception:
+            pass
 
 
 class _DummyStdio:
@@ -228,44 +263,83 @@ class MultiprocessingProcessor(Processor):
         self._processor_factory_data = processor_factory_data
 
         # Communication with subprocess
-        self._request_queue: multiprocessing.Queue[ProcessorMessage] = multiprocessing.Queue()
-        self._response_queue: multiprocessing.Queue[str] = multiprocessing.Queue()
+        self._request_queue: multiprocessing.Queue[ProcessorMessage] = _global_request_queue
+        self._response_queue: multiprocessing.Queue[str] = _global_response_queue
         self._subprocess: multiprocessing.Process | None = None
         self._shutdown_event = threading.Event()
         self._initialized = False
 
     def _test_pickle_compatibility(self) -> None:
-        """Test that processor_factory and processor_factory_data can be pickled."""
-        logger.debug("MultiprocessingProcessor._test_pickle_compatibility: Testing pickle compatibility")
-        
+        """Test that processor_factory and processor_factory_data can be
+        pickled."""
+        logger.debug(
+            "MultiprocessingProcessor._test_pickle_compatibility: Testing pickle compatibility"
+        )
+
         try:
             # Test processor_factory pickling
-            logger.debug("MultiprocessingProcessor._test_pickle_compatibility: Testing processor_factory pickling")
+            logger.debug(
+                "MultiprocessingProcessor._test_pickle_compatibility: Testing processor_factory pickling"
+            )
             pickled_factory = pickle.dumps(self._processor_factory)
             unpickled_factory = pickle.loads(pickled_factory)
-            logger.debug(f"MultiprocessingProcessor._test_pickle_compatibility: processor_factory pickle test passed (size: {len(pickled_factory)} bytes)")
-            
+            logger.debug(
+                f"MultiprocessingProcessor._test_pickle_compatibility: processor_factory pickle test passed (size: {len(pickled_factory)} bytes)"
+            )
+
             # Test processor_factory_data pickling
-            logger.debug("MultiprocessingProcessor._test_pickle_compatibility: Testing processor_factory_data pickling")
+            logger.debug(
+                "MultiprocessingProcessor._test_pickle_compatibility: Testing processor_factory_data pickling"
+            )
             pickled_data = pickle.dumps(self._processor_factory_data)
-            unpickled_data = pickle.loads(pickled_data)
-            logger.debug(f"MultiprocessingProcessor._test_pickle_compatibility: processor_factory_data pickle test passed (size: {len(pickled_data)} bytes)")
-            
+            _ = pickle.loads(pickled_data)
+            logger.debug(
+                f"MultiprocessingProcessor._test_pickle_compatibility: processor_factory_data pickle test passed (size: {len(pickled_data)} bytes)"
+            )
+
             # Test that unpickled factory is callable
-            logger.debug("MultiprocessingProcessor._test_pickle_compatibility: Testing unpickled factory is callable")
+            logger.debug(
+                "MultiprocessingProcessor._test_pickle_compatibility: Testing unpickled factory is callable"
+            )
             if not callable(unpickled_factory):
                 raise ValueError("Unpickled processor_factory is not callable")
-            
-            # Test only the processor_factory since queues are now module-level globals
-            logger.debug("MultiprocessingProcessor._test_pickle_compatibility: Only processor_factory needs to be pickled")
-            logger.debug("MultiprocessingProcessor._test_pickle_compatibility: Queues are now module-level globals, not pickled")
-            
-            logger.debug("MultiprocessingProcessor._test_pickle_compatibility: All pickle tests passed")
-            
+
+            # Test the InitializeData that will be sent to subprocess
+            logger.debug(
+                "MultiprocessingProcessor._test_pickle_compatibility: Testing InitializeData pickling"
+            )
+            init_data = InitializeData(
+                processor_factory=self._processor_factory,
+                processor_factory_data=self._processor_factory_data,
+            )
+            pickled_init_data = pickle.dumps(init_data)
+            unpickled_init_data = pickle.loads(pickled_init_data)
+            logger.debug(
+                f"MultiprocessingProcessor._test_pickle_compatibility: InitializeData pickle test passed (size: {len(pickled_init_data)} bytes)"
+            )
+
+            # Verify unpickled factory is still callable
+            if not callable(unpickled_init_data.processor_factory):
+                raise ValueError("Unpickled processor_factory in InitializeData is not callable")
+
+            logger.debug(
+                "MultiprocessingProcessor._test_pickle_compatibility: Queues are now module-level globals, not pickled"
+            )
+
+            logger.debug(
+                "MultiprocessingProcessor._test_pickle_compatibility: All pickle tests passed"
+            )
+
         except Exception as e:
-            logger.error(f"MultiprocessingProcessor._test_pickle_compatibility: Pickle test failed: {e}")
-            logger.error(f"MultiprocessingProcessor._test_pickle_compatibility: processor_factory type: {type(self._processor_factory)}")
-            logger.error(f"MultiprocessingProcessor._test_pickle_compatibility: processor_factory_data type: {type(self._processor_factory_data)}")
+            logger.error(
+                f"MultiprocessingProcessor._test_pickle_compatibility: Pickle test failed: {e}"
+            )
+            logger.error(
+                f"MultiprocessingProcessor._test_pickle_compatibility: processor_factory type: {type(self._processor_factory)}"
+            )
+            logger.error(
+                f"MultiprocessingProcessor._test_pickle_compatibility: processor_factory_data type: {type(self._processor_factory_data)}"
+            )
             raise RuntimeError(f"Pickle compatibility test failed: {e}") from e
 
     def initialize(self) -> None:
@@ -276,11 +350,11 @@ class MultiprocessingProcessor(Processor):
         self._test_pickle_compatibility()
 
         # Set up global queues for subprocess communication
-        logger.debug("MultiprocessingProcessor.initialize: Setting up global queues")
-        global _global_request_queue, _global_response_queue
-        _global_request_queue = self._request_queue
-        _global_response_queue = self._response_queue
-        logger.debug("MultiprocessingProcessor.initialize: Global queues set")
+        # logger.debug("MultiprocessingProcessor.initialize: Setting up global queues")
+        # global _global_request_queue, _global_response_queue
+        # _global_request_queue = self._request_queue
+        # _global_response_queue = self._response_queue
+        # logger.debug("MultiprocessingProcessor.initialize: Global queues set")
 
         # Install dummy stdio handlers to work around Pants-installed ones.
         logger.debug("MultiprocessingProcessor.initialize: Saving original stdio")
@@ -295,7 +369,7 @@ class MultiprocessingProcessor(Processor):
 
             # Start the subprocess
             logger.debug("MultiprocessingProcessor.initialize: Configuring multiprocessing")
-            
+
             # Set multiprocessing start method to 'spawn' for better compatibility
             # try:
             #     original_start_method = multiprocessing.get_start_method()
@@ -305,29 +379,41 @@ class MultiprocessingProcessor(Processor):
             #         logger.debug("MultiprocessingProcessor.initialize: Set start method to 'spawn'")
             # except RuntimeError as e:
             #     logger.debug(f"MultiprocessingProcessor.initialize: Could not set start method: {e}")
-            
+
             multiprocessing.log_to_stderr(logging.DEBUG)
-            
+
             logger.debug("MultiprocessingProcessor.initialize: Creating subprocess")
-            logger.debug(f"MultiprocessingProcessor.initialize: Factory type: {type(self._processor_factory)}")
-            
+            logger.debug(
+                f"MultiprocessingProcessor.initialize: Factory type: {type(self._processor_factory)}"
+            )
+
             try:
                 self._subprocess = multiprocessing.Process(
                     target=_subprocess_worker,
-                    args=(self._processor_factory,),
+                    args=(),
                 )
-                logger.debug("MultiprocessingProcessor.initialize: Process object created successfully")
+                logger.debug(
+                    "MultiprocessingProcessor.initialize: Process object created successfully"
+                )
             except Exception as e:
-                logger.error(f"MultiprocessingProcessor.initialize: Failed to create Process object: {e}")
+                logger.error(
+                    f"MultiprocessingProcessor.initialize: Failed to create Process object: {e}"
+                )
                 raise
-            
+
             logger.debug("MultiprocessingProcessor.initialize: Starting subprocess")
             try:
                 self._subprocess.start()
-                logger.debug(f"MultiprocessingProcessor.initialize: Subprocess started with PID {self._subprocess.pid}")
-                logger.debug(f"MultiprocessingProcessor.initialize: Subprocess logging to /tmp/subprocess-{self._subprocess.pid}.log")
+                logger.debug(
+                    f"MultiprocessingProcessor.initialize: Subprocess started with PID {self._subprocess.pid}"
+                )
+                logger.debug(
+                    f"MultiprocessingProcessor.initialize: Subprocess logging to /tmp/subprocess-{self._subprocess.pid}.log"
+                )
             except Exception as e:
-                logger.error(f"MultiprocessingProcessor.initialize: Failed to start subprocess: {e}")
+                logger.error(
+                    f"MultiprocessingProcessor.initialize: Failed to start subprocess: {e}"
+                )
                 raise
         finally:
             logger.debug("MultiprocessingProcessor.initialize: Restoring original stdio")
@@ -336,22 +422,31 @@ class MultiprocessingProcessor(Processor):
             sys.stderr = saved_stderr
 
         # Wait for subprocess to start
-        logger.debug("MultiprocessingProcessor.initialize: Waiting for subprocess startup confirmation")
+        logger.debug(
+            "MultiprocessingProcessor.initialize: Waiting for subprocess startup confirmation"
+        )
         try:
             response = self._response_queue.get(timeout=10.0)
-            logger.debug(f"MultiprocessingProcessor.initialize: Received startup response: {response}")
+            logger.debug(
+                f"MultiprocessingProcessor.initialize: Received startup response: {response}"
+            )
             if response != "started":
                 raise RuntimeError(f"Subprocess failed to start: {response}")
         except queue.Empty:
             logger.error("MultiprocessingProcessor.initialize: Subprocess startup timeout")
             if self._subprocess:
-                logger.error(f"MultiprocessingProcessor.initialize: Subprocess is_alive: {self._subprocess.is_alive()}")
-                logger.error(f"MultiprocessingProcessor.initialize: Subprocess exitcode: {self._subprocess.exitcode}")
+                logger.error(
+                    f"MultiprocessingProcessor.initialize: Subprocess is_alive: {self._subprocess.is_alive()}"
+                )
+                logger.error(
+                    f"MultiprocessingProcessor.initialize: Subprocess exitcode: {self._subprocess.exitcode}"
+                )
             raise RuntimeError("Subprocess failed to start within timeout")
 
         # Send initialization message
         logger.debug("MultiprocessingProcessor.initialize: Sending initialization message")
         init_data = InitializeData(
+            processor_factory=self._processor_factory,
             processor_factory_data=self._processor_factory_data,
         )
 
@@ -361,17 +456,25 @@ class MultiprocessingProcessor(Processor):
         logger.debug("MultiprocessingProcessor.initialize: Waiting for initialization confirmation")
         try:
             response = self._response_queue.get(timeout=30.0)
-            logger.debug(f"MultiprocessingProcessor.initialize: Received initialization response: {response}")
+            logger.debug(
+                f"MultiprocessingProcessor.initialize: Received initialization response: {response}"
+            )
             if response != "initialized":
                 raise RuntimeError(f"Subprocess initialization failed: {response}")
         except queue.Empty:
             logger.error("MultiprocessingProcessor.initialize: Subprocess initialization timeout")
             if self._subprocess:
-                logger.error(f"MultiprocessingProcessor.initialize: Subprocess is_alive: {self._subprocess.is_alive()}")
-                logger.error(f"MultiprocessingProcessor.initialize: Subprocess exitcode: {self._subprocess.exitcode}")
+                logger.error(
+                    f"MultiprocessingProcessor.initialize: Subprocess is_alive: {self._subprocess.is_alive()}"
+                )
+                logger.error(
+                    f"MultiprocessingProcessor.initialize: Subprocess exitcode: {self._subprocess.exitcode}"
+                )
             raise RuntimeError("Subprocess initialization timeout")
 
-        logger.debug("MultiprocessingProcessor.initialize: OpenTelemetry subprocess initialized successfully")
+        logger.debug(
+            "MultiprocessingProcessor.initialize: OpenTelemetry subprocess initialized successfully"
+        )
         self._initialized = True
 
     def start_workunit(self, workunit: IncompleteWorkunit, *, context: ProcessorContext) -> None:
@@ -460,21 +563,33 @@ class MultiprocessingProcessor(Processor):
     def _send_message(self, message_type: MessageType, data: Any) -> None:
         """Send a message to the subprocess."""
         logger.debug(f"MultiprocessingProcessor._send_message: Attempting to send {message_type}")
-        
+
         if self._subprocess is None:
-            logger.warning(f"MultiprocessingProcessor._send_message: Cannot send {message_type} - subprocess is None")
+            logger.warning(
+                f"MultiprocessingProcessor._send_message: Cannot send {message_type} - subprocess is None"
+            )
             return
-            
+
         if not self._subprocess.is_alive():
-            logger.warning(f"MultiprocessingProcessor._send_message: Cannot send {message_type} - subprocess not alive (exitcode: {self._subprocess.exitcode})")
+            logger.warning(
+                f"MultiprocessingProcessor._send_message: Cannot send {message_type} - subprocess not alive (exitcode: {self._subprocess.exitcode})"
+            )
             return
 
         try:
             message = ProcessorMessage(type=message_type, data=data)
-            logger.debug(f"MultiprocessingProcessor._send_message: Putting message {message_type} in queue")
+            logger.debug(
+                f"MultiprocessingProcessor._send_message: Putting message {message_type} in queue"
+            )
             self._request_queue.put(message, timeout=1.0)
-            logger.debug(f"MultiprocessingProcessor._send_message: Message {message_type} sent successfully")
+            logger.debug(
+                f"MultiprocessingProcessor._send_message: Message {message_type} sent successfully"
+            )
         except queue.Full:
-            logger.warning(f"MultiprocessingProcessor._send_message: Failed to send {message_type} - queue full")
+            logger.warning(
+                f"MultiprocessingProcessor._send_message: Failed to send {message_type} - queue full"
+            )
         except Exception as e:
-            logger.exception(f"MultiprocessingProcessor._send_message: Error sending {message_type}: {e}")
+            logger.exception(
+                f"MultiprocessingProcessor._send_message: Error sending {message_type}: {e}"
+            )
