@@ -83,8 +83,8 @@ class _SerializableContext(ProcessorContext):
 
 
 def _subprocess_worker(
-    request_queue: multiprocessing.Queue[ProcessorMessage],
-    response_queue: multiprocessing.Queue[str],
+    request_queue: Any,  # Manager queue proxy
+    response_queue: Any,  # Manager queue proxy
 ) -> None:
     """Worker function that runs in a separate process to handle OpenTelemetry
     operations."""
@@ -257,12 +257,88 @@ class MultiprocessingProcessor(Processor):
         self._processor_factory = processor_factory
         self._processor_factory_data = processor_factory_data
 
-        # Communication with subprocess
-        self._request_queue: multiprocessing.Queue[ProcessorMessage] = multiprocessing.Queue()
-        self._response_queue: multiprocessing.Queue[str] = multiprocessing.Queue()
+        # Communication with subprocess - use direct queues, create during initialize
+        logger.debug(
+            "MultiprocessingProcessor.__init__: Deferring queue creation until initialize()"
+        )
+        self._request_queue: Any = None
+        self._response_queue: Any = None
         self._subprocess: multiprocessing.Process | None = None
         self._shutdown_event = threading.Event()
         self._initialized = False
+
+    def _set_multiprocessing_start_method(self) -> None:
+        """Set the appropriate multiprocessing start method for the
+        platform."""
+        import platform
+
+        system = platform.system()
+        logger.debug(
+            f"MultiprocessingProcessor._set_multiprocessing_start_method: Detected platform: {system}"
+        )
+
+        try:
+            current_method = multiprocessing.get_start_method()
+            logger.debug(
+                f"MultiprocessingProcessor._set_multiprocessing_start_method: Current start method: {current_method}"
+            )
+
+            if system == "Darwin":  # macOS
+                desired_method = "spawn"
+            elif system == "Linux":
+                desired_method = "forkserver"
+            else:
+                logger.debug(
+                    f"MultiprocessingProcessor._set_multiprocessing_start_method: Unknown platform {system}, keeping current method {current_method}"
+                )
+                return
+
+            if current_method != desired_method:
+                logger.debug(
+                    f"MultiprocessingProcessor._set_multiprocessing_start_method: Setting start method to {desired_method}"
+                )
+                multiprocessing.set_start_method(desired_method, force=True)
+                logger.debug(
+                    f"MultiprocessingProcessor._set_multiprocessing_start_method: Successfully set start method to {desired_method}"
+                )
+            else:
+                logger.debug(
+                    f"MultiprocessingProcessor._set_multiprocessing_start_method: Start method already set to {desired_method}"
+                )
+
+        except RuntimeError as e:
+            logger.warning(
+                f"MultiprocessingProcessor._set_multiprocessing_start_method: Could not set start method: {e}"
+            )
+        except Exception as e:
+            logger.error(
+                f"MultiprocessingProcessor._set_multiprocessing_start_method: Unexpected error setting start method: {e}"
+            )
+
+    def _ensure_queues(self) -> None:
+        """Create direct multiprocessing queues if not already created."""
+        if self._request_queue is None:
+            logger.debug(
+                "MultiprocessingProcessor._ensure_queues: Creating direct multiprocessing queues"
+            )
+
+            # Set appropriate start method for platform
+            self._set_multiprocessing_start_method()
+
+            try:
+                self._request_queue = multiprocessing.Queue()
+                self._response_queue = multiprocessing.Queue()
+                logger.debug(
+                    f"MultiprocessingProcessor._ensure_queues: Created direct queues - request: {type(self._request_queue)}, response: {type(self._response_queue)}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"MultiprocessingProcessor._ensure_queues: Failed to create queues: {e}"
+                )
+                logger.error(
+                    "MultiprocessingProcessor._ensure_queues: Multiprocessing not compatible with this environment"
+                )
+                raise RuntimeError(f"Multiprocessing not supported in this environment: {e}") from e
 
     def _test_pickle_compatibility(self) -> None:
         """Test that processor_factory and processor_factory_data can be
@@ -340,6 +416,9 @@ class MultiprocessingProcessor(Processor):
     def initialize(self) -> None:
         """Start the subprocess and initialize the OpenTelemetry processor."""
         logger.debug("MultiprocessingProcessor.initialize: Starting OpenTelemetry subprocess")
+
+        # Create queues now that any forking should be complete
+        self._ensure_queues()
 
         # Test pickle compatibility before creating subprocess
         self._test_pickle_compatibility()
@@ -431,7 +510,7 @@ class MultiprocessingProcessor(Processor):
                 raise RuntimeError(f"Subprocess failed to start: {response}")
         except queue.Empty:
             logger.error("MultiprocessingProcessor.initialize: Subprocess startup timeout")
-            if self._subprocess:
+            if hasattr(self, "_subprocess") and self._subprocess:
                 logger.error(
                     f"MultiprocessingProcessor.initialize: Subprocess is_alive: {self._subprocess.is_alive()}"
                 )
@@ -460,7 +539,7 @@ class MultiprocessingProcessor(Processor):
                 raise RuntimeError(f"Subprocess initialization failed: {response}")
         except queue.Empty:
             logger.error("MultiprocessingProcessor.initialize: Subprocess initialization timeout")
-            if self._subprocess:
+            if hasattr(self, "_subprocess") and self._subprocess:
                 logger.error(
                     f"MultiprocessingProcessor.initialize: Subprocess is_alive: {self._subprocess.is_alive()}"
                 )
@@ -531,22 +610,26 @@ class MultiprocessingProcessor(Processor):
         # Shutdown subprocess
         self._send_message(MessageType.SHUTDOWN, None)
 
-        if self._subprocess and self._subprocess.is_alive():
+        if hasattr(self, "_subprocess") and self._subprocess and self._subprocess.is_alive():
             self._subprocess.join(timeout=5.0)
             if self._subprocess.is_alive():
                 logger.warning("Forcibly terminating subprocess")
                 self._subprocess.terminate()
                 self._subprocess.join(timeout=2.0)
 
+        # Cleanup queues
+        self._cleanup_queues()
+
         logger.debug("MultiprocessingProcessor.finish completed")
 
     def __del__(self) -> None:
         """Cleanup subprocess if not properly shutdown."""
         self._cleanup_subprocess()
+        self._cleanup_queues()
 
     def _cleanup_subprocess(self) -> None:
         """Force cleanup of subprocess resources."""
-        if self._subprocess and self._subprocess.is_alive():
+        if hasattr(self, "_subprocess") and self._subprocess and self._subprocess.is_alive():
             logger.warning("Forcibly cleaning up subprocess")
             try:
                 self._subprocess.terminate()
@@ -557,11 +640,26 @@ class MultiprocessingProcessor(Processor):
             except Exception as e:
                 logger.exception(f"Error during subprocess cleanup: {e}")
 
+    def _cleanup_queues(self) -> None:
+        """Cleanup queue resources."""
+        try:
+            if hasattr(self, "_request_queue") and self._request_queue is not None:
+                logger.debug("MultiprocessingProcessor: Cleaning up queues")
+                # Close queues if they have close method
+                if hasattr(self._request_queue, "close"):
+                    self._request_queue.close()
+                if hasattr(self._response_queue, "close"):
+                    self._response_queue.close()
+                self._request_queue = None
+                self._response_queue = None
+        except Exception as e:
+            logger.exception(f"Error during queue cleanup: {e}")
+
     def _send_message(self, message_type: MessageType, data: Any) -> None:
         """Send a message to the subprocess."""
         logger.debug(f"MultiprocessingProcessor._send_message: Attempting to send {message_type}")
 
-        if self._subprocess is None:
+        if not hasattr(self, "_subprocess") or self._subprocess is None:
             logger.warning(
                 f"MultiprocessingProcessor._send_message: Cannot send {message_type} - subprocess is None"
             )

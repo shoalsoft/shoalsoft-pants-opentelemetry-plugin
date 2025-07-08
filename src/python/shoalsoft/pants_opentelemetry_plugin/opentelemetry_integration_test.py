@@ -237,7 +237,7 @@ def do_test_of_otlp_grpc_exporter(
                 },
                 cwd=buildroot,
                 stream_output=True,
-                use_pantsd=False,
+                use_pantsd=True,
             )
             result.assert_success()
 
