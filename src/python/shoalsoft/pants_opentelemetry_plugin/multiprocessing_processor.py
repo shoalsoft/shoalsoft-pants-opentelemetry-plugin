@@ -18,6 +18,7 @@ import datetime
 import enum
 import logging
 import multiprocessing
+import pickle
 import queue
 import signal
 import sys
@@ -33,6 +34,10 @@ from shoalsoft.pants_opentelemetry_plugin.processor import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Module-level queues that will be set before subprocess creation
+_global_request_queue: multiprocessing.Queue[ProcessorMessage] | None = None
+_global_response_queue: multiprocessing.Queue[str] | None = None
 
 
 class MessageType(enum.Enum):
@@ -81,17 +86,38 @@ class _SerializableContext(ProcessorContext):
 
 
 def _subprocess_worker(
-    request_queue: multiprocessing.Queue[ProcessorMessage],
-    response_queue: multiprocessing.Queue[str],
     processor_factory: Callable[[Any], Processor],
 ) -> None:
     """Worker function that runs in a separate process to handle OpenTelemetry
     operations."""
     processor: Processor | None = None
 
-    # Set up logging for subprocess
-    logging.basicConfig(level=logging.DEBUG, format='[SUBPROCESS] %(levelname)s: %(message)s')
-    logger.debug("_subprocess_worker: Entry point reached")
+    # Set up logging for subprocess to write to file
+    import os
+    pid = os.getpid()
+    log_file = f"/tmp/subprocess-{pid}.log"
+    
+    # Configure logging to write to file
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='[SUBPROCESS-%(process)d] %(asctime)s %(levelname)s: %(message)s',
+        handlers=[
+            logging.FileHandler(log_file, mode='w'),
+            logging.StreamHandler()  # Also log to stderr for backup
+        ]
+    )
+    logger.debug(f"_subprocess_worker: Entry point reached, logging to {log_file}")
+    logger.debug(f"_subprocess_worker: PID is {pid}")
+
+    # Access the global queues
+    global _global_request_queue, _global_response_queue
+    if _global_request_queue is None or _global_response_queue is None:
+        logger.error("_subprocess_worker: Global queues not initialized")
+        return
+    
+    request_queue = _global_request_queue
+    response_queue = _global_response_queue
+    logger.debug("_subprocess_worker: Accessed global queues successfully")
 
     try:
         # Ignore SIGINT in the subprocess - let the parent handle it
@@ -170,6 +196,9 @@ def _subprocess_worker(
             pass  # Queue might be broken
     finally:
         logger.debug("_subprocess_worker: Exiting subprocess worker")
+        # Flush all log handlers to ensure everything is written to file
+        for handler in logging.getLogger().handlers:
+            handler.flush()
 
 
 class _DummyStdio:
@@ -205,9 +234,53 @@ class MultiprocessingProcessor(Processor):
         self._shutdown_event = threading.Event()
         self._initialized = False
 
+    def _test_pickle_compatibility(self) -> None:
+        """Test that processor_factory and processor_factory_data can be pickled."""
+        logger.debug("MultiprocessingProcessor._test_pickle_compatibility: Testing pickle compatibility")
+        
+        try:
+            # Test processor_factory pickling
+            logger.debug("MultiprocessingProcessor._test_pickle_compatibility: Testing processor_factory pickling")
+            pickled_factory = pickle.dumps(self._processor_factory)
+            unpickled_factory = pickle.loads(pickled_factory)
+            logger.debug(f"MultiprocessingProcessor._test_pickle_compatibility: processor_factory pickle test passed (size: {len(pickled_factory)} bytes)")
+            
+            # Test processor_factory_data pickling
+            logger.debug("MultiprocessingProcessor._test_pickle_compatibility: Testing processor_factory_data pickling")
+            pickled_data = pickle.dumps(self._processor_factory_data)
+            unpickled_data = pickle.loads(pickled_data)
+            logger.debug(f"MultiprocessingProcessor._test_pickle_compatibility: processor_factory_data pickle test passed (size: {len(pickled_data)} bytes)")
+            
+            # Test that unpickled factory is callable
+            logger.debug("MultiprocessingProcessor._test_pickle_compatibility: Testing unpickled factory is callable")
+            if not callable(unpickled_factory):
+                raise ValueError("Unpickled processor_factory is not callable")
+            
+            # Test only the processor_factory since queues are now module-level globals
+            logger.debug("MultiprocessingProcessor._test_pickle_compatibility: Only processor_factory needs to be pickled")
+            logger.debug("MultiprocessingProcessor._test_pickle_compatibility: Queues are now module-level globals, not pickled")
+            
+            logger.debug("MultiprocessingProcessor._test_pickle_compatibility: All pickle tests passed")
+            
+        except Exception as e:
+            logger.error(f"MultiprocessingProcessor._test_pickle_compatibility: Pickle test failed: {e}")
+            logger.error(f"MultiprocessingProcessor._test_pickle_compatibility: processor_factory type: {type(self._processor_factory)}")
+            logger.error(f"MultiprocessingProcessor._test_pickle_compatibility: processor_factory_data type: {type(self._processor_factory_data)}")
+            raise RuntimeError(f"Pickle compatibility test failed: {e}") from e
+
     def initialize(self) -> None:
         """Start the subprocess and initialize the OpenTelemetry processor."""
         logger.debug("MultiprocessingProcessor.initialize: Starting OpenTelemetry subprocess")
+
+        # Test pickle compatibility before creating subprocess
+        self._test_pickle_compatibility()
+
+        # Set up global queues for subprocess communication
+        logger.debug("MultiprocessingProcessor.initialize: Setting up global queues")
+        global _global_request_queue, _global_response_queue
+        _global_request_queue = self._request_queue
+        _global_response_queue = self._response_queue
+        logger.debug("MultiprocessingProcessor.initialize: Global queues set")
 
         # Install dummy stdio handlers to work around Pants-installed ones.
         logger.debug("MultiprocessingProcessor.initialize: Saving original stdio")
@@ -221,17 +294,41 @@ class MultiprocessingProcessor(Processor):
             sys.stderr = _DummyStdio(sys.stderr)
 
             # Start the subprocess
-            logger.debug("MultiprocessingProcessor.initialize: Configuring multiprocessing logging")
+            logger.debug("MultiprocessingProcessor.initialize: Configuring multiprocessing")
+            
+            # Set multiprocessing start method to 'spawn' for better compatibility
+            # try:
+            #     original_start_method = multiprocessing.get_start_method()
+            #     logger.debug(f"MultiprocessingProcessor.initialize: Current start method: {original_start_method}")
+            #     if original_start_method != 'spawn':
+            #         multiprocessing.set_start_method('spawn', force=True)
+            #         logger.debug("MultiprocessingProcessor.initialize: Set start method to 'spawn'")
+            # except RuntimeError as e:
+            #     logger.debug(f"MultiprocessingProcessor.initialize: Could not set start method: {e}")
+            
             multiprocessing.log_to_stderr(logging.DEBUG)
             
             logger.debug("MultiprocessingProcessor.initialize: Creating subprocess")
-            self._subprocess = multiprocessing.Process(
-                target=_subprocess_worker,
-                args=(self._request_queue, self._response_queue, self._processor_factory),
-            )
+            logger.debug(f"MultiprocessingProcessor.initialize: Factory type: {type(self._processor_factory)}")
+            
+            try:
+                self._subprocess = multiprocessing.Process(
+                    target=_subprocess_worker,
+                    args=(self._processor_factory,),
+                )
+                logger.debug("MultiprocessingProcessor.initialize: Process object created successfully")
+            except Exception as e:
+                logger.error(f"MultiprocessingProcessor.initialize: Failed to create Process object: {e}")
+                raise
+            
             logger.debug("MultiprocessingProcessor.initialize: Starting subprocess")
-            self._subprocess.start()
-            logger.debug(f"MultiprocessingProcessor.initialize: Subprocess started with PID {self._subprocess.pid}")
+            try:
+                self._subprocess.start()
+                logger.debug(f"MultiprocessingProcessor.initialize: Subprocess started with PID {self._subprocess.pid}")
+                logger.debug(f"MultiprocessingProcessor.initialize: Subprocess logging to /tmp/subprocess-{self._subprocess.pid}.log")
+            except Exception as e:
+                logger.error(f"MultiprocessingProcessor.initialize: Failed to start subprocess: {e}")
+                raise
         finally:
             logger.debug("MultiprocessingProcessor.initialize: Restoring original stdio")
             sys.stdin = saved_stdin
