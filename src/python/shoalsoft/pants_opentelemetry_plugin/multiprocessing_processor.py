@@ -50,11 +50,6 @@ class ProcessorMessage:
     data: Any = None
 
 
-# Module-level queues that will be set before subprocess creation
-_global_request_queue: multiprocessing.Queue[ProcessorMessage] = multiprocessing.Queue()
-_global_response_queue: multiprocessing.Queue[str] = multiprocessing.Queue()
-
-
 @dataclass
 class InitializeData:
     processor_factory: Callable[[Any], Processor]
@@ -87,7 +82,10 @@ class _SerializableContext(ProcessorContext):
         return self._metrics
 
 
-def _subprocess_worker() -> None:
+def _subprocess_worker(
+    request_queue: multiprocessing.Queue[ProcessorMessage],
+    response_queue: multiprocessing.Queue[str],
+) -> None:
     """Worker function that runs in a separate process to handle OpenTelemetry
     operations."""
     processor: Processor | None = None
@@ -123,15 +121,12 @@ def _subprocess_worker() -> None:
     log_message("DEBUG", f"_subprocess_worker: Entry point reached, logging to {log_file_path}")
     log_message("DEBUG", f"_subprocess_worker: PID is {pid}")
 
-    # Access the global queues
-    global _global_request_queue, _global_response_queue
-    # if _global_request_queue is None or _global_response_queue is None:
-    #     log_message("ERROR", "_subprocess_worker: Global queues not initialized")
-    #     return
-
-    request_queue = _global_request_queue
-    response_queue = _global_response_queue
-    log_message("DEBUG", "_subprocess_worker: Accessed global queues successfully")
+    # Queues are now passed as arguments
+    log_message("DEBUG", "_subprocess_worker: Using queues passed as arguments")
+    log_message("DEBUG", f"_subprocess_worker: request_queue type: {type(request_queue)}")
+    log_message("DEBUG", f"_subprocess_worker: response_queue type: {type(response_queue)}")
+    log_message("DEBUG", f"_subprocess_worker: request_queue id: {id(request_queue)}")
+    log_message("DEBUG", f"_subprocess_worker: response_queue id: {id(response_queue)}")
 
     try:
         # Ignore SIGINT in the subprocess - let the parent handle it
@@ -263,8 +258,8 @@ class MultiprocessingProcessor(Processor):
         self._processor_factory_data = processor_factory_data
 
         # Communication with subprocess
-        self._request_queue: multiprocessing.Queue[ProcessorMessage] = _global_request_queue
-        self._response_queue: multiprocessing.Queue[str] = _global_response_queue
+        self._request_queue: multiprocessing.Queue[ProcessorMessage] = multiprocessing.Queue()
+        self._response_queue: multiprocessing.Queue[str] = multiprocessing.Queue()
         self._subprocess: multiprocessing.Process | None = None
         self._shutdown_event = threading.Event()
         self._initialized = False
@@ -349,12 +344,8 @@ class MultiprocessingProcessor(Processor):
         # Test pickle compatibility before creating subprocess
         self._test_pickle_compatibility()
 
-        # Set up global queues for subprocess communication
-        # logger.debug("MultiprocessingProcessor.initialize: Setting up global queues")
-        # global _global_request_queue, _global_response_queue
-        # _global_request_queue = self._request_queue
-        # _global_response_queue = self._response_queue
-        # logger.debug("MultiprocessingProcessor.initialize: Global queues set")
+        # Queues will be passed as arguments to subprocess
+        logger.debug("MultiprocessingProcessor.initialize: Queues will be passed as arguments")
 
         # Install dummy stdio handlers to work around Pants-installed ones.
         logger.debug("MultiprocessingProcessor.initialize: Saving original stdio")
@@ -386,11 +377,17 @@ class MultiprocessingProcessor(Processor):
             logger.debug(
                 f"MultiprocessingProcessor.initialize: Factory type: {type(self._processor_factory)}"
             )
+            logger.debug(
+                f"MultiprocessingProcessor.initialize: request_queue id: {id(self._request_queue)}"
+            )
+            logger.debug(
+                f"MultiprocessingProcessor.initialize: response_queue id: {id(self._response_queue)}"
+            )
 
             try:
                 self._subprocess = multiprocessing.Process(
                     target=_subprocess_worker,
-                    args=(),
+                    args=(self._request_queue, self._response_queue),
                 )
                 logger.debug(
                     "MultiprocessingProcessor.initialize: Process object created successfully"

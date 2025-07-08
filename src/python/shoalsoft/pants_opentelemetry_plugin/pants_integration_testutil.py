@@ -150,15 +150,16 @@ def run_pants_with_workdir_without_waiting(
     args = [
         "--no-pantsrc",
         f"--pants-workdir={workdir}",
+        "--no-pantsd",
     ]
     if set_pants_ignore:
         # FIXME: For some reason, Pants's CI adds the coverage file and it is not ignored by default. Why?
         args.append("--pants-ignore=+['.coverage.*', '.python-build-standalone']")
 
-    pantsd_in_command = "--no-pantsd" in command or "--pantsd" in command
-    pantsd_in_config = config and "GLOBAL" in config and "pantsd" in config["GLOBAL"]
-    if not pantsd_in_command and not pantsd_in_config:
-        args.append("--pantsd" if use_pantsd else "--no-pantsd")
+    # pantsd_in_command = "--no-pantsd" in command or "--pantsd" in command
+    # pantsd_in_config = config and "GLOBAL" in config and "pantsd" in config["GLOBAL"]
+    # if not pantsd_in_command and not pantsd_in_config:
+    #     args.append("--pantsd" if use_pantsd else "--no-pantsd")
 
     # if hermetic:
     #     args.append("--pants-config-files=[]")
