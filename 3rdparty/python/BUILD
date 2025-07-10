@@ -7,6 +7,9 @@ python_requirements(
         "pantsbuild.pants": ["pants"],
         "pantsbuild.pants.testutil": ["pants.testutil"],
     },
+    type_stubs_module_mapping={
+        "types-grpcio": ["grpc"],
+    },
 )
 
 python_requirements(
@@ -18,6 +21,9 @@ python_requirements(
         "pantsbuild.pants": ["pants"],
         "pantsbuild.pants.testutil": ["pants.testutil"],
     },
+    type_stubs_module_mapping={
+        "types-grpcio": ["grpc"],
+    },
 )
 
 python_requirements(
@@ -28,6 +34,9 @@ python_requirements(
         "opentelemetry-proto": ["opentelemetry.proto"],
         "pantsbuild.pants": ["pants"],
         "pantsbuild.pants.testutil": ["pants.testutil"],
+    },
+    type_stubs_module_mapping={
+        "types-grpcio": ["grpc"],
     },
 )
 

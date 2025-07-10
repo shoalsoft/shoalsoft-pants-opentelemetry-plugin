@@ -102,11 +102,15 @@ class SingleThreadedProcessor(Processor):
         self._processor.initialize()
         self._initialize_completed_event.set()
 
+        logger.debug("Work unit processing loop started.")
+
         finish_details: _FinishDetails | None
         while msg := self._queue.get():
             finish_details = self._handle_message(msg)
             if finish_details is not None:
                 break
+
+        logger.debug("Work unit processing loop finished.")
 
         if self._queue.qsize() > 0:
             logger.warning(
@@ -118,7 +122,8 @@ class SingleThreadedProcessor(Processor):
 
     def initialize(self) -> None:
         self._thread.start()
-        self._initialize_completed_event.wait()
+        if not self._initialize_completed_event.wait(5.0):
+            raise RuntimeError("Work unit processor failed to report initialization.")
 
     def start_workunit(self, workunit: IncompleteWorkunit, *, context: ProcessorContext) -> None:
         self._queue.put_nowait((_MessageType.START_WORKUNIT, workunit, context))
@@ -132,7 +137,8 @@ class SingleThreadedProcessor(Processor):
         self._queue.put_nowait(
             (_MessageType.FINISH, _FinishDetails(timeout=timeout, context=context), context)
         )
-        self._finish_completed_event.wait(
+        if not self._finish_completed_event.wait(
             timeout=timeout.total_seconds() * 1000.0 if timeout is not None else None
-        )
-        self._thread.join()
+        ):
+            raise RuntimeError("Work unit processor failed to report completion.")
+        self._thread.join(timeout=timeout.total_seconds() if timeout is not None else None)
