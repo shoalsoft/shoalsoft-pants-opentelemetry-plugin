@@ -102,15 +102,11 @@ class SingleThreadedProcessor(Processor):
         self._processor.initialize()
         self._initialize_completed_event.set()
 
-        logger.debug("Work unit processing loop started.")
-
         finish_details: _FinishDetails | None
         while msg := self._queue.get():
             finish_details = self._handle_message(msg)
             if finish_details is not None:
                 break
-
-        logger.debug("Work unit processing loop finished.")
 
         if self._queue.qsize() > 0:
             logger.warning(

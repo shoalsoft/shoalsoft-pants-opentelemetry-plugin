@@ -15,7 +15,6 @@
 from __future__ import annotations
 
 import datetime
-import logging
 from typing import Any, Mapping
 
 from pants.engine.internals.native_engine import all_counter_names
@@ -29,8 +28,6 @@ from shoalsoft.pants_opentelemetry_plugin.processor import (
     ProcessorContext,
     Workunit,
 )
-
-logger = logging.getLogger(__name__)
 
 
 class _TelemetryContext(ProcessorContext):
@@ -103,10 +100,6 @@ class TelemetryWorkunitsCallback(WorkunitsCallback):
         finished: bool = False,
         **kwargs: Any,
     ) -> None:
-        logger.debug(
-            f"TelemetryWorkunitsCallback called: #completed={len(completed_workunits)}, #started={len(started_workunits)}, finished={finished}"
-        )
-
         telemetry_context = _TelemetryContext(context)
 
         for started_workunit in started_workunits:

@@ -38,7 +38,7 @@ class ExceptionLoggingProcessor(Processor):
     @contextmanager
     def _wrapper(self) -> Generator[None, None, None]:
         try:
-            yield
+            return (yield)
         except Exception as ex:
             logger.debug(
                 f"An exception occurred while processing a workunit in the {self._name} workunit tracing handler: {ex}",

@@ -65,8 +65,7 @@ async def telemetry_workunits_callback_factory_request(
 
         # Use subprocess processor for gRPC to avoid fork safety issues.
         if telemetry.exporter == TracingExporterId.GRPC:
-            logger.debug("Using queue processor for gRPC exporter")
-
+            logger.debug("Using subprocess processor for gRPC exporter.")
             processor = SubprocessProcessor(
                 otel_parameters=OtelParameters(
                     endpoint=telemetry.exporter_endpoint,
@@ -86,7 +85,7 @@ async def telemetry_workunits_callback_factory_request(
                 traceparent_env_var=traceparent_env_var,
             )
         else:
-            logger.debug("Using single-threaded processor for non-gRPC exporter")
+            logger.debug("Using single-threaded in-process processor for non-gRPC exporter.")
             otel_processor = get_processor(
                 span_exporter_name=telemetry.exporter,
                 otel_parameters=OtelParameters(

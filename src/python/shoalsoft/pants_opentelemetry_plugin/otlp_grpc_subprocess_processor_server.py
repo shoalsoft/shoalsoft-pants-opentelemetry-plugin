@@ -50,7 +50,6 @@ class _Context(ProcessorContext):
 
 
 class Server:
-
     def __init__(self, processor: Processor) -> None:
         self.processor = processor
         self.message_queue: queue.Queue[ProcessorMessage] = queue.Queue(maxsize=1000)

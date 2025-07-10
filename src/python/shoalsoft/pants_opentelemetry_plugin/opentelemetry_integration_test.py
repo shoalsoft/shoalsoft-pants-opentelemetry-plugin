@@ -470,16 +470,16 @@ def test_opentelemetry_integration(subtests, pants_version_str: str) -> None:
         )
         result.assert_success()
 
-    with subtests.test(msg="OTLP/GRPC span exporter"):
-        do_test_of_otlp_grpc_exporter(
+    with subtests.test(msg="OTLP/HTTP span exporter"):
+        do_test_of_otlp_http_exporter(
             buildroot=buildroot,
             pants_exe_args=pants_exe_args,
             workdir_base=workdir_base,
             extra_env=extra_env,
         )
 
-    with subtests.test(msg="OTLP/HTTP span exporter"):
-        do_test_of_otlp_http_exporter(
+    with subtests.test(msg="OTLP/GRPC span exporter"):
+        do_test_of_otlp_grpc_exporter(
             buildroot=buildroot,
             pants_exe_args=pants_exe_args,
             workdir_base=workdir_base,
