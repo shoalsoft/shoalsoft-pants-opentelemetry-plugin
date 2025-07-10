@@ -14,25 +14,27 @@
 
 from __future__ import annotations
 
+import base64
 import json
+import logging
 import os
+import queue
 import subprocess
+import sys
 import tempfile
 import textwrap
 import threading
 import time
 import typing
-from concurrent import futures
 from dataclasses import dataclass
 from functools import partial
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import IO, Any, Iterable, Mapping
 
-import grpc  # type: ignore[import-untyped]
 import httpx
 import pytest
-from opentelemetry.proto.collector.trace.v1 import trace_service_pb2, trace_service_pb2_grpc
+from opentelemetry.proto.collector.trace.v1 import trace_service_pb2
 from opentelemetry.proto.common.v1 import common_pb2
 from opentelemetry.proto.trace.v1 import trace_pb2
 from packaging.version import Version
@@ -41,6 +43,8 @@ from pants.testutil.python_interpreter_selection import python_interpreter_path
 from pants.util.dirutil import safe_file_dump
 from shoalsoft.pants_opentelemetry_plugin.pants_integration_testutil import run_pants_with_workdir
 from shoalsoft.pants_opentelemetry_plugin.subsystem import TracingExporterId
+
+logger = logging.getLogger(__name__)
 
 
 def _safe_write_files(base_path: str | os.PathLike, files: Mapping[str, str | bytes]) -> None:
@@ -189,7 +193,7 @@ def do_test_of_otlp_http_exporter(
         result.assert_success()
 
         # Assert that tracing spans were received over HTTP.
-        assert len(recorded_requests) > 0
+        assert len(recorded_requests) > 0, "No trace requests received!"
 
         def _convert(body: bytes) -> trace_service_pb2.ExportTraceServiceRequest:
             trace_request = trace_service_pb2.ExportTraceServiceRequest()
@@ -199,17 +203,6 @@ def do_test_of_otlp_http_exporter(
         _assert_trace_requests([_convert(request.body) for request in recorded_requests])
 
 
-class _TraceServiceImpl(trace_service_pb2_grpc.TraceServiceServicer):
-    def __init__(self, requests: list[trace_service_pb2.ExportTraceServiceRequest]) -> None:
-        self.requests = requests
-
-    def Export(
-        self, request: trace_service_pb2.ExportTraceServiceRequest, context
-    ) -> trace_service_pb2.ExportTraceServiceResponse:
-        self.requests.append(request)
-        return trace_service_pb2.ExportTraceServiceResponse()
-
-
 def do_test_of_otlp_grpc_exporter(
     *,
     buildroot: Path,
@@ -217,45 +210,122 @@ def do_test_of_otlp_grpc_exporter(
     workdir_base: Path,
     extra_env: Mapping[str, str] | None = None,
 ) -> None:
-    received_requests: list[trace_service_pb2.ExportTraceServiceRequest] = []
-    server_impl = _TraceServiceImpl(received_requests)
+    # Start a subprocess with a test server to receive OpenTelemetry spans. Because of the fork safety issues with the
+    # gRPC C library wrapped by the `grpcio` Python module, gRPC-related logic should be invoked in a process which
+    # will not fork once gRPC is in use.
+    script_path = Path(__file__).parent.joinpath("otlp_grpc_test_server.py")
+    assert script_path.exists(), "gRPC test server script is not available."
+    test_server_process = subprocess.Popen(
+        [sys.executable, str(script_path)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env={
+            "PYTHONPATH": ":".join(sys.path),
+            "PYTHONUNBUFFERED": "1",
+            "GRPC_VERBOSITY": "DEBUG",
+        },
+    )
+    output_queue: queue.Queue[str] = queue.Queue()
+    error_queue: queue.Queue[str] = queue.Queue()
 
-    grpc_server = grpc.server(futures.ThreadPoolExecutor(max_workers=2))
-    trace_service_pb2_grpc.add_TraceServiceServicer_to_server(server_impl, grpc_server)
-    server_port = grpc_server.add_insecure_port("127.0.0.1:0")
-    grpc_server.start()
+    def worker(stream: IO[bytes], queue: queue.Queue[str], log: bool = False) -> None:
+        while True:
+            line = stream.readline()
+            if not line:
+                break
+            if log:
+                logger.info("")
+            queue.put_nowait(line.decode("utf-8").strip())
 
-    sources = {
-        "otlp-grpc/BUILD": "python_sources(name='src')\n",
-        "otlp-grpc/main.py": "print('Hello World!)\n",
-    }
-    with tempfile.TemporaryDirectory(dir=workdir_base) as workdir:
-        _safe_write_files(buildroot, sources)
+    stdout_reader_thread = threading.Thread(
+        target=worker, args=(test_server_process.stdout, output_queue)
+    )
+    stdout_reader_thread.daemon = True
+    stdout_reader_thread.start()
 
-        result = run_pants_with_workdir(
-            [
-                "--shoalsoft-opentelemetry-enabled",
-                f"--shoalsoft-opentelemetry-exporter={TracingExporterId.GRPC.value}",
-                f"--shoalsoft-opentelemetry-exporter-endpoint=http://127.0.0.1:{server_port}/",
-                "--shoalsoft-opentelemetry-exporter-insecure",
-                "list",
-                "otlp-grpc::",
-            ],
-            pants_exe_args=pants_exe_args,
-            workdir=workdir,
-            extra_env={
-                **(extra_env if extra_env else {}),
-                "PANTS_BUILDROOT_OVERRIDE": str(buildroot),
-                "GRPC_VERBOSITY": "DEBUG",
-                "TRACEPARENT": "00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-00",
-            },
-            cwd=buildroot,
-        )
-        result.assert_success()
+    stderr_reader_thread = threading.Thread(
+        target=worker, args=(test_server_process.stderr, error_queue)
+    )
+    stderr_reader_thread.daemon = True
+    stderr_reader_thread.start()
 
-        # Assert that tracing spans were received over HTTP.
-        assert len(received_requests) > 0
-        _assert_trace_requests(received_requests)
+    try:
+        # The server's listening port is written as the first output line.
+        server_port: int
+        try:
+            server_port_str = output_queue.get(timeout=5.0)
+            server_port = int(server_port_str)
+        except queue.Empty:
+            raise AssertionError("gRPC test server failed to start within timeout.")
+
+        sources = {
+            "otlp-grpc/BUILD": "python_sources(name='src')\n",
+            "otlp-grpc/main.py": "print('Hello World!')\n",
+        }
+        with tempfile.TemporaryDirectory(dir=workdir_base) as workdir:
+            _safe_write_files(buildroot, sources)
+
+            # Test the gRPC exporter configuration with actual gRPC server
+            result = run_pants_with_workdir(
+                [
+                    "--shoalsoft-opentelemetry-enabled",
+                    f"--shoalsoft-opentelemetry-exporter={TracingExporterId.GRPC.value}",
+                    f"--shoalsoft-opentelemetry-exporter-endpoint=http://127.0.0.1:{server_port}",
+                    "--shoalsoft-opentelemetry-exporter-insecure",
+                    "--shoalsoft-opentelemetry-finish-timeout=5",  # Allow time for export
+                    "-ldebug",
+                    "list",
+                    "otlp-grpc::",
+                ],
+                pants_exe_args=pants_exe_args,
+                workdir=workdir,
+                extra_env={
+                    **(extra_env if extra_env else {}),
+                    "PANTS_BUILDROOT_OVERRIDE": str(buildroot),
+                    "TRACEPARENT": "00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-00",
+                },
+                cwd=buildroot,
+                stream_output=True,
+                use_pantsd=False,
+            )
+
+            # The command should succeed.
+            result.assert_success()
+
+            # Collect all of the trace reqyests sent to the test server.
+            received_requests: list[trace_service_pb2.ExportTraceServiceRequest] = []
+            while True:
+                try:
+                    trace_request_str = output_queue.get(timeout=0.25)
+                    trace_request = trace_service_pb2.ExportTraceServiceRequest()
+                    trace_request.ParseFromString(
+                        base64.b64decode(trace_request_str, validate=True)
+                    )
+                    received_requests.append(trace_request)
+                except queue.Empty:
+                    break
+
+            # Assert that tracing spans were received over HTTP.
+            assert len(received_requests) > 0, "No trace requests received!"
+
+            _assert_trace_requests(received_requests)
+
+    finally:
+        test_server_process.kill()
+        test_server_process.wait(timeout=1.0)
+
+        error_messages: list[str] = []
+        while True:
+            try:
+                error_str = error_queue.get(timeout=0.25)
+                error_messages.append(error_str)
+            except queue.Empty:
+                break
+
+        joined_error_messages = "\n".join(error_messages)
+        if joined_error_messages:
+            print("gRPC test server returned stderr output:\n\n" + joined_error_messages)
+            assert "TEST-ERROR" not in joined_error_messages, "gRPC test server signalled an error"
 
 
 def do_test_of_json_file_exporter(

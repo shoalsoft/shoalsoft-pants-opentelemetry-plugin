@@ -77,3 +77,7 @@ The plugin uses the `shoalsoft-opentelemetry` options scope. Key options:
 - isort import sorting  
 - flake8 linting with custom config in `build-support/flake8/.flake8`
 - mypy type checking with strict settings
+
+## Development Workflow
+
+- When testing changes, first check formatting, linting, and type checking via the Pants `fmt`, `lint`, and `check` goals respectively. Then run tests using the Pants `test` goal. Do not attempt to run tests directly using `pytest` since Pants supplies the execution environment.
