@@ -1,6 +1,7 @@
 [GLOBAL]
 plugins.add = ["shoalsoft-pants-opentelemetry-plugin==0.3.0"]
 backend_packages.add = ["shoalsoft.pants_opentelemetry_plugin"]
+level = "debug"
 
 [shoalsoft-opentelemetry]
 enabled = true
