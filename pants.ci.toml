@@ -4,7 +4,7 @@ backend_packages.add = ["shoalsoft.pants_opentelemetry_plugin"]
 level = "debug"
 
 [python-repos]
-indexes = ["https://test.pypi.org/simple/"]
+indexes = ["https://test.pypi.org/simple/", "https://pypi.org/simple/"]
 
 [shoalsoft-opentelemetry]
 enabled = true
