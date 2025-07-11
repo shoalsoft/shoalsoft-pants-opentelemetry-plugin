@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import argparse
 import datetime
 import tempfile
 
@@ -319,6 +320,164 @@ def test_subprocess_processor_sequence_id_increments():
     assert seq2 == 2
     assert seq3 == 3
     assert processor._next_sequence_id == 3
+
+
+def test_subprocess_server_argument_parsing():
+    """Test that the subprocess server can parse all its defined arguments."""
+    # Test basic argument parsing
+    parser = argparse.ArgumentParser()
+    OtelParameters.add_options_to_parser(parser)
+    parser.add_argument("--build_root", default=None, action="store")
+    parser.add_argument("--traceparent_env_var", default=None, action="store")
+
+    # Test minimal arguments
+    args = ["--build_root", "/tmp/test"]
+    parsed_options = parser.parse_args(args)
+    otel_parameters = OtelParameters.from_parsed_options(parsed_options)
+
+    assert parsed_options.build_root == "/tmp/test"
+    assert parsed_options.traceparent_env_var is None
+    assert otel_parameters.endpoint is None
+    assert otel_parameters.insecure is None
+
+    # Test all arguments
+    args = [
+        "--build_root",
+        "/tmp/test",
+        "--traceparent_env_var",
+        "TRACE_PARENT",
+        "--endpoint",
+        "http://localhost:4318/v1/traces",
+        "--certificate_file",
+        "/path/to/cert.pem",
+        "--client_key_file",
+        "/path/to/key.pem",
+        "--client_certificate_file",
+        "/path/to/client.pem",
+        "--headers",
+        '{"x-api-key": "test"}',
+        "--timeout",
+        "30",
+        "--compression",
+        "gzip",
+        "--insecure",
+    ]
+    parsed_options = parser.parse_args(args)
+    otel_parameters = OtelParameters.from_parsed_options(parsed_options)
+
+    assert parsed_options.build_root == "/tmp/test"
+    assert parsed_options.traceparent_env_var == "TRACE_PARENT"
+    assert otel_parameters.endpoint == "http://localhost:4318/v1/traces"
+    assert otel_parameters.certificate_file == "/path/to/cert.pem"
+    assert otel_parameters.client_key_file == "/path/to/key.pem"
+    assert otel_parameters.client_certificate_file == "/path/to/client.pem"
+    assert otel_parameters.headers == {"x-api-key": "test"}
+    assert otel_parameters.timeout == 30
+    assert otel_parameters.compression == "gzip"
+    assert otel_parameters.insecure is True
+
+    # Test --no-insecure
+    args = ["--build_root", "/tmp/test", "--no-insecure"]
+    parsed_options = parser.parse_args(args)
+    otel_parameters = OtelParameters.from_parsed_options(parsed_options)
+
+    assert otel_parameters.insecure is False
+
+
+def test_subprocess_server_insecure_argument_variations():
+    """Test that --insecure and --no-insecure arguments work correctly."""
+    parser = argparse.ArgumentParser()
+    OtelParameters.add_options_to_parser(parser)
+    parser.add_argument("--build_root", default=None, action="store")
+
+    # Test --insecure
+    args = ["--build_root", "/tmp/test", "--insecure"]
+    parsed_options = parser.parse_args(args)
+    otel_parameters = OtelParameters.from_parsed_options(parsed_options)
+    assert otel_parameters.insecure is True
+
+    # Test --no-insecure
+    args = ["--build_root", "/tmp/test", "--no-insecure"]
+    parsed_options = parser.parse_args(args)
+    otel_parameters = OtelParameters.from_parsed_options(parsed_options)
+    assert otel_parameters.insecure is False
+
+    # Test neither (default)
+    args = ["--build_root", "/tmp/test"]
+    parsed_options = parser.parse_args(args)
+    otel_parameters = OtelParameters.from_parsed_options(parsed_options)
+    assert otel_parameters.insecure is None
+
+
+def test_subprocess_server_mutually_exclusive_insecure_args():
+    """Test that --insecure and --no-insecure are mutually exclusive."""
+    parser = argparse.ArgumentParser()
+    OtelParameters.add_options_to_parser(parser)
+    parser.add_argument("--build_root", default=None, action="store")
+
+    # Test that using both --insecure and --no-insecure raises an error
+    args = ["--build_root", "/tmp/test", "--insecure", "--no-insecure"]
+    with pytest.raises(SystemExit):
+        parser.parse_args(args)
+
+
+def test_otel_parameters_to_args_for_subprocess():
+    """Test that OtelParameters.to_args_for_subprocess() generates correct
+    arguments."""
+    # Test with insecure=True
+    params = OtelParameters(
+        endpoint="http://localhost:4318/v1/traces",
+        certificate_file=None,
+        client_key_file=None,
+        client_certificate_file=None,
+        headers={"x-api-key": "test"},
+        timeout=30,
+        compression="gzip",
+        insecure=True,
+    )
+    args = params.to_args_for_subprocess()
+    expected_args = [
+        "--endpoint",
+        "http://localhost:4318/v1/traces",
+        "--headers",
+        '{"x-api-key": "test"}',
+        "--timeout",
+        "30",
+        "--compression",
+        "gzip",
+        "--insecure",
+    ]
+    assert args == expected_args
+
+    # Test with insecure=False
+    params = OtelParameters(
+        endpoint="http://localhost:4318/v1/traces",
+        certificate_file=None,
+        client_key_file=None,
+        client_certificate_file=None,
+        headers=None,
+        timeout=None,
+        compression=None,
+        insecure=False,
+    )
+    args = params.to_args_for_subprocess()
+    expected_args = ["--endpoint", "http://localhost:4318/v1/traces", "--no-insecure"]
+    assert args == expected_args
+
+    # Test with insecure=None
+    params = OtelParameters(
+        endpoint="http://localhost:4318/v1/traces",
+        certificate_file=None,
+        client_key_file=None,
+        client_certificate_file=None,
+        headers=None,
+        timeout=None,
+        compression=None,
+        insecure=None,
+    )
+    args = params.to_args_for_subprocess()
+    expected_args = ["--endpoint", "http://localhost:4318/v1/traces"]
+    assert args == expected_args
 
 
 if __name__ == "__main__":

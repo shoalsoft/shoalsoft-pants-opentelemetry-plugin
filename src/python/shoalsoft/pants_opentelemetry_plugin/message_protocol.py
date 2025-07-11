@@ -81,7 +81,7 @@ class OtelParameters:
             headers=json.loads(options.headers) if options.headers is not None else None,
             timeout=options.timeout if options.timeout is not None else None,
             compression=options.compression if options.compression is not None else None,
-            insecure=options.insecure if options.insecure is not None else None,
+            insecure=options.insecure if hasattr(options, "insecure") else None,
         )
 
     @staticmethod
@@ -93,7 +93,10 @@ class OtelParameters:
         parser.add_argument("--headers", default=None, action="store")
         parser.add_argument("--timeout", default=None, type=int, action="store")
         parser.add_argument("--compression", default=None, action="store")
-        parser.add_argument("--insecure", action=argparse.BooleanOptionalAction)
+        insecure_group = parser.add_mutually_exclusive_group()
+        insecure_group.add_argument("--insecure", dest="insecure", action="store_true")
+        insecure_group.add_argument("--no-insecure", dest="insecure", action="store_false")
+        parser.set_defaults(insecure=False)
 
 
 @dataclass(frozen=True)
