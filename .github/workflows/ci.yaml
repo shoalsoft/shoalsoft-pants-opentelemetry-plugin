@@ -39,3 +39,11 @@ jobs:
               exit 1
             fi
           done
+      - name: Upload pants.log
+        if: always()
+        uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: pants-logs
+          overwrite: 'true'
+          path: .pants.d/workdir/*.log
