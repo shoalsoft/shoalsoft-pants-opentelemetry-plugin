@@ -93,7 +93,7 @@ class OtelParameters:
         parser.add_argument("--headers", default=None, action="store")
         parser.add_argument("--timeout", default=None, type=int, action="store")
         parser.add_argument("--compression", default=None, action="store")
-        parser.add_argument("--insecure", action="store_true")
+        parser.add_argument("--insecure", action=argparse.BooleanOptionalAction)
 
 
 @dataclass(frozen=True)
