@@ -89,3 +89,11 @@ jobs:
           gh release upload ${{ github.event.inputs.ref }} ${{ steps.package.outputs.source-archive-file }}
         env:
           GH_TOKEN: ${{ github.token }}
+      - name: Upload pants.log
+        if: always()
+        uses: actions/upload-artifact@v4
+        continue-on-error: true
+        with:
+          name: pants-logs
+          overwrite: 'true'
+          path: .pants.d/workdir/*.log
