@@ -192,7 +192,7 @@ class SubprocessProcessor(Processor):
                 # Decode and strip the line, then log it
                 stderr_msg = line.decode("utf-8", errors="replace").rstrip("\n\r")
                 if stderr_msg:  # Only log non-empty lines
-                    logger.debug(f"subprocess stderr: {stderr_msg}")
+                    logger.debug(f"subprocess processor: stderr: {stderr_msg}")
         except Exception as e:
             logger.error(f"Error reading subprocess stderr: {e}")
         finally:
@@ -249,9 +249,22 @@ class SubprocessProcessor(Processor):
             self._sequence_reader_thread.start()
             self._stderr_reader_thread.start()
 
-            # Wait for threads to start
-            sequence_reader_started_event.wait(timeout=5.0)
-            stderr_reader_started_event.wait(timeout=5.0)
+            # Wait for threads to start.
+            if not sequence_reader_started_event.wait(timeout=5.0):
+                logger.error("Timeout while waiting for sequence reader thread to start.")
+                raise RuntimeError("Failed to start sequence ID reader thread.")
+            if not stderr_reader_started_event.wait(timeout=5.0):
+                logger.error("Timeout while waiting for stderr reader thread to start.")
+                raise RuntimeError("Failed to start stderr reader thread.")
+
+            # Check if subprocess is still alive after brief initialization
+            if self.subprocess.poll() is not None:
+                logger.error(
+                    f"Subprocess died immediately after start (exit code: {self.subprocess.returncode})"
+                )
+                raise RuntimeError(
+                    f"Subprocess failed to start (exit code: {self.subprocess.returncode})"
+                )
 
             logger.debug(f"gRPC processor subprocess started with PID {self.subprocess.pid}")
 
@@ -294,27 +307,29 @@ class SubprocessProcessor(Processor):
         if self.subprocess:
             returncode = self.subprocess.poll()
             if returncode is not None:
-                logger.error(f"Subprocess has exited with code {returncode}")
+                error_msg = (
+                    f"Subprocess has exited with code {returncode} before processing sequence ID {desired_sequence_id}. "
+                    f"This indicates the subprocess crashed. Check stderr output above for details."
+                )
+                logger.error(error_msg)
                 raise RuntimeError(f"Subprocess exited with code {returncode}")
         else:
-            logger.error("No subprocess found")
+            logger.error("No subprocess found when waiting for sequence ID")
             raise RuntimeError("No subprocess found")
 
         with self._last_processed_sequence_id_cond:
             # Wait for the condition with timeout
             success = self._last_processed_sequence_id_cond.wait_for(
                 lambda: self._last_processed_sequence_id >= desired_sequence_id,
-                timeout=30.0,  # 30 second timeout
+                timeout=5.0,
             )
 
             if not success:
-                logger.error(
-                    f"Timeout waiting for sequence ID {desired_sequence_id}, current: {self._last_processed_sequence_id}"
+                error_msg = (
+                    f"Timeout waiting for sequence ID {desired_sequence_id} "
+                    f"(current: {self._last_processed_sequence_id}). "
                 )
-                # Check subprocess status again
-                if self.subprocess:
-                    returncode = self.subprocess.poll()
-                    logger.error(f"After timeout, subprocess returncode: {returncode}")
+                logger.error(error_msg)
                 raise RuntimeError(f"Timeout waiting for sequence ID {desired_sequence_id}")
 
         logger.debug(f"Received sequence ID {desired_sequence_id}")

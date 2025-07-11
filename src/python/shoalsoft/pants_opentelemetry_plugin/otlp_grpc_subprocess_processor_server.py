@@ -152,7 +152,7 @@ class Server:
                 self._handle_shutdown()
         except Exception as e:
             self.logger.error(
-                f"Error whi.e processing work unit message `{message.operation}` (seq id #{message.sequence_id}): {e}"
+                f"Error while processing work unit message `{message.operation}` (seq id #{message.sequence_id}): {e}"
             )
 
         # Signal that the message has been processed.
