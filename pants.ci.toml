@@ -8,8 +8,8 @@ pantsd = false
 
 [shoalsoft-opentelemetry]
 enabled = true
-exporter = "grpc"
-exporter_endpoint = "https://api.honeycomb.io"
+exporter = "http"
+exporter_endpoint = "https://api.honeycomb.io:443"
 async_completion = false
 
 [shoalsoft-opentelemetry.exporter_headers]
