@@ -33,8 +33,12 @@ jobs:
           # cache0 makes it easy to bust the cache if needed
           gha-cache-key: cache0-py3.11
           named-caches-hash: ${{ hashFiles('3rdparty/python/pants-2.27.lock') }}
+        env:
+          HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
       - name: Run tests
         run: "pants test ::"
+        env:
+          HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
       - name: Package the plugin as a wheel
         id: package
         run: |
@@ -53,7 +57,8 @@ jobs:
           fi
           echo "wheel-local-path=$wheel_file" >> $GITHUB_OUTPUT
           echo "source-archive-file=$source_archive_file" >> $GITHUB_OUTPUT
-          
+        env:
+          HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
       - name: Attest provenance of the wheel and source archive.
         uses: actions/attest-build-provenance@v2
         with:
