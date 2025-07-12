@@ -9,7 +9,7 @@ pantsd = false
 [shoalsoft-opentelemetry]
 enabled = true
 exporter = "http"
-exporter_endpoint = "https://api.honeycomb.io:443"
+exporter_endpoint = "https://api.honeycomb.io:443/v1/traces"
 async_completion = false
 
 [shoalsoft-opentelemetry.exporter_headers]
