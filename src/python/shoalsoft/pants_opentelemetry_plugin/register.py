@@ -66,6 +66,7 @@ async def telemetry_workunits_callback_factory_request(
             span_exporter_name=telemetry.exporter,
             otlp_parameters=OtlpParameters(
                 endpoint=telemetry.exporter_endpoint,
+                traces_endpoint=telemetry.exporter_traces_endpoint,
                 certificate_file=telemetry.exporter_certificate_file,
                 client_key_file=telemetry.exporter_client_key_file,
                 client_certificate_file=telemetry.exporter_client_certificate_file,
@@ -74,7 +75,6 @@ async def telemetry_workunits_callback_factory_request(
                 compression=(
                     telemetry.exporter_compression.value if telemetry.exporter_compression else None
                 ),
-                insecure=telemetry.exporter_insecure,
             ),
             build_root=build_root.pathlib_path,
             traceparent_env_var=traceparent_env_var,
