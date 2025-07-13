@@ -1,0 +1,12 @@
+[GLOBAL]
+plugins.add = ["shoalsoft-pants-opentelemetry-plugin==0.4.0.dev0"]
+backend_packages.add = ["shoalsoft.pants_opentelemetry_plugin"]
+level = "debug"
+
+[shoalsoft-opentelemetry]
+enabled = true
+exporter_endpoint = "https://api.honeycomb.io"
+async_completion = false
+
+[shoalsoft-opentelemetry.exporter_headers]
+"x-honeycomb-team" = "%(env.HONEYCOMB_API_KEY)s"
