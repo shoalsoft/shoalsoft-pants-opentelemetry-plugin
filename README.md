@@ -10,12 +10,11 @@ From PyPI:
 
 1. In the relevant Pants project, edit `pants.toml` to set the `[GLOBAL].plugins` option to include `shoalsoft-pants-opentelemetry-plugin` and the `[GLOBAL].backend_packages` option to include `shoalsoft.pants_opentelemetry_plugin`.
 
-2. For basic export to a local OTLP/GRPC OpenTelemetry agent on its default port, configure the plugin as follows in `pants.toml`:
+2. For basic export to a local OpenTelemetry collector agent on its default port, configure the plugin as follows in `pants.toml`:
 
    ```toml
    [shoalsoft-opentelemetry]
    enabled = true
-   exporter = "grpc"
    ```
 
 3. The plugin exposes many other options (which correspond to `OTEL_` environment variables in other systems).  Run `pants help-advanced shoalsoft-opentelemetry` to see all of the plugin's available configuration options.
@@ -29,7 +28,6 @@ To configure the plugin to send to [Honeycomb](https://www.honeycomb.io/), use t
 ```toml
 [shoalsoft-opentelemetry]
 enabled = true
-exporter = "grpc"
 exporter_endpoint = "https://api.honeycomb.io"
 
 [shoalsoft-opentelemetry.exporter_headers]
@@ -58,7 +56,7 @@ To manually test export of tracing spans using OTLP/HTTP:
 
 2. Modify a Pants project to set the `[GLOBAL].pythonpath` option to include the path `"/BASE_PATH_FOR_THIS_REPOSITORY/src/python"` and then set `[GLOBAL].backend_packages` to include `shoalsoft.pants_opentelemetry_plugin`.
 
-3. Run Pants with `--shoalsoft-opentelemetry-enabled` and `--shoalsoft-opentelemetry-exporter=http`. The default endpoint configured in the OpenTelemetry library sends to http://localhost:4318 (on which the Docker image is listening).
+3. Run Pants with `--shoalsoft-opentelemetry-enabled`. The default endpoint sends to http://localhost:4317 (on which the Docker image is listening).
 
 4. View your traces in the Jaeger UI at http://localhost:16686.
 

@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PLUGIN_VERSION = "0.3.0"
+PLUGIN_VERSION = "0.4.0.dev0"
 
 PANTS_MAJOR_MINOR_VERSIONS = ["2.27", "2.26", "2.25"]
 
 python_sources(
-    sources=["*.py", "!*_test_server.py", "!*_test.py", "!*_integration_test.py"],
+    sources=["*.py", "!*_test.py", "!*_integration_test.py"],
     **parametrize(
         "pants-2.27",
         resolve="pants-2.27",
@@ -112,22 +112,17 @@ for pants_version in PANTS_MAJOR_MINOR_VERSIONS:
 LONG_DESCRIPTION = """\
 # Pantsbuild OpenTelemetry Plugin
 
-## Overview
-
-This is a plugin to the [Pantsbuild](https://pantsbuild.org/) build orchestration tool to emit tracing spans to OpenTelemetry-compatible systems for the build workflows orchestrated by Pants. The plugin is licensed under the [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
-
 ## Installation
 
 From PyPI:
 
 1. In the relevant Pants project, edit `pants.toml` to set the `[GLOBAL].plugins` option to include `shoalsoft-pants-opentelemetry-plugin` and the `[GLOBAL].backend_packages` option to include `shoalsoft.pants_opentelemetry_plugin`.
 
-2. For basic export to a local OTLP/GRPC OpenTelemetry agent on its default port, configure the plugin as follows in `pants.toml`:
+2. For basic export to a local OpenTelemetry collector agent on its default port, configure the plugin as follows in `pants.toml`:
 
    ```toml
    [shoalsoft-opentelemetry]
    enabled = true
-   exporter = "grpc"
    ```
 
 3. The plugin exposes many other options (which correspond to `OTEL_` environment variables in other systems).  Run `pants help-advanced shoalsoft-opentelemetry` to see all of the plugin's available configuration options.
