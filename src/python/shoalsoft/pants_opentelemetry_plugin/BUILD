@@ -18,11 +18,6 @@ PANTS_MAJOR_MINOR_VERSIONS = ["2.27", "2.26", "2.25"]
 
 python_sources(
     sources=["*.py", "!*_test_server.py", "!*_test.py", "!*_integration_test.py"],
-    overrides={
-        "subprocess_processor.py": dict(
-            dependencies=["./otlp_grpc_subprocess_processor_server.py"],
-        )
-    },
     **parametrize(
         "pants-2.27",
         resolve="pants-2.27",
@@ -64,30 +59,8 @@ python_tests(
             for pants_version in PANTS_MAJOR_MINOR_VERSIONS
         ),
     ],
-    overrides={
-        "opentelemetry_integration_test.py": dict(
-            dependencies=["./otlp_grpc_test_server.py:test_utils"],
-        )
-    },
     # Integration tests take forever given how they are run. :(
     timeout=600,
-)
-
-python_sources(
-    name="test_utils",
-    sources=["*_test_server.py"],
-    **parametrize(
-        "pants-2.27",
-        resolve="pants-2.27",
-    ),
-    **parametrize(
-        "pants-2.26",
-        resolve="pants-2.26",
-    ),
-    **parametrize(
-        "pants-2.25",
-        resolve="pants-2.25",
-    ),
 )
 
 pex_binary(

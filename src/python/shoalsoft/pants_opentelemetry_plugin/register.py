@@ -28,12 +28,11 @@ from pants.engine.unions import UnionRule
 from shoalsoft.pants_opentelemetry_plugin.exception_logging_processor import (
     ExceptionLoggingProcessor,
 )
-from shoalsoft.pants_opentelemetry_plugin.message_protocol import OtelParameters
+from shoalsoft.pants_opentelemetry_plugin.opentelemetry_config import OtelParameters
 from shoalsoft.pants_opentelemetry_plugin.opentelemetry_processor import get_processor
 from shoalsoft.pants_opentelemetry_plugin.processor import Processor
 from shoalsoft.pants_opentelemetry_plugin.single_threaded_processor import SingleThreadedProcessor
-from shoalsoft.pants_opentelemetry_plugin.subprocess_processor import SubprocessProcessor
-from shoalsoft.pants_opentelemetry_plugin.subsystem import TelemetrySubsystem, TracingExporterId
+from shoalsoft.pants_opentelemetry_plugin.subsystem import TelemetrySubsystem
 from shoalsoft.pants_opentelemetry_plugin.workunit_handler import TelemetryWorkunitsCallback
 
 logger = logging.getLogger(__name__)
@@ -63,52 +62,28 @@ async def telemetry_workunits_callback_factory_request(
             traceparent_env_var = env_vars.get("TRACEPARENT")
             logger.debug(f"Found TRACEPARENT: {traceparent_env_var}")
 
-        # Use subprocess processor for gRPC to avoid fork safety issues.
-        if telemetry.exporter == TracingExporterId.GRPC:
-            logger.debug("Using subprocess processor for gRPC exporter.")
-            processor = SubprocessProcessor(
-                otel_parameters=OtelParameters(
-                    endpoint=telemetry.exporter_endpoint,
-                    certificate_file=telemetry.exporter_certificate_file,
-                    client_key_file=telemetry.exporter_client_key_file,
-                    client_certificate_file=telemetry.exporter_client_certificate_file,
-                    headers=telemetry.exporter_headers,
-                    timeout=telemetry.exporter_timeout,
-                    compression=(
-                        telemetry.exporter_compression.value
-                        if telemetry.exporter_compression
-                        else None
-                    ),
-                    insecure=telemetry.exporter_insecure,
+        otel_processor = get_processor(
+            span_exporter_name=telemetry.exporter,
+            otel_parameters=OtelParameters(
+                endpoint=telemetry.exporter_endpoint,
+                certificate_file=telemetry.exporter_certificate_file,
+                client_key_file=telemetry.exporter_client_key_file,
+                client_certificate_file=telemetry.exporter_client_certificate_file,
+                headers=telemetry.exporter_headers,
+                timeout=telemetry.exporter_timeout,
+                compression=(
+                    telemetry.exporter_compression.value if telemetry.exporter_compression else None
                 ),
-                build_root=str(build_root.pathlib_path),
-                traceparent_env_var=traceparent_env_var,
-            )
-        else:
-            logger.debug("Using single-threaded in-process processor for non-gRPC exporter.")
-            otel_processor = get_processor(
-                span_exporter_name=telemetry.exporter,
-                otel_parameters=OtelParameters(
-                    endpoint=telemetry.exporter_endpoint,
-                    certificate_file=telemetry.exporter_certificate_file,
-                    client_key_file=telemetry.exporter_client_key_file,
-                    client_certificate_file=telemetry.exporter_client_certificate_file,
-                    headers=telemetry.exporter_headers,
-                    timeout=telemetry.exporter_timeout,
-                    compression=(
-                        telemetry.exporter_compression.value
-                        if telemetry.exporter_compression
-                        else None
-                    ),
-                    insecure=telemetry.exporter_insecure,
-                ),
-                build_root=build_root.pathlib_path,
-                traceparent_env_var=traceparent_env_var,
-                json_file=telemetry.json_file,
-            )
-            processor = SingleThreadedProcessor(
-                ExceptionLoggingProcessor(otel_processor, name="OpenTelemetry")
-            )
+                insecure=telemetry.exporter_insecure,
+            ),
+            build_root=build_root.pathlib_path,
+            traceparent_env_var=traceparent_env_var,
+            json_file=telemetry.json_file,
+        )
+
+        processor = SingleThreadedProcessor(
+            ExceptionLoggingProcessor(otel_processor, name="OpenTelemetry")
+        )
 
         processor.initialize()
 
