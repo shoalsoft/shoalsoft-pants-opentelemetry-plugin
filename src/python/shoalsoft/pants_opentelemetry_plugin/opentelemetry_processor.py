@@ -18,7 +18,6 @@ import datetime
 import json
 import logging
 import typing
-import urllib.parse
 from pathlib import Path
 from typing import TextIO
 
@@ -37,7 +36,7 @@ from opentelemetry.trace.span import NonRecordingSpan, Span, SpanContext
 from opentelemetry.trace.status import StatusCode
 
 from pants.util.frozendict import FrozenDict
-from shoalsoft.pants_opentelemetry_plugin.opentelemetry_config import OtelParameters
+from shoalsoft.pants_opentelemetry_plugin.opentelemetry_config import OtlpParameters
 from shoalsoft.pants_opentelemetry_plugin.processor import (
     IncompleteWorkunit,
     Level,
@@ -78,16 +77,9 @@ class JsonFileSpanExporter(SpanExporter):
         return True
 
 
-def _maybe_add_traces_path(endpoint: str) -> str:
-    url = urllib.parse.urlparse(endpoint)
-    if not url.path:
-        url = url._replace(path="/v1/traces")
-    return url.geturl()
-
-
 def get_processor(
     span_exporter_name: TracingExporterId,
-    otel_parameters: OtelParameters,
+    otlp_parameters: OtlpParameters,
     build_root: Path,
     traceparent_env_var: str | None,
     json_file: str | None,
@@ -101,15 +93,15 @@ def get_processor(
     tracer = tracer_provider.get_tracer(__name__)
 
     span_exporter: SpanExporter
-    if span_exporter_name == TracingExporterId.HTTP:
+    if span_exporter_name == TracingExporterId.OTLP:
         span_exporter = HttpOTLPSpanExporter(
-            endpoint=_maybe_add_traces_path(otel_parameters.endpoint or "http://localhost:4317"),
-            certificate_file=otel_parameters.certificate_file,
-            client_key_file=otel_parameters.client_key_file,
-            client_certificate_file=otel_parameters.client_certificate_file,
-            headers=dict(otel_parameters.headers) if otel_parameters.headers else None,
-            timeout=otel_parameters.timeout,
-            compression=Compression(otel_parameters.compression),
+            endpoint=otlp_parameters.resolve_traces_endpoint(),
+            certificate_file=otlp_parameters.certificate_file,
+            client_key_file=otlp_parameters.client_key_file,
+            client_certificate_file=otlp_parameters.client_certificate_file,
+            headers=dict(otlp_parameters.headers) if otlp_parameters.headers else None,
+            timeout=otlp_parameters.timeout,
+            compression=Compression(otlp_parameters.compression),
         )
     elif span_exporter_name == TracingExporterId.JSON_FILE:
         json_file_path_str = json_file
@@ -122,10 +114,6 @@ def get_processor(
         json_file_path.parent.mkdir(parents=True, exist_ok=True)
         span_exporter = JsonFileSpanExporter(open(json_file_path, "w"))
         logger.debug(f"Enabling OpenTelemetry JSON file span exporter: path={json_file_path}")
-    elif span_exporter_name == TracingExporterId.GRPC:
-        raise ValueError(
-            "gRPC export is not available any more due to fork safety issues with the gRPC C library."
-        )
     else:
         raise AssertionError(f"Unknown span exporter type: {span_exporter_name.value}")
 

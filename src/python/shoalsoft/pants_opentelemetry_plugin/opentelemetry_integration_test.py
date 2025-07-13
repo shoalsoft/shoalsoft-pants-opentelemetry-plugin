@@ -172,7 +172,7 @@ def do_test_of_otlp_http_exporter(
         result = run_pants_with_workdir(
             [
                 "--shoalsoft-opentelemetry-enabled",
-                f"--shoalsoft-opentelemetry-exporter={TracingExporterId.HTTP.value}",
+                f"--shoalsoft-opentelemetry-exporter={TracingExporterId.OTLP.value}",
                 f"--shoalsoft-opentelemetry-exporter-endpoint=http://127.0.0.1:{server_port}/v1/traces",
                 "list",
                 "otlp-http::",
