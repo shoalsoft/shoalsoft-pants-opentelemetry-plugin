@@ -14,13 +14,10 @@
 
 from __future__ import annotations
 
-import base64
 import json
 import logging
 import os
-import queue
 import subprocess
-import sys
 import tempfile
 import textwrap
 import threading
@@ -30,7 +27,7 @@ from dataclasses import dataclass
 from functools import partial
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
-from typing import IO, Any, Iterable, Mapping
+from typing import Any, Iterable, Mapping
 
 import httpx
 import pytest
@@ -203,131 +200,6 @@ def do_test_of_otlp_http_exporter(
         _assert_trace_requests([_convert(request.body) for request in recorded_requests])
 
 
-def do_test_of_otlp_grpc_exporter(
-    *,
-    buildroot: Path,
-    pants_exe_args: Iterable[str],
-    workdir_base: Path,
-    extra_env: Mapping[str, str] | None = None,
-) -> None:
-    # Start a subprocess with a test server to receive OpenTelemetry spans. Because of the fork safety issues with the
-    # gRPC C library wrapped by the `grpcio` Python module, gRPC-related logic should be invoked in a process which
-    # will not fork once gRPC is in use.
-    script_path = Path(__file__).parent.joinpath("otlp_grpc_test_server.py")
-    assert script_path.exists(), "gRPC test server script is not available."
-    test_server_process = subprocess.Popen(
-        [sys.executable, str(script_path)],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        env={
-            "PYTHONPATH": ":".join(sys.path),
-            "PYTHONUNBUFFERED": "1",
-            "GRPC_VERBOSITY": "DEBUG",
-        },
-    )
-    output_queue: queue.Queue[str] = queue.Queue()
-    error_queue: queue.Queue[str] = queue.Queue()
-
-    def worker(stream: IO[bytes], queue: queue.Queue[str], log: bool = False) -> None:
-        while True:
-            line = stream.readline()
-            if not line:
-                break
-            if log:
-                logger.info("")
-            queue.put_nowait(line.decode("utf-8").strip())
-
-    stdout_reader_thread = threading.Thread(
-        target=worker, args=(test_server_process.stdout, output_queue)
-    )
-    stdout_reader_thread.daemon = True
-    stdout_reader_thread.start()
-
-    stderr_reader_thread = threading.Thread(
-        target=worker, args=(test_server_process.stderr, error_queue)
-    )
-    stderr_reader_thread.daemon = True
-    stderr_reader_thread.start()
-
-    try:
-        # The server's listening port is written as the first output line.
-        server_port: int
-        try:
-            server_port_str = output_queue.get(timeout=5.0)
-            server_port = int(server_port_str)
-        except queue.Empty:
-            raise AssertionError("gRPC test server failed to start within timeout.")
-
-        sources = {
-            "otlp-grpc/BUILD": "python_sources(name='src')\n",
-            "otlp-grpc/main.py": "print('Hello World!')\n",
-        }
-        with tempfile.TemporaryDirectory(dir=workdir_base) as workdir:
-            _safe_write_files(buildroot, sources)
-
-            # Test the gRPC exporter configuration with actual gRPC server
-            result = run_pants_with_workdir(
-                [
-                    "--shoalsoft-opentelemetry-enabled",
-                    f"--shoalsoft-opentelemetry-exporter={TracingExporterId.GRPC.value}",
-                    f"--shoalsoft-opentelemetry-exporter-endpoint=http://127.0.0.1:{server_port}",
-                    "--shoalsoft-opentelemetry-exporter-insecure",
-                    "--shoalsoft-opentelemetry-finish-timeout=5",  # Allow time for export
-                    "-ldebug",
-                    "list",
-                    "otlp-grpc::",
-                ],
-                pants_exe_args=pants_exe_args,
-                workdir=workdir,
-                extra_env={
-                    **(extra_env if extra_env else {}),
-                    "PANTS_BUILDROOT_OVERRIDE": str(buildroot),
-                    "TRACEPARENT": "00-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-bbbbbbbbbbbbbbbb-00",
-                },
-                cwd=buildroot,
-                stream_output=True,
-                use_pantsd=False,
-            )
-
-            # The command should succeed.
-            result.assert_success()
-
-            # Collect all of the trace reqyests sent to the test server.
-            received_requests: list[trace_service_pb2.ExportTraceServiceRequest] = []
-            while True:
-                try:
-                    trace_request_str = output_queue.get(timeout=0.25)
-                    trace_request = trace_service_pb2.ExportTraceServiceRequest()
-                    trace_request.ParseFromString(
-                        base64.b64decode(trace_request_str, validate=True)
-                    )
-                    received_requests.append(trace_request)
-                except queue.Empty:
-                    break
-
-            # Assert that tracing spans were received over HTTP.
-            assert len(received_requests) > 0, "No trace requests received!"
-
-            _assert_trace_requests(received_requests)
-
-    finally:
-        test_server_process.kill()
-        test_server_process.wait(timeout=1.0)
-
-        error_messages: list[str] = []
-        while True:
-            try:
-                error_str = error_queue.get(timeout=0.25)
-                error_messages.append(error_str)
-            except queue.Empty:
-                break
-
-        joined_error_messages = "\n".join(error_messages)
-        if joined_error_messages:
-            print("gRPC test server returned stderr output:\n\n" + joined_error_messages)
-            assert "TEST-ERROR" not in joined_error_messages, "gRPC test server signalled an error"
-
-
 def do_test_of_json_file_exporter(
     *,
     buildroot: Path,
@@ -472,14 +344,6 @@ def test_opentelemetry_integration(subtests, pants_version_str: str) -> None:
 
     with subtests.test(msg="OTLP/HTTP span exporter"):
         do_test_of_otlp_http_exporter(
-            buildroot=buildroot,
-            pants_exe_args=pants_exe_args,
-            workdir_base=workdir_base,
-            extra_env=extra_env,
-        )
-
-    with subtests.test(msg="OTLP/GRPC span exporter"):
-        do_test_of_otlp_grpc_exporter(
             buildroot=buildroot,
             pants_exe_args=pants_exe_args,
             workdir_base=workdir_base,
