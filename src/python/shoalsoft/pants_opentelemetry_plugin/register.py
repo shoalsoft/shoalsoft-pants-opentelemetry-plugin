@@ -28,7 +28,7 @@ from pants.engine.unions import UnionRule
 from shoalsoft.pants_opentelemetry_plugin.exception_logging_processor import (
     ExceptionLoggingProcessor,
 )
-from shoalsoft.pants_opentelemetry_plugin.opentelemetry_config import OtelParameters
+from shoalsoft.pants_opentelemetry_plugin.opentelemetry_config import OtlpParameters
 from shoalsoft.pants_opentelemetry_plugin.opentelemetry_processor import get_processor
 from shoalsoft.pants_opentelemetry_plugin.processor import Processor
 from shoalsoft.pants_opentelemetry_plugin.single_threaded_processor import SingleThreadedProcessor
@@ -64,7 +64,7 @@ async def telemetry_workunits_callback_factory_request(
 
         otel_processor = get_processor(
             span_exporter_name=telemetry.exporter,
-            otel_parameters=OtelParameters(
+            otlp_parameters=OtlpParameters(
                 endpoint=telemetry.exporter_endpoint,
                 certificate_file=telemetry.exporter_certificate_file,
                 client_key_file=telemetry.exporter_client_key_file,

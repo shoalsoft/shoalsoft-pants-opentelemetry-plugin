@@ -37,7 +37,7 @@ from opentelemetry.trace.span import NonRecordingSpan, Span, SpanContext
 from opentelemetry.trace.status import StatusCode
 
 from pants.util.frozendict import FrozenDict
-from shoalsoft.pants_opentelemetry_plugin.opentelemetry_config import OtelParameters
+from shoalsoft.pants_opentelemetry_plugin.opentelemetry_config import OtlpParameters
 from shoalsoft.pants_opentelemetry_plugin.processor import (
     IncompleteWorkunit,
     Level,
@@ -87,7 +87,7 @@ def _maybe_add_traces_path(endpoint: str) -> str:
 
 def get_processor(
     span_exporter_name: TracingExporterId,
-    otel_parameters: OtelParameters,
+    otlp_parameters: OtlpParameters,
     build_root: Path,
     traceparent_env_var: str | None,
     json_file: str | None,
@@ -103,13 +103,13 @@ def get_processor(
     span_exporter: SpanExporter
     if span_exporter_name == TracingExporterId.HTTP:
         span_exporter = HttpOTLPSpanExporter(
-            endpoint=_maybe_add_traces_path(otel_parameters.endpoint or "http://localhost:4317"),
-            certificate_file=otel_parameters.certificate_file,
-            client_key_file=otel_parameters.client_key_file,
-            client_certificate_file=otel_parameters.client_certificate_file,
-            headers=dict(otel_parameters.headers) if otel_parameters.headers else None,
-            timeout=otel_parameters.timeout,
-            compression=Compression(otel_parameters.compression),
+            endpoint=_maybe_add_traces_path(otlp_parameters.endpoint or "http://localhost:4317"),
+            certificate_file=otlp_parameters.certificate_file,
+            client_key_file=otlp_parameters.client_key_file,
+            client_certificate_file=otlp_parameters.client_certificate_file,
+            headers=dict(otlp_parameters.headers) if otlp_parameters.headers else None,
+            timeout=otlp_parameters.timeout,
+            compression=Compression(otlp_parameters.compression),
         )
     elif span_exporter_name == TracingExporterId.JSON_FILE:
         json_file_path_str = json_file

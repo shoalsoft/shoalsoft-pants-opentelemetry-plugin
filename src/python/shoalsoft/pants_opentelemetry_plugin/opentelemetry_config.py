@@ -19,7 +19,7 @@ from typing import Mapping
 
 
 @dataclass(frozen=True)
-class OtelParameters:
+class OtlpParameters:
     endpoint: str | None
     certificate_file: str | None
     client_key_file: str | None
