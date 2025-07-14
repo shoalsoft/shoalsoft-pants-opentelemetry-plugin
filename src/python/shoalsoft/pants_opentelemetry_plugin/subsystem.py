@@ -80,13 +80,13 @@ class TelemetrySubsystem(Subsystem):
     )
 
     async_completion = BoolOption(
-        default=True,
+        default=False,
         help=softwrap(
             """
             If `True`, allows the plugin to finish asynchronously when Pants is shutting down. This can result in
             faster Pants exit times but may lead to some spans not being exported if the export process is slow.
             If `False`, forces synchronous completion, ensuring all spans are exported before Pants exits but
-            potentially slowing down the shutdown process.
+            potentially slowing down the shutdown process. Defaults to `False`.
             """
         ),
     )
