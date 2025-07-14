@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Added testing with Pants 2.28.x.
+
 ## [0.4.0] - 2025-07-14
 
 - Removed gRPC support completely since there are fork safety issues with the gRPC C library used indirectly by the OpenTelemetry library. While there are mitigations, those mitigations only really work if the process stops forking at some point, and of course Pants is almost always forking to spawn build actions. Thus, the gRPC support has been removed for now so the plugin can focus on the working HTTP/Protobuf transport.
