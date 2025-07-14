@@ -84,12 +84,15 @@ def get_processor(
     traceparent_env_var: str | None,
     json_file: str | None,
 ) -> Processor:
+    logger.debug(f"OTEL: get_processor: otlp_parameters={otlp_parameters}; build_root={build_root}")
     resource = Resource(
         attributes={
             SERVICE_NAME: "pantsbuild",
         }
     )
-    tracer_provider = TracerProvider(sampler=sampling.ALWAYS_ON, resource=resource)
+    tracer_provider = TracerProvider(
+        sampler=sampling.ALWAYS_ON, resource=resource, shutdown_on_exit=False
+    )
     tracer = tracer_provider.get_tracer(__name__)
 
     span_exporter: SpanExporter
@@ -127,7 +130,10 @@ def get_processor(
     tracer_provider.add_span_processor(span_processor)
 
     otel_processor = OpenTelemetryProcessor(
-        tracer=tracer, span_processor=span_processor, traceparent_env_var=traceparent_env_var
+        tracer=tracer,
+        span_processor=span_processor,
+        traceparent_env_var=traceparent_env_var,
+        tracer_provider=tracer_provider,
     )
 
     return otel_processor
@@ -190,9 +196,14 @@ class _Encoder(json.JSONEncoder):
 
 class OpenTelemetryProcessor(Processor):
     def __init__(
-        self, tracer: trace.Tracer, span_processor: SpanProcessor, traceparent_env_var: str | None
+        self,
+        tracer: trace.Tracer,
+        span_processor: SpanProcessor,
+        traceparent_env_var: str | None,
+        tracer_provider: TracerProvider,
     ) -> None:
         self._tracer = tracer
+        self._tracer_provider = tracer_provider
         self._trace_id: int | None = None
         self._workunit_span_id_to_otel_span_id: dict[str, int] = {}
         self._otel_spans: dict[int, trace.Span] = {}
@@ -354,3 +365,4 @@ class OpenTelemetryProcessor(Processor):
         timeout_millis: int = int(timeout.total_seconds() * 1000.0) if timeout is not None else 2000
         self._span_processor.force_flush(timeout_millis)
         self._span_processor.shutdown()
+        self._tracer_provider.shutdown()
