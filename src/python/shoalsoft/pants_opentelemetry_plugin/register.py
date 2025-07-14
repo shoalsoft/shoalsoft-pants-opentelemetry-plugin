@@ -21,6 +21,7 @@ from pants.base.build_root import BuildRoot
 from pants.engine.env_vars import EnvironmentVars, EnvironmentVarsRequest
 from pants.engine.rules import Get, collect_rules, rule
 from pants.engine.streaming_workunit_handler import (
+    WorkunitsCallback,
     WorkunitsCallbackFactory,
     WorkunitsCallbackFactoryRequest,
 )
@@ -30,7 +31,6 @@ from shoalsoft.pants_opentelemetry_plugin.exception_logging_processor import (
 )
 from shoalsoft.pants_opentelemetry_plugin.opentelemetry_config import OtlpParameters
 from shoalsoft.pants_opentelemetry_plugin.opentelemetry_processor import get_processor
-from shoalsoft.pants_opentelemetry_plugin.processor import Processor
 from shoalsoft.pants_opentelemetry_plugin.single_threaded_processor import SingleThreadedProcessor
 from shoalsoft.pants_opentelemetry_plugin.subsystem import TelemetrySubsystem
 from shoalsoft.pants_opentelemetry_plugin.workunit_handler import TelemetryWorkunitsCallback
@@ -48,19 +48,23 @@ async def telemetry_workunits_callback_factory_request(
     telemetry: TelemetrySubsystem,
     build_root: BuildRoot,
 ) -> WorkunitsCallbackFactory:
-    processor: Processor | None = None
     logger.debug(
         f"telemetry_workunits_callback_factory_request: telemetry.enabled={telemetry.enabled}; telemetry.exporter={telemetry.exporter}; "
         f"bool(telemetry.exporter)={bool(telemetry.exporter)}"
     )
-    if telemetry.enabled and telemetry.exporter:
-        logger.debug("Enabling OpenTelemetry work unit handler.")
 
-        traceparent_env_var: str | None = None
-        if telemetry.parse_traceparent:
-            env_vars = await Get(EnvironmentVars, EnvironmentVarsRequest(["TRACEPARENT"]))
-            traceparent_env_var = env_vars.get("TRACEPARENT")
-            logger.debug(f"Found TRACEPARENT: {traceparent_env_var}")
+    traceparent_env_var: str | None = None
+    if telemetry.enabled and telemetry.exporter and telemetry.parse_traceparent:
+        env_vars = await Get(EnvironmentVars, EnvironmentVarsRequest(["TRACEPARENT"]))
+        traceparent_env_var = env_vars.get("TRACEPARENT")
+        logger.debug(f"Found TRACEPARENT: {traceparent_env_var}")
+
+    def workunits_callback_factory() -> WorkunitsCallback | None:
+        if not telemetry.enabled or not telemetry.exporter:
+            logger.debug("Skipping enabling OpenTelemetry work unit handler.")
+            return None
+
+        logger.debug("Enabling OpenTelemetry work unit handler.")
 
         otel_processor = get_processor(
             span_exporter_name=telemetry.exporter,
@@ -87,17 +91,15 @@ async def telemetry_workunits_callback_factory_request(
 
         processor.initialize()
 
+        return TelemetryWorkunitsCallback(
+            processor=processor,
+            finish_timeout=finish_timeout,
+            async_completion=telemetry.async_completion,
+        )
+
     finish_timeout = datetime.timedelta(seconds=telemetry.finish_timeout)
     return WorkunitsCallbackFactory(
-        lambda: (
-            TelemetryWorkunitsCallback(
-                processor=processor,
-                finish_timeout=finish_timeout,
-                async_completion=telemetry.async_completion,
-            )
-            if processor is not None
-            else None
-        )
+        callback_factory=workunits_callback_factory,
     )
 
 
