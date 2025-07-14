@@ -210,6 +210,8 @@ class OpenTelemetryProcessor(Processor):
         self._span_processor = span_processor
         self._span_count: int = 0
         self._counters: dict[str, int] = {}
+        self._initialized: bool = False
+        self._shutdown: bool = False
 
         self._parent_trace_id: int | None = None
         self._parent_span_id: int | None = None
@@ -220,7 +222,10 @@ class OpenTelemetryProcessor(Processor):
                 self._parent_span_id = ids[1]
 
     def initialize(self) -> None:
+        if self._initialized:
+            raise RuntimeError("OTEL: processor already initialized")
         logger.debug("OpenTelemetryProcessor.initialize called")
+        self._initialized = True
 
     def _increment_counter(self, name: str, delta: int = 1) -> None:
         if name not in self._counters:
@@ -312,6 +317,10 @@ class OpenTelemetryProcessor(Processor):
                 otel_span.set_attribute(f"pantsbuild.workunit.metadata.{key}", value)
 
     def start_workunit(self, workunit: IncompleteWorkunit, *, context: ProcessorContext) -> None:
+        if not self._initialized:
+            raise RuntimeError("OTEL: start_workunit called on uninitialized processor")
+        if self._shutdown:
+            raise RuntimeError("OTEL: start_workunit called on shutdown processor")
         if workunit.span_id in self._workunit_span_id_to_otel_span_id:
             self._increment_counter("multiple_start_workunit_for_span_id")
             return
@@ -326,6 +335,10 @@ class OpenTelemetryProcessor(Processor):
         self._apply_incomplete_workunit_attributes(workunit=workunit, otel_span=otel_span)
 
     def complete_workunit(self, workunit: Workunit, *, context: ProcessorContext) -> None:
+        if not self._initialized:
+            raise RuntimeError("OTEL: complete_workunit called on uninitialized processor")
+        if self._shutdown:
+            raise RuntimeError("OTEL: complete_workunit called on shutdown processor")
         otel_span: Span
         otel_span_id: int
         if workunit.span_id in self._workunit_span_id_to_otel_span_id:
@@ -356,6 +369,8 @@ class OpenTelemetryProcessor(Processor):
     def finish(
         self, timeout: datetime.timedelta | None = None, *, context: ProcessorContext
     ) -> None:
+        if self._shutdown:
+            raise RuntimeError("OTEL: finish called on shutdown processor")
         logger.debug("OpenTelemetryProcessor requested to finish workunit transmission.")
         logger.debug(f"OpenTelemetry processing counters: {self._counters.items()}")
         if len(self._otel_spans) > 0:
@@ -366,3 +381,4 @@ class OpenTelemetryProcessor(Processor):
         self._span_processor.force_flush(timeout_millis)
         self._span_processor.shutdown()
         self._tracer_provider.shutdown()
+        self._shutdown = True
