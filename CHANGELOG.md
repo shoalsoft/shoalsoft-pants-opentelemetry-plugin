@@ -38,4 +38,4 @@ Changes since v0.2.0.dev3:
 [0.3.0]: https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin/releases/tag/v0.3.0
 [0.2.2]: https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin/releases/tag/v0.2.2
 [0.2.1]: https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin/releases/tag/v0.2.1
-[9.2.0]: https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin/releases/tag/v0.2.0
+[0.2.0]: https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin/releases/tag/v0.2.0
