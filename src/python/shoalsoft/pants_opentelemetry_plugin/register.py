@@ -83,6 +83,7 @@ async def telemetry_workunits_callback_factory_request(
             build_root=build_root.pathlib_path,
             traceparent_env_var=traceparent_env_var,
             json_file=telemetry.json_file,
+            trace_link_template=telemetry.trace_link_template,
         )
 
         processor = SingleThreadedProcessor(
