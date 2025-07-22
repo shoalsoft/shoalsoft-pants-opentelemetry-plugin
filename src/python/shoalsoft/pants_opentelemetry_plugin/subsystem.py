@@ -111,7 +111,7 @@ class TelemetrySubsystem(Subsystem):
 
             - `{trace_id}` - The OpenTelemetry trace ID
 
-            - `{root_spand_id}` - The span ID of the root span of the trace
+            - `{root_span_id}` - The span ID of the root span of the trace
 
             - `{trace_start_ms}` - Start time of the root span in milliseconds since the UNIX epoch
 
