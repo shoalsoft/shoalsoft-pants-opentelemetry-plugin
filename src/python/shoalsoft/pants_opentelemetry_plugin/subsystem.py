@@ -102,6 +102,24 @@ class TelemetrySubsystem(Subsystem):
         ),
     )
 
+    trace_link_template = StrOption(
+        default=None,
+        help=softwrap(
+            """
+            Log a link to the URL at which the trace will be available in a trace management system. The following
+            replacement variables are available:
+
+            - `{trace_id}` - The OpenTelemetry trace ID
+
+            - `{root_spand_id}` - The span ID of the root span of the trace
+
+            - `{trace_start_ms}` - Start time of the root span in milliseconds since the UNIX epoch
+
+            - `{trace_end_ms}` - End time of the root span in milliseconds since the UNIX epoch
+            """
+        ),
+    )
+
     exporter_endpoint = StrOption(
         default=None,
         help=softwrap(

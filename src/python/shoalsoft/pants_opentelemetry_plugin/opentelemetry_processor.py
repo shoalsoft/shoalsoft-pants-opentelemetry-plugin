@@ -32,7 +32,13 @@ from opentelemetry.sdk.trace import ReadableSpan, TracerProvider, sampling
 from opentelemetry.sdk.trace.export import SpanProcessor  # type: ignore[attr-defined]
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, SpanExporter, SpanExportResult
 from opentelemetry.trace import Link, TraceFlags
-from opentelemetry.trace.span import NonRecordingSpan, Span, SpanContext
+from opentelemetry.trace.span import (
+    NonRecordingSpan,
+    Span,
+    SpanContext,
+    format_span_id,
+    format_trace_id,
+)
 from opentelemetry.trace.status import StatusCode
 
 from pants.util.frozendict import FrozenDict
@@ -83,6 +89,7 @@ def get_processor(
     build_root: Path,
     traceparent_env_var: str | None,
     json_file: str | None,
+    trace_link_template: str | None,
 ) -> Processor:
     logger.debug(f"OTEL: get_processor: otlp_parameters={otlp_parameters}; build_root={build_root}")
     resource = Resource(
@@ -134,6 +141,7 @@ def get_processor(
         span_processor=span_processor,
         traceparent_env_var=traceparent_env_var,
         tracer_provider=tracer_provider,
+        trace_link_template=trace_link_template,
     )
 
     return otel_processor
@@ -201,6 +209,7 @@ class OpenTelemetryProcessor(Processor):
         span_processor: SpanProcessor,
         traceparent_env_var: str | None,
         tracer_provider: TracerProvider,
+        trace_link_template: str | None,
     ) -> None:
         self._tracer = tracer
         self._tracer_provider = tracer_provider
@@ -210,6 +219,7 @@ class OpenTelemetryProcessor(Processor):
         self._span_processor = span_processor
         self._span_count: int = 0
         self._counters: dict[str, int] = {}
+        self._trace_link_template: str | None = trace_link_template
         self._initialized: bool = False
         self._shutdown: bool = False
 
@@ -231,6 +241,25 @@ class OpenTelemetryProcessor(Processor):
         if name not in self._counters:
             self._counters[name] = 0
         self._counters[name] += delta
+
+    def _log_trace_link(
+        self,
+        root_span_id: int,
+        root_span_start_time: datetime.datetime,
+        root_span_end_time: datetime.datetime,
+    ) -> None:
+        template = self._trace_link_template
+        if not template:
+            return
+
+        replacements = {
+            "trace_id": format_trace_id(self._trace_id) if self._trace_id else "UNKNOWN",
+            "root_span_id": format_span_id(root_span_id),
+            "trace_start_ms": str(int(root_span_start_time.timestamp() * 1000)),
+            "trace_end_ms": str(int(root_span_end_time.timestamp() * 1000)),
+        }
+        trace_link = template.format(**replacements)
+        logger.info(f"OpenTelemetry trace link: {trace_link}")
 
     def _construct_otel_span(
         self,
@@ -260,6 +289,7 @@ class OpenTelemetryProcessor(Processor):
                 DummySpan(otel_parent_span_context), context=otel_context
             )
 
+        # Record a "link" on the root span to any parent trace set via TRACEPARENT.
         links: list[Link] = []
         if not workunit_parent_span_id and self._parent_trace_id and self._parent_span_id:
             parent_trace_id_context = SpanContext(
@@ -365,6 +395,14 @@ class OpenTelemetryProcessor(Processor):
 
         del self._otel_spans[otel_span_id]
         self._span_count += 1
+
+        # If this the root span, then log any vendor trace link as a side effect.
+        if not workunit.primary_parent_id and self._trace_link_template:
+            self._log_trace_link(
+                root_span_id=otel_span_id,
+                root_span_start_time=workunit.start_time,
+                root_span_end_time=workunit.end_time,
+            )
 
     def finish(
         self, timeout: datetime.timedelta | None = None, *, context: ProcessorContext
