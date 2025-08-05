@@ -38,7 +38,7 @@ Changes since v0.2.0.dev3:
 - Updated docs to show example Honeycomb configuration.
 - Test the plugin with Pants v2.25.2 and v2.26.1.
 
-[Unreleased]: https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin/compare/v0.4.1...HEAD
 [0.4.1]: https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin/releases/tag/v0.4.1
 [0.4.0]: https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin/releases/tag/v0.4.0
 [0.3.0]: https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin/releases/tag/v0.3.0
