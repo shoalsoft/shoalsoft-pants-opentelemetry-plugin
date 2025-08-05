@@ -4,7 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-- Added testing with Pants 2.28.x.
+## [0.4.1] - 2025-07-24
+
+- Support logging links to traces in a trace collection system via the new [shoalsoft-opentelemetry].trace_link_template option.
+- Test the plugin with Pants v2.28.x.
 
 ## [0.4.0] - 2025-07-14
 
@@ -36,6 +39,7 @@ Changes since v0.2.0.dev3:
 - Test the plugin with Pants v2.25.2 and v2.26.1.
 
 [Unreleased]: https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin/compare/v0.4.0...HEAD
+[0.4.1]: https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin/releases/tag/v0.4.1
 [0.4.0]: https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin/releases/tag/v0.4.0
 [0.3.0]: https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin/releases/tag/v0.3.0
 [0.2.2]: https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin/releases/tag/v0.2.2
