@@ -16,8 +16,8 @@
 //     "opentelemetry-proto==1.34.1",
 //     "opentelemetry-sdk==1.34.1",
 //     "packaging",
-//     "pantsbuild.pants.testutil==2.28.0a0",
-//     "pantsbuild.pants==2.28.0a0",
+//     "pantsbuild.pants.testutil==2.28.0rc0",
+//     "pantsbuild.pants==2.28.0rc0",
 //     "pytest",
 //     "toml==0.10.2",
 //     "types-grpcio==1.0.0.20250703"
@@ -62,39 +62,25 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "9f76d541cad6e36af7beb62e978876f3b41e3e04f2c1fbf0884604c0a9c4d93c",
-              "url": "https://files.pythonhosted.org/packages/a1/ee/48ca1a7c89ffec8b6a0c5d02b89c305671d5ffd8d3c94acf8b8c408575bb/anyio-4.9.0-py3-none-any.whl"
+              "hash": "60e474ac86736bbfd6f210f7a61218939c318f43f9972497381f1c5e930ed3d1",
+              "url": "https://files.pythonhosted.org/packages/6f/12/e5e0282d673bb9746bacfb6e2dba8719989d3660cdb2ea79aee9a9651afb/anyio-4.10.0-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "673c0c244e15788651a4ff38710fea9675823028a6f08a5eda409e0c9840a028",
-              "url": "https://files.pythonhosted.org/packages/95/7d/4c1bd541d4dffa1b52bd83fb8527089e097a106fc90b467a7313b105f840/anyio-4.9.0.tar.gz"
+              "hash": "3f3fae35c96039744587aa5b8371e7e8e603c0702999535961dd336026973ba6",
+              "url": "https://files.pythonhosted.org/packages/f1/b4/636b3b65173d3ce9a38ef5f0522789614e590dab6a8d505340a4efe4c567/anyio-4.10.0.tar.gz"
             }
           ],
           "project_name": "anyio",
           "requires_dists": [
-            "Sphinx~=8.2; extra == \"doc\"",
-            "anyio[trio]; extra == \"test\"",
-            "blockbuster>=1.5.23; extra == \"test\"",
-            "coverage[toml]>=7; extra == \"test\"",
             "exceptiongroup>=1.0.2; python_version < \"3.11\"",
-            "exceptiongroup>=1.2.0; extra == \"test\"",
-            "hypothesis>=4.0; extra == \"test\"",
             "idna>=2.8",
-            "packaging; extra == \"doc\"",
-            "psutil>=5.9; extra == \"test\"",
-            "pytest>=7.0; extra == \"test\"",
             "sniffio>=1.1",
-            "sphinx-autodoc-typehints>=1.2.0; extra == \"doc\"",
-            "sphinx_rtd_theme; extra == \"doc\"",
             "trio>=0.26.1; extra == \"trio\"",
-            "trustme; extra == \"test\"",
-            "truststore>=0.9.1; python_version >= \"3.10\" and extra == \"test\"",
-            "typing_extensions>=4.5; python_version < \"3.13\"",
-            "uvloop>=0.21; (platform_python_implementation == \"CPython\" and platform_system != \"Windows\" and python_version < \"3.14\") and extra == \"test\""
+            "typing_extensions>=4.5; python_version < \"3.13\""
           ],
           "requires_python": ">=3.9",
-          "version": "4.9.0"
+          "version": "4.10.0"
         },
         {
           "artifacts": [
@@ -159,92 +145,82 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "6b31f564a415d79ee77df69d757bb49a5bb53bd9f756cbbe24394ffd6fc1f4b2",
-              "url": "https://files.pythonhosted.org/packages/4f/52/34c6cf5bb9285074dc3531c437b3919e825d976fde097a7a73f79e726d03/certifi-2025.7.14-py3-none-any.whl"
+              "hash": "f6c12493cfb1b06ba2ff328595af9350c65d6644968e5d3a2ffd78699af217a5",
+              "url": "https://files.pythonhosted.org/packages/e5/48/1549795ba7742c948d2ad169c1c8cdbae65bc450d6cd753d124b17c8cd32/certifi-2025.8.3-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "8ea99dbdfaaf2ba2f9bac77b9249ef62ec5218e7c2b2e903378ed5fccf765995",
-              "url": "https://files.pythonhosted.org/packages/b3/76/52c535bcebe74590f296d6c77c86dabf761c41980e1347a2422e4aa2ae41/certifi-2025.7.14.tar.gz"
+              "hash": "e564105f78ded564e3ae7c923924435e1daa7463faeab5bb932bc53ffae63407",
+              "url": "https://files.pythonhosted.org/packages/dc/67/960ebe6bf230a96cda2e0abcf73af550ec4f090005363542f0765df162e0/certifi-2025.8.3.tar.gz"
             }
           ],
           "project_name": "certifi",
           "requires_dists": [],
           "requires_python": ">=3.7",
-          "version": "2025.7.14"
+          "version": "2025.8.3"
         },
         {
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "7f56930ab0abd1c45cd15be65cc741c28b1c9a34876ce8c17a2fa107810c0af0",
-              "url": "https://files.pythonhosted.org/packages/20/94/c5790835a017658cbfabd07f3bfb549140c3ac458cfc196323996b10095a/charset_normalizer-3.4.2-py3-none-any.whl"
+              "hash": "ce571ab16d890d23b5c278547ba694193a45011ff86a9162a71307ed9f86759a",
+              "url": "https://files.pythonhosted.org/packages/8a/1f/f041989e93b001bc4e44bb1669ccdcf54d3f00e628229a85b08d330615c5/charset_normalizer-3.4.3-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "be1e352acbe3c78727a16a455126d9ff83ea2dfdcbc83148d2982305a04714c2",
-              "url": "https://files.pythonhosted.org/packages/05/85/4c40d00dcc6284a1c1ad5de5e0996b06f39d8232f1031cd23c2f5c07ee86/charset_normalizer-3.4.2-cp311-cp311-macosx_10_9_universal2.whl"
+              "hash": "1e8ac75d72fa3775e0b7cb7e4629cec13b7514d928d15ef8ea06bca03ef01cae",
+              "url": "https://files.pythonhosted.org/packages/2f/36/77da9c6a328c54d17b960c89eccacfab8271fdaaa228305330915b88afa9/charset_normalizer-3.4.3-cp311-cp311-musllinux_1_2_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "aa88ca0b1932e93f2d961bf3addbb2db902198dca337d88c89e1559e066e7645",
-              "url": "https://files.pythonhosted.org/packages/41/d9/7a6c0b9db952598e97e93cbdfcb91bacd89b9b88c7c983250a77c008703c/charset_normalizer-3.4.2-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl"
+              "hash": "00237675befef519d9af72169d8604a067d92755e84fe76492fef5441db05b91",
+              "url": "https://files.pythonhosted.org/packages/3a/a4/b3b6c76e7a635748c4421d2b92c7b8f90a432f98bda5082049af37ffc8e3/charset_normalizer-3.4.3-cp311-cp311-manylinux2014_ppc64le.manylinux_2_17_ppc64le.manylinux_2_28_ppc64le.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "6b66f92b17849b85cad91259efc341dce9c1af48e2173bf38a85c6329f1033e5",
-              "url": "https://files.pythonhosted.org/packages/59/2e/d3b9811db26a5ebf444bc0fa4f4be5aa6d76fc6e1c0fd537b16c14e849b6/charset_normalizer-3.4.2-cp311-cp311-musllinux_1_2_x86_64.whl"
+              "hash": "939578d9d8fd4299220161fdd76e86c6a251987476f5243e8864a7844476ba14",
+              "url": "https://files.pythonhosted.org/packages/4c/92/27dbe365d34c68cfe0ca76f1edd70e8705d82b378cb54ebbaeabc2e3029d/charset_normalizer-3.4.3-cp311-cp311-musllinux_1_2_ppc64le.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "f0aa37f3c979cf2546b73e8222bbfa3dc07a641585340179d768068e3455e544",
-              "url": "https://files.pythonhosted.org/packages/60/5b/c3f3a94bc345bc211622ea59b4bed9ae63c00920e2e8f11824aa5708e8b7/charset_normalizer-3.4.2-cp311-cp311-musllinux_1_2_i686.whl"
+              "hash": "96b2b3d1a83ad55310de8c7b4a2d04d9277d5591f40761274856635acc5fcb30",
+              "url": "https://files.pythonhosted.org/packages/61/f1/190d9977e0084d3f1dc169acd060d479bbbc71b90bf3e7bf7b9927dec3eb/charset_normalizer-3.4.3-cp311-cp311-musllinux_1_2_aarch64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "d524ba3f1581b35c03cb42beebab4a13e6cdad7b36246bd22541fa585a56cccd",
-              "url": "https://files.pythonhosted.org/packages/66/82/a37989cda2ace7e37f36c1a8ed16c58cf48965a79c2142713244bf945c89/charset_normalizer-3.4.2-cp311-cp311-manylinux_2_17_ppc64le.manylinux2014_ppc64le.whl"
+              "hash": "b256ee2e749283ef3ddcff51a675ff43798d92d746d1a6e4631bf8c707d22d0b",
+              "url": "https://files.pythonhosted.org/packages/7f/b5/991245018615474a60965a7c9cd2b4efbaabd16d582a5547c47ee1c7730b/charset_normalizer-3.4.3-cp311-cp311-macosx_10_9_universal2.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "efd387a49825780ff861998cd959767800d54f8308936b21025326de4b5a42b9",
-              "url": "https://files.pythonhosted.org/packages/8b/f2/b3c2f07dbcc248805f10e67a0262c93308cfa149a4cd3d1fe01f593e5fd2/charset_normalizer-3.4.2-cp311-cp311-musllinux_1_2_aarch64.whl"
+              "hash": "6fce4b8500244f6fcb71465d4a4930d132ba9ab8e71a7859e6a5d59851068d14",
+              "url": "https://files.pythonhosted.org/packages/83/2d/5fd176ceb9b2fc619e63405525573493ca23441330fcdaee6bef9460e924/charset_normalizer-3.4.3.tar.gz"
             },
             {
               "algorithm": "sha256",
-              "hash": "fdb20a30fe1175ecabed17cbf7812f7b804b8a315a25f24678bcdf120a90077f",
-              "url": "https://files.pythonhosted.org/packages/92/9b/ad67f03d74554bed3aefd56fe836e1623a50780f7c998d00ca128924a499/charset_normalizer-3.4.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+              "hash": "0e78314bdc32fa80696f72fa16dc61168fda4d6a0c014e0380f9d02f0e5d8a07",
+              "url": "https://files.pythonhosted.org/packages/87/df/b7737ff046c974b183ea9aa111b74185ac8c3a326c6262d413bd5a1b8c69/charset_normalizer-3.4.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "0c8c57f84ccfc871a48a47321cfa49ae1df56cd1d965a09abe84066f6853b9c0",
-              "url": "https://files.pythonhosted.org/packages/a2/2b/b964c6a2fda88611a1fe3d4c400d39c66a42d6c169c924818c848f922415/charset_normalizer-3.4.2-cp311-cp311-musllinux_1_2_s390x.whl"
+              "hash": "fd10de089bcdcd1be95a2f73dbe6254798ec1bda9f450d5828c96f93e2536b9c",
+              "url": "https://files.pythonhosted.org/packages/99/04/baae2a1ea1893a01635d475b9261c889a18fd48393634b6270827869fa34/charset_normalizer-3.4.3-cp311-cp311-musllinux_1_2_s390x.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "0f5d9ed7f254402c9e7d35d2f5972c9bbea9040e99cd2861bd77dc68263277c7",
-              "url": "https://files.pythonhosted.org/packages/a6/e6/8aebae25e328160b20e31a7e9929b1578bbdc7f42e66f46595a432f8539e/charset_normalizer-3.4.2-cp311-cp311-manylinux_2_5_i686.manylinux1_i686.manylinux_2_17_i686.manylinux2014_i686.whl"
+              "hash": "13faeacfe61784e2559e690fc53fa4c5ae97c6fcedb8eb6fb8d0a15b475d2c64",
+              "url": "https://files.pythonhosted.org/packages/c7/2a/ae245c41c06299ec18262825c1569c5d3298fc920e4ddf56ab011b417efd/charset_normalizer-3.4.3-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "28a1005facc94196e1fb3e82a3d442a9d9110b8434fc1ded7a24a2983c9888d8",
-              "url": "https://files.pythonhosted.org/packages/df/68/a576b31b694d07b53807269d05ec3f6f1093e9545e8607121995ba7a8313/charset_normalizer-3.4.2-cp311-cp311-manylinux_2_17_s390x.manylinux2014_s390x.whl"
-            },
-            {
-              "algorithm": "sha256",
-              "hash": "e70e990b2137b29dc5564715de1e12701815dacc1d056308e2b17e9095372a82",
-              "url": "https://files.pythonhosted.org/packages/e2/4d/ff460c8b474122334c2fa394a3f99a04cf11c646da895f81402ae54f5c42/charset_normalizer-3.4.2-cp311-cp311-musllinux_1_2_ppc64le.whl"
-            },
-            {
-              "algorithm": "sha256",
-              "hash": "5baececa9ecba31eff645232d59845c07aa030f0c81ee70184a90d35099a0e63",
-              "url": "https://files.pythonhosted.org/packages/e4/33/89c2ced2b67d1c2a61c19c6751aa8902d46ce3dacb23600a283619f5a12d/charset_normalizer-3.4.2.tar.gz"
+              "hash": "585f3b2a80fbd26b048a0be90c5aae8f06605d3c92615911c3a2b03a8a3b796f",
+              "url": "https://files.pythonhosted.org/packages/e2/e6/63bb0e10f90a8243c5def74b5b105b3bbbfb3e7bb753915fe333fb0c11ea/charset_normalizer-3.4.3-cp311-cp311-manylinux2014_s390x.manylinux_2_17_s390x.manylinux_2_28_s390x.whl"
             }
           ],
           "project_name": "charset-normalizer",
           "requires_dists": [],
           "requires_python": ">=3.7",
-          "version": "3.4.2"
+          "version": "3.4.3"
         },
         {
           "artifacts": [
@@ -894,23 +870,23 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "f89e024f1b56ecb940d3ae500cd69ff1ab5ef79e57df8fb81694c514bd3c98a8",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.28.0a0/pantsbuild.pants-2.28.0a0-cp311-cp311-manylinux2014_x86_64.whl"
+              "hash": "21130663aa98ea1105e9457698fc4a5cc3f520bf637adbb65c07171e479317e7",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.28.0rc0/pantsbuild.pants-2.28.0rc0-cp311-cp311-manylinux2014_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "9fd2ef5faa1e4f9b63c4dc9e7e0dda434f791cebfe0b03418f6c99415c2eb839",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.28.0a0/pantsbuild.pants-2.28.0a0-cp311-cp311-macosx_13_0_x86_64.whl"
+              "hash": "6aa073b8b7e7b7be1085107cc8553da47f8645dd101dc24a4d6128606e0b4768",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.28.0rc0/pantsbuild.pants-2.28.0rc0-cp311-cp311-macosx_13_0_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "d5fc420e04b0b4d92e896a1e19689a9dc350824b90c01904bb4aec2fa5b8d2ca",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.28.0a0/pantsbuild.pants-2.28.0a0-cp311-cp311-macosx_14_0_arm64.whl"
+              "hash": "ed3f163e374e26013d804f0e3451c99ca280b605027a94e2c5ecbae715eafe44",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.28.0rc0/pantsbuild.pants-2.28.0rc0-cp311-cp311-macosx_14_0_arm64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "3ba423a18fbdfc6c6bccbcaf073eebf48d7d7a1a70aa64da7ba8bd98117723fa",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.28.0a0/pantsbuild.pants-2.28.0a0-cp311-cp311-manylinux2014_aarch64.whl"
+              "hash": "68449ca097118e1e4a6f9268dc34debf88a941ba5bffc2c95765be604e1035c7",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.28.0rc0/pantsbuild.pants-2.28.0rc0-cp311-cp311-manylinux2014_aarch64.whl"
             }
           ],
           "project_name": "pantsbuild-pants",
@@ -935,37 +911,37 @@
             "typing-extensions~=4.12"
           ],
           "requires_python": "==3.11.*",
-          "version": "2.28.0a0"
+          "version": "2.28.0rc0"
         },
         {
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "ac19d9dbd06f94046e6ab0a481b398b578fca2abfbffc34857a3582221fae129",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.28.0a0/pantsbuild.pants.testutil-2.28.0a0-py3-none-any.whl"
+              "hash": "4f64f7b7c59b3dcd6226c55d59c90d88cde194aee39a496b44d919d7b0302341",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.28.0rc0/pantsbuild.pants.testutil-2.28.0rc0-py3-none-any.whl"
             }
           ],
           "project_name": "pantsbuild-pants-testutil",
           "requires_dists": [
-            "pantsbuild.pants==2.28.0a0",
+            "pantsbuild.pants==2.28.0rc0",
             "pytest<7.1.0,>=6.2.4",
             "toml==0.10.2",
             "types-toml==0.10.8"
           ],
           "requires_python": "==3.11.*",
-          "version": "2.28.0a0"
+          "version": "2.28.0rc0"
         },
         {
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "38d4daea5d9fa63b3f626131b9d34947fd0c8be9b05a29276870580050a25a76",
-              "url": "https://files.pythonhosted.org/packages/47/ac/684d71315abc7b1214d59304e23a982472967f6bf4bde5a98f1503f648dc/pbr-6.1.1-py2.py3-none-any.whl"
+              "hash": "b447e63a2bc04fd975fc0480b8d5ebf979179e2c0ae203bf1eff9ea20073bc38",
+              "url": "https://files.pythonhosted.org/packages/d6/98/120c3e21bf3fc0ef397a3906465ee9f5c76996c52811e65455eadc12d68a/pbr-7.0.0-py2.py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "93ea72ce6989eb2eed99d0f75721474f69ad88128afdef5ac377eb797c4bf76b",
-              "url": "https://files.pythonhosted.org/packages/01/d2/510cc0d218e753ba62a1bc1434651db3cd797a9716a0a66cc714cb4f0935/pbr-6.1.1.tar.gz"
+              "hash": "cf4127298723dafbce3afd13775ccf3885be5d3c8435751b867f9a6a10b71a39",
+              "url": "https://files.pythonhosted.org/packages/80/88/baf6b45d064271f19fefac7def6a030a893f912f430de0024dd595ced61f/pbr-7.0.0.tar.gz"
             }
           ],
           "project_name": "pbr",
@@ -973,7 +949,7 @@
             "setuptools"
           ],
           "requires_python": ">=2.6",
-          "version": "6.1.1"
+          "version": "7.0.0"
         },
         {
           "artifacts": [
@@ -1675,7 +1651,7 @@
   "only_wheels": [],
   "overridden": [],
   "path_mappings": {},
-  "pex_version": "2.40.2",
+  "pex_version": "2.50.2",
   "pip_version": "25.0",
   "prefer_older_binary": false,
   "requirements": [
@@ -1686,8 +1662,8 @@
     "opentelemetry-proto==1.34.1",
     "opentelemetry-sdk==1.34.1",
     "packaging",
-    "pantsbuild.pants.testutil==2.28.0a0",
-    "pantsbuild.pants==2.28.0a0",
+    "pantsbuild.pants.testutil==2.28.0rc0",
+    "pantsbuild.pants==2.28.0rc0",
     "pytest",
     "toml==0.10.2",
     "types-grpcio==1.0.0.20250703"
