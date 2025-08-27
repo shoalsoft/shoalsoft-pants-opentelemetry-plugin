@@ -17,15 +17,19 @@ from __future__ import annotations
 import datetime
 import logging
 
+from packaging.version import Version
+
 from pants.base.build_root import BuildRoot
-from pants.engine.env_vars import EnvironmentVars, EnvironmentVarsRequest
-from pants.engine.rules import Get, collect_rules, rule
+from pants.engine.env_vars import EnvironmentVarsRequest
+from pants.engine.internals.platform_rules import environment_vars_subset
+from pants.engine.rules import collect_rules, implicitly, rule
 from pants.engine.streaming_workunit_handler import (
     WorkunitsCallback,
     WorkunitsCallbackFactory,
     WorkunitsCallbackFactoryRequest,
 )
 from pants.engine.unions import UnionRule
+from pants.version import PANTS_SEMVER
 from shoalsoft.pants_opentelemetry_plugin.exception_logging_processor import (
     ExceptionLoggingProcessor,
 )
@@ -36,6 +40,18 @@ from shoalsoft.pants_opentelemetry_plugin.subsystem import TelemetrySubsystem
 from shoalsoft.pants_opentelemetry_plugin.workunit_handler import TelemetryWorkunitsCallback
 
 logger = logging.getLogger(__name__)
+
+if PANTS_SEMVER >= Version("2.27.0"):
+
+    async def get_env_vars(var_names: list[str]):
+        return await environment_vars_subset(EnvironmentVarsRequest(var_names), **implicitly())  # type: ignore[arg-type,unused-ignore]
+
+else:
+
+    async def get_env_vars(var_names: list[str]):
+        return await environment_vars_subset(
+            **implicitly({EnvironmentVarsRequest(var_names): EnvironmentVarsRequest})
+        )
 
 
 class TelemetryWorkunitsCallbackFactoryRequest(WorkunitsCallbackFactoryRequest):
@@ -55,7 +71,7 @@ async def telemetry_workunits_callback_factory_request(
 
     traceparent_env_var: str | None = None
     if telemetry.enabled and telemetry.exporter and telemetry.parse_traceparent:
-        env_vars = await Get(EnvironmentVars, EnvironmentVarsRequest(["TRACEPARENT"]))
+        env_vars = await get_env_vars(["TRACEPARENT"])
         traceparent_env_var = env_vars.get("TRACEPARENT")
         logger.debug(f"Found TRACEPARENT: {traceparent_env_var}")
 
