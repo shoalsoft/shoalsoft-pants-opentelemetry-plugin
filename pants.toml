@@ -22,7 +22,6 @@ default_resolve = "pants-2.28"
 "pants-2.28" = "3rdparty/python/pants-2.28.lock"
 "pants-2.27" = "3rdparty/python/pants-2.27.lock"
 "pants-2.26" = "3rdparty/python/pants-2.26.lock"
-"pants-2.25" = "3rdparty/python/pants-2.25.lock"
 pytest = "3rdparty/python/pytest.lock"
 mypy = "3rdparty/python/mypy.lock"
 
