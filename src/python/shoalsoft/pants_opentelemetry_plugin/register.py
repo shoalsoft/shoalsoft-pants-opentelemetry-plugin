@@ -21,7 +21,6 @@ from packaging.version import Version
 
 from pants.base.build_root import BuildRoot
 from pants.engine.env_vars import EnvironmentVarsRequest
-from pants.engine.internals.platform_rules import environment_vars_subset
 from pants.engine.rules import collect_rules, implicitly, rule
 from pants.engine.streaming_workunit_handler import (
     WorkunitsCallback,
@@ -40,6 +39,17 @@ from shoalsoft.pants_opentelemetry_plugin.subsystem import TelemetrySubsystem
 from shoalsoft.pants_opentelemetry_plugin.workunit_handler import TelemetryWorkunitsCallback
 
 logger = logging.getLogger(__name__)
+
+
+try:
+    from pants.core.util_rules.env_vars import (  # type: ignore[import-not-found,unused-ignore]
+        environment_vars_subset,
+    )
+except ImportError:
+    from pants.engine.internals.platform_rules import (  # type: ignore[attr-defined,unused-ignore]
+        environment_vars_subset,
+    )
+
 
 if PANTS_SEMVER >= Version("2.27.0"):
 
