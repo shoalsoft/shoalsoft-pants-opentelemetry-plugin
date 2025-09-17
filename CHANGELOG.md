@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.0] - 2025-09-17
+
+- Test the plugin with Pants v2.29.x.
+- Discontinue testing the plugin with Pants v2.25.x.
+- Use call-by-name syntax for rule invocations.
+
 ## [0.4.1] - 2025-07-24
 
 - Support logging links to traces in a trace collection system via the new `[shoalsoft-opentelemetry].trace_link_template` option.
