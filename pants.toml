@@ -14,7 +14,7 @@ backend_packages.add = [
 [python]
 interpreter_constraints = ["==3.11.*"]
 enable_resolves = true
-pip_version = "25.0"
+pip_version = "latest"
 default_resolve = "pants-2.30"
 
 [python.resolves]
