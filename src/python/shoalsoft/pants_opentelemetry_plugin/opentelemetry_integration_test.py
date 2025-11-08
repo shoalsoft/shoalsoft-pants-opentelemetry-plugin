@@ -254,7 +254,7 @@ def do_test_of_json_file_exporter(
         )
 
 
-@pytest.mark.parametrize("pants_major_minor", ["2.30", "2.29", "2.28"])
+@pytest.mark.parametrize("pants_major_minor", ["2.31", "2.30", "2.29", "2.28", "2.27"])
 def test_opentelemetry_integration(subtests, pants_major_minor: str) -> None:
     # Find the Python interpreter compatible with this version of Pants.
     py_version_for_pants_major_minor = (

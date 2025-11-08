@@ -14,10 +14,14 @@
 
 PLUGIN_VERSION = "0.5.0"
 
-PANTS_MAJOR_MINOR_VERSIONS = ["2.30", "2.29", "2.28"]
+PANTS_MAJOR_MINOR_VERSIONS = ["2.31", "2.30", "2.29", "2.28", "2.27"]
 
 python_sources(
     sources=["*.py", "!*_test.py", "!*_integration_test.py"],
+    **parametrize(
+        "pants-2.31",
+        resolve="pants-2.31",
+    ),
     **parametrize(
         "pants-2.30",
         resolve="pants-2.30",
@@ -29,6 +33,10 @@ python_sources(
     **parametrize(
         "pants-2.28",
         resolve="pants-2.28",
+    ),
+    **parametrize(
+        "pants-2.27",
+        resolve="pants-2.27",
     ),
 )
 
@@ -36,6 +44,10 @@ python_tests(
     name="tests",
     sources=["*_test.py", "!*_integration_test.py"],
     **parametrize(
+        "pants-2.31",
+        resolve="pants-2.31",
+    ),
+    **parametrize(
         "pants-2.30",
         resolve="pants-2.30",
     ),
@@ -46,6 +58,10 @@ python_tests(
     **parametrize(
         "pants-2.28",
         resolve="pants-2.28",
+    ),
+    **parametrize(
+        "pants-2.27",
+        resolve="pants-2.27",
     ),
 )
 
@@ -69,6 +85,12 @@ pex_binary(
     execution_mode="venv",
     layout="zipapp",
     **parametrize(
+        "pants-2.31",
+        resolve="pants-2.31",
+        dependencies=["3rdparty/python:pants-2.31#pantsbuild.pants"],
+        output_path="pants-2.31.pex",
+    ),
+    **parametrize(
         "pants-2.30",
         resolve="pants-2.30",
         dependencies=["3rdparty/python:pants-2.30#pantsbuild.pants"],
@@ -85,6 +107,12 @@ pex_binary(
         resolve="pants-2.28",
         dependencies=["3rdparty/python:pants-2.28#pantsbuild.pants"],
         output_path="pants-2.28.pex",
+    ),
+    **parametrize(
+        "pants-2.27",
+        resolve="pants-2.27",
+        dependencies=["3rdparty/python:pants-2.27#pantsbuild.pants"],
+        output_path="pants-2.27.pex",
     ),
 )
 
@@ -147,10 +175,10 @@ python_distribution(
         url="https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin",
     ),
     dependencies=[
-        f"./register.py@parametrize=pants-2.29",
+        f"./register.py@parametrize=pants-2.30",
         # Exclude Pants and its transitive dependencies since the Pants will supply those
         # dependencies itself from its own venv. This should also allow the plugin to be used
         # with any Pants version from Pants v2.25 and later.
-        f"!!3rdparty/python:pants-2.29#pantsbuild.pants",
+        f"!!3rdparty/python:pants-2.30#pantsbuild.pants",
     ],
 )
