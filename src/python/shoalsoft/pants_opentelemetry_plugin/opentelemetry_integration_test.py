@@ -254,11 +254,8 @@ def do_test_of_json_file_exporter(
         )
 
 
-@pytest.mark.parametrize("pants_version_str", ["2.30.0rc0", "2.29.1", "2.28.1"])
-def test_opentelemetry_integration(subtests, pants_version_str: str) -> None:
-    pants_version = Version(pants_version_str)
-    pants_major_minor = f"{pants_version.major}.{pants_version.minor}"
-
+@pytest.mark.parametrize("pants_major_minor", ["2.30", "2.29", "2.28"])
+def test_opentelemetry_integration(subtests, pants_major_minor: str) -> None:
     # Find the Python interpreter compatible with this version of Pants.
     py_version_for_pants_major_minor = (
         "3.11" if Version(pants_major_minor) >= Version("2.25") else "3.9"
@@ -295,8 +292,20 @@ def test_opentelemetry_integration(subtests, pants_version_str: str) -> None:
     pants_pex_path = (Path.cwd() / f"pants-{pants_major_minor}.pex").resolve()
     assert pants_pex_path.exists(), f"Expected to find pants-{pants_major_minor}.pex in sandbox."
 
+    # Create the buildroot for this test run.
     buildroot = (Path.cwd() / f"buildroot-{pants_major_minor}").resolve()
     buildroot.mkdir(parents=True)
+    (buildroot / "BUILDROOT").touch()
+
+    # Determine the full version of the Pants used for the test.
+    version_result = subprocess.run(
+        [python_path, str(pants_pex_path), "--version"],
+        env={"NO_SCIE_WARNING": "1"},
+        capture_output=True,
+        check=True,
+        cwd=buildroot,
+    )
+    pants_version = Version(version_result.stdout.decode("utf-8").strip())
 
     # Write out common configuration file for all integration tests.
     safe_file_dump(
