@@ -254,7 +254,7 @@ def do_test_of_json_file_exporter(
         )
 
 
-@pytest.mark.parametrize("pants_version_str", ["2.29.0a0", "2.28.0", "2.27.0", "2.26.2"])
+@pytest.mark.parametrize("pants_version_str", ["2.30.0rc0", "2.29.1", "2.28.1"])
 def test_opentelemetry_integration(subtests, pants_version_str: str) -> None:
     pants_version = Version(pants_version_str)
     pants_major_minor = f"{pants_version.major}.{pants_version.minor}"

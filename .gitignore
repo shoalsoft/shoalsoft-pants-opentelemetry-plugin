@@ -7,3 +7,5 @@
 
 *.code*
 /.vscode
+
+__pycache__
