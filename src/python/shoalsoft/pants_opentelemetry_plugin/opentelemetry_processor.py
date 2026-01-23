@@ -17,7 +17,9 @@ from __future__ import annotations
 import datetime
 import json
 import logging
+import os
 import typing
+from contextlib import contextmanager
 from pathlib import Path
 from typing import TextIO
 
@@ -57,6 +59,21 @@ logger = logging.getLogger(__name__)
 _UNIX_EPOCH = datetime.datetime(year=1970, month=1, day=1, tzinfo=datetime.timezone.utc)
 
 
+@contextmanager
+def _temp_env_var(key: str, value: str | None):
+    """Temporarily set an environment variable, restoring the original value afterward."""
+    old_value = os.environ.get(key)
+    try:
+        if value is not None:
+            os.environ[key] = value
+        yield
+    finally:
+        if old_value is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = old_value
+
+
 def _datetime_to_otel_timestamp(d: datetime.datetime) -> int:
     """OTEL times are nanoseconds since the Unix epoch."""
     duration_since_epoch = d - _UNIX_EPOCH
@@ -88,15 +105,22 @@ def get_processor(
     otlp_parameters: OtlpParameters,
     build_root: Path,
     traceparent_env_var: str | None,
+    otel_resource_attributes: str | None,
     json_file: str | None,
     trace_link_template: str | None,
 ) -> Processor:
     logger.debug(f"OTEL: get_processor: otlp_parameters={otlp_parameters}; build_root={build_root}")
-    resource = Resource(
-        attributes={
-            SERVICE_NAME: "pantsbuild",
-        }
-    )
+
+    # Temporarily set OTEL_RESOURCE_ATTRIBUTES so Resource.create() can parse it
+    with _temp_env_var("OTEL_RESOURCE_ATTRIBUTES", otel_resource_attributes):
+        if otel_resource_attributes:
+            logger.debug(f"Using OTEL_RESOURCE_ATTRIBUTES: {otel_resource_attributes}")
+        # Resource.create() will automatically merge OTEL_RESOURCE_ATTRIBUTES from os.environ
+        resource = Resource.create(
+            attributes={
+                SERVICE_NAME: "pantsbuild",
+            }
+        )
     tracer_provider = TracerProvider(
         sampler=sampling.ALWAYS_ON, resource=resource, shutdown_on_exit=False
     )
