@@ -113,8 +113,6 @@ def get_processor(
 
     # Temporarily set OTEL_RESOURCE_ATTRIBUTES so Resource.create() can parse it
     with _temp_env_var("OTEL_RESOURCE_ATTRIBUTES", otel_resource_attributes):
-        if otel_resource_attributes:
-            logger.debug(f"Using OTEL_RESOURCE_ATTRIBUTES: {otel_resource_attributes}")
         # Resource.create() will automatically merge OTEL_RESOURCE_ATTRIBUTES from os.environ
         resource = Resource.create(
             attributes={
