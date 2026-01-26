@@ -61,7 +61,8 @@ _UNIX_EPOCH = datetime.datetime(year=1970, month=1, day=1, tzinfo=datetime.timez
 
 @contextmanager
 def _temp_env_var(key: str, value: str | None):
-    """Temporarily set an environment variable, restoring the original value afterward."""
+    """Temporarily set an environment variable, restoring the original value
+    afterward."""
     old_value = os.environ.get(key)
     try:
         if value is not None:

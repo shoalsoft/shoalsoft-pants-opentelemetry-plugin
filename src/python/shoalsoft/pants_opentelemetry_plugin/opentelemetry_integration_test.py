@@ -261,7 +261,8 @@ def do_test_of_resource_attributes(
     workdir_base: Path,
     extra_env: Mapping[str, str] | None = None,
 ) -> None:
-    """Test that OTEL_RESOURCE_ATTRIBUTES are properly included in telemetry."""
+    """Test that OTEL_RESOURCE_ATTRIBUTES are properly included in
+    telemetry."""
     with tempfile.TemporaryDirectory(dir=workdir_base) as workdir:
         trace_file = Path(buildroot) / "dist" / "otel-resource-attrs-trace.jsonl"
         assert not trace_file.exists()
