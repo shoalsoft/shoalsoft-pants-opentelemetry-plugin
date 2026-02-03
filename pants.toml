@@ -1,5 +1,5 @@
 [GLOBAL]
-pants_version = "2.31.0.dev1"
+pants_version = "2.31.0a0"
 backend_packages.add = [
   "pants.backend.build_files.fmt.black",
   "pants.backend.plugin_development",
@@ -36,12 +36,12 @@ unowned_dependency_behavior = "error"
 find_links = ["https://wheels.pantsbuild.org/simple"]
 
 [pex-cli]
-version = "v2.69.0"
+version = "v2.87.0"
 known_versions = [
-  "v2.69.0|macos_arm64|46daf30e28366643740a84427cfa96829777b0119ddc30cd2822e53f0f705788|4937340",
-  "v2.69.0|macos_x86_64|46daf30e28366643740a84427cfa96829777b0119ddc30cd2822e53f0f705788|4937340",
-  "v2.69.0|linux_x86_64|46daf30e28366643740a84427cfa96829777b0119ddc30cd2822e53f0f705788|4937340",
-  "v2.69.0|linux_arm64|46daf30e28366643740a84427cfa96829777b0119ddc30cd2822e53f0f705788|4937340",
+  "v2.87.0|macos_arm64|5512aa085081cb90ae399a5190f2d7029225d39e0911d81d1e07b3060dc1536b|4981159",
+  "v2.87.0|macos_x86_64|5512aa085081cb90ae399a5190f2d7029225d39e0911d81d1e07b3060dc1536b|4981159",
+  "v2.87.0|linux_x86_64|5512aa085081cb90ae399a5190f2d7029225d39e0911d81d1e07b3060dc1536b|4981159",
+  "v2.87.0|linux_arm64|5512aa085081cb90ae399a5190f2d7029225d39e0911d81d1e07b3060dc1536b|4981159",
 ]
 
 [pytest]
