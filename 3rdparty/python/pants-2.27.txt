@@ -3,15 +3,15 @@ pantsbuild.pants==2.28.1
 pantsbuild.pants.testutil==2.28.1
 
 # OpenTelemetry dependencies
-opentelemetry-api==1.38.0
-opentelemetry-sdk==1.38.0
-opentelemetry-exporter-otlp==1.38.0
+opentelemetry-api==1.39.1
+opentelemetry-sdk==1.39.1
+opentelemetry-exporter-otlp==1.39.1
 
 # Test dependencies
 pytest
 toml==0.10.2
 httpx==0.28.1
-opentelemetry-proto==1.38.0
+opentelemetry-proto==1.39.1
 grpcio==1.73.1
 types-grpcio==1.0.0.20250703
 packaging  # match version in Pants repository
