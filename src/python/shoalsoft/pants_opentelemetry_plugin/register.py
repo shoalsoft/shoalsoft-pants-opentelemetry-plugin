@@ -80,10 +80,14 @@ async def telemetry_workunits_callback_factory_request(
     )
 
     traceparent_env_var: str | None = None
-    if telemetry.enabled and telemetry.exporter and telemetry.parse_traceparent:
-        env_vars = await get_env_vars(["TRACEPARENT"])
-        traceparent_env_var = env_vars.get("TRACEPARENT")
-        logger.debug(f"Found TRACEPARENT: {traceparent_env_var}")
+    otel_resource_attributes: str | None = None
+    if telemetry.enabled and telemetry.exporter:
+        env_vars = await get_env_vars(["TRACEPARENT", "OTEL_RESOURCE_ATTRIBUTES"])
+        if telemetry.parse_traceparent:
+            traceparent_env_var = env_vars.get("TRACEPARENT")
+            logger.debug(f"Found TRACEPARENT: {traceparent_env_var}")
+        otel_resource_attributes = env_vars.get("OTEL_RESOURCE_ATTRIBUTES")
+        logger.debug(f"Found OTEL_RESOURCE_ATTRIBUTES: {otel_resource_attributes}")
 
     def workunits_callback_factory() -> WorkunitsCallback | None:
         if not telemetry.enabled or not telemetry.exporter:
@@ -108,6 +112,7 @@ async def telemetry_workunits_callback_factory_request(
             ),
             build_root=build_root.pathlib_path,
             traceparent_env_var=traceparent_env_var,
+            otel_resource_attributes=otel_resource_attributes,
             json_file=telemetry.json_file,
             trace_link_template=telemetry.trace_link_template,
         )

@@ -254,6 +254,53 @@ def do_test_of_json_file_exporter(
         )
 
 
+def do_test_of_resource_attributes(
+    *,
+    buildroot: Path,
+    pants_exe_args: Iterable[str],
+    workdir_base: Path,
+    extra_env: Mapping[str, str] | None = None,
+) -> None:
+    """Test that OTEL_RESOURCE_ATTRIBUTES are properly included in
+    telemetry."""
+    with tempfile.TemporaryDirectory(dir=workdir_base) as workdir:
+        trace_file = Path(buildroot) / "dist" / "otel-resource-attrs-trace.jsonl"
+        assert not trace_file.exists()
+
+        result = run_pants_with_workdir(
+            [
+                "--shoalsoft-opentelemetry-enabled",
+                f"--shoalsoft-opentelemetry-exporter={TracingExporterId.JSON_FILE.value}",
+                "--shoalsoft-opentelemetry-json-file=dist/otel-resource-attrs-trace.jsonl",
+                "version",
+            ],
+            pants_exe_args=pants_exe_args,
+            workdir=str(workdir),
+            extra_env={
+                **(extra_env if extra_env else {}),
+                "PANTS_BUILDROOT_OVERRIDE": str(buildroot),
+                "OTEL_RESOURCE_ATTRIBUTES": "user.name=testuser,team=ml-platform,env=test",
+            },
+            cwd=buildroot,
+        )
+        result.assert_success()
+
+        # Assert that tracing spans were output with resource attributes
+        traces_content = trace_file.read_text()
+        for trace_line in traces_content.splitlines():
+            trace_json = json.loads(trace_line)
+            resource_attrs = trace_json["resource"]["attributes"]
+
+            # Verify standard attributes
+            assert resource_attrs["service.name"] == "pantsbuild"
+            assert "telemetry.sdk.name" in resource_attrs
+
+            # Verify our custom resource attributes from OTEL_RESOURCE_ATTRIBUTES
+            assert resource_attrs["user.name"] == "testuser"
+            assert resource_attrs["team"] == "ml-platform"
+            assert resource_attrs["env"] == "test"
+
+
 @pytest.mark.parametrize("pants_major_minor", ["2.31", "2.30", "2.29", "2.28", "2.27"])
 def test_opentelemetry_integration(subtests, pants_major_minor: str) -> None:
     # Find the Python interpreter compatible with this version of Pants.
@@ -361,6 +408,14 @@ def test_opentelemetry_integration(subtests, pants_major_minor: str) -> None:
 
     with subtests.test(msg="OTEL/JSON file span exporter"):
         do_test_of_json_file_exporter(
+            buildroot=buildroot,
+            pants_exe_args=pants_exe_args,
+            workdir_base=workdir_base,
+            extra_env=extra_env,
+        )
+
+    with subtests.test(msg="OTEL_RESOURCE_ATTRIBUTES support"):
+        do_test_of_resource_attributes(
             buildroot=buildroot,
             pants_exe_args=pants_exe_args,
             workdir_base=workdir_base,
