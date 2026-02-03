@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PLUGIN_VERSION = "0.5.0"
+PLUGIN_VERSION = "0.5.1.dev0"
 
 PANTS_MAJOR_MINOR_VERSIONS = ["2.31", "2.30", "2.29", "2.28", "2.27"]
 
