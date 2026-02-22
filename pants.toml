@@ -12,7 +12,8 @@ backend_packages.add = [
 ]
 
 [python]
-interpreter_constraints = ["==3.11.*"]
+interpreter_constraints = ["==3.11.*", "==3.14.*"]
+interpreter_versions_universe = ["3.11", "3.14"]
 enable_resolves = true
 default_to_resolve_interpreter_constraints = true
 pip_version = "latest"

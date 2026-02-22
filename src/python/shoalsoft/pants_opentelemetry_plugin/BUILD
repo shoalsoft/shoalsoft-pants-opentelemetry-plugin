@@ -14,33 +14,39 @@
 
 PLUGIN_VERSION = "0.5.1.dev0"
 
-PANTS_MAJOR_MINOR_VERSIONS = ["2.32", "2.31", "2.30", "2.29", "2.28", "2.27"]
+PANTS_MINOR_VERSIONS = [32, 31, 30, 29, 28, 27]
 
 python_sources(
     sources=["*.py", "!*_test.py", "!*_integration_test.py"],
     **parametrize(
         "pants-2.32",
         resolve="pants-2.32",
+        interpreter_constraints=["==3.14.*"],
     ),
     **parametrize(
         "pants-2.31",
         resolve="pants-2.31",
+        interpreter_constraints=["==3.11.*"],
     ),
     **parametrize(
         "pants-2.30",
         resolve="pants-2.30",
+        interpreter_constraints=["==3.11.*"],
     ),
     **parametrize(
         "pants-2.29",
         resolve="pants-2.29",
+        interpreter_constraints=["==3.11.*"],
     ),
     **parametrize(
         "pants-2.28",
         resolve="pants-2.28",
+        interpreter_constraints=["==3.11.*"],
     ),
     **parametrize(
         "pants-2.27",
         resolve="pants-2.27",
+        interpreter_constraints=["==3.11.*"],
     ),
 )
 
@@ -50,37 +56,44 @@ python_tests(
     **parametrize(
         "pants-2.32",
         resolve="pants-2.32",
+        interpreter_constraints=["==3.14.*"],
     ),
     **parametrize(
         "pants-2.31",
         resolve="pants-2.31",
+        interpreter_constraints=["==3.11.*"],
     ),
     **parametrize(
         "pants-2.30",
         resolve="pants-2.30",
+        interpreter_constraints=["==3.11.*"],
     ),
     **parametrize(
         "pants-2.29",
         resolve="pants-2.29",
+        interpreter_constraints=["==3.11.*"],
     ),
     **parametrize(
         "pants-2.28",
         resolve="pants-2.28",
+        interpreter_constraints=["==3.11.*"],
     ),
     **parametrize(
         "pants-2.27",
         resolve="pants-2.27",
+        interpreter_constraints=["==3.11.*"],
     ),
 )
 
 python_tests(
     name="integration_tests",
     sources=["*_integration_test.py"],
+    interpreter_constraints=["==3.11.*"],
     runtime_package_dependencies=[
-        *(f":pex-{pants_version}" for pants_version in PANTS_MAJOR_MINOR_VERSIONS),
+        *(f":pex-2.{pants_minor_version}" for pants_minor_version in PANTS_MINOR_VERSIONS),
         *(
-            f":pants-for-tests@parametrize=pants-{pants_version}"
-            for pants_version in PANTS_MAJOR_MINOR_VERSIONS
+            f":pants-for-tests@parametrize=pants-2.{pants_minor_version}"
+            for pants_minor_version in PANTS_MINOR_VERSIONS
         ),
     ],
     # Integration tests take forever given how they are run. :(
@@ -131,23 +144,24 @@ pex_binary(
 )
 
 
-def declare_pex_artifact(pants_major_minor_version):
+def declare_pex_artifact(pants_minor_version):
     pex_binary(
-        name=f"pex-{pants_major_minor_version}",
-        output_path=f"shoalsoft-pants-opentelemetry-plugin-pants{pants_major_minor_version}-v{PLUGIN_VERSION}.pex",
+        name=f"pex-2.{pants_minor_version}",
+        output_path=f"shoalsoft-pants-opentelemetry-plugin-pants2.{pants_minor_version}-v{PLUGIN_VERSION}.pex",
         dependencies=[
-            f"./register.py@parametrize=pants-{pants_major_minor_version}",
+            f"./register.py@parametrize=pants-2.{pants_minor_version}",
             # Exclude Pants and its transitive dependencies since the Pants will supply those
             # dependencies itself from its own venv.
-            f"!!3rdparty/python:pants-{pants_major_minor_version}#pantsbuild.pants",
+            f"!!3rdparty/python:pants-2.{pants_minor_version}#pantsbuild.pants",
         ],
         include_tools=True,
-        resolve=f"pants-{pants_major_minor_version}",
+        resolve=f"pants-2.{pants_minor_version}",
+        interpreter_constraints=["==3.11.*" if pants_minor_version < 32 else "==3.14.*"]
     )
 
 
-for pants_version in PANTS_MAJOR_MINOR_VERSIONS:
-    declare_pex_artifact(pants_version)
+for pants_minor_version in PANTS_MINOR_VERSIONS:
+    declare_pex_artifact(pants_minor_version)
 
 # This is a partial copy of the README.md geared more for the PyPI UX.
 LONG_DESCRIPTION = """\
@@ -181,7 +195,7 @@ python_distribution(
         description=f"Pantsbuild OpenTelemetry Plugin from Shoal Software LLC",
         long_description=LONG_DESCRIPTION,
         long_description_content_type="text/markdown",
-        python_requires=f"==3.11.*",
+        python_requires="==3.11.*",
         version=PLUGIN_VERSION,
         author="Tom Dyas",
         author_email="tom@shoalsoftware.com",
