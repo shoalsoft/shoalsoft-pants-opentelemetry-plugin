@@ -16,8 +16,8 @@
 //     "opentelemetry-proto==1.39.1",
 //     "opentelemetry-sdk==1.39.1",
 //     "packaging",
-//     "pantsbuild.pants.testutil==2.31.0a0",
-//     "pantsbuild.pants==2.31.0a0",
+//     "pantsbuild.pants.testutil==2.31.0",
+//     "pantsbuild.pants==2.31.0",
 //     "pytest",
 //     "toml==0.10.2",
 //     "types-grpcio==1.0.0.20250703"
@@ -821,18 +821,18 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "cfb7dfbc92c38cd4c387e6f25cb9052a9d9ade07011ad913b5618c40b51f51b3",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.31.0a0/pantsbuild_pants-2.31.0a0-cp311-cp311-manylinux2014_x86_64.whl"
+              "hash": "c75288cb3fe7880b09ef1581f60e9f0ad9eb7358199a61f472daeca5c7ff8380",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.31.0/pantsbuild_pants-2.31.0-cp311-cp311-manylinux2014_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "2d7a9c6798aaba9ca5a008d354ff89a82a7ad669cdc81f3ed63d14b063b72b1e",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.31.0a0/pantsbuild_pants-2.31.0a0-cp311-cp311-macosx_14_0_arm64.whl"
+              "hash": "8fde4c6c9e202d425e882a612f04d300b344ef44979c4a635a188c64224fa4e7",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.31.0/pantsbuild_pants-2.31.0-cp311-cp311-macosx_14_0_arm64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "182778581750f9f2ef8d410af43d24a9ce808fc9519c6e005c54f3c69e61f27a",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.31.0a0/pantsbuild_pants-2.31.0a0-cp311-cp311-manylinux2014_aarch64.whl"
+              "hash": "81b378f59ef9b62a8c1a533b0d468b6f48b4436ab89e60993100d6c419587aec",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.31.0/pantsbuild_pants-2.31.0-cp311-cp311-manylinux2014_aarch64.whl"
             }
           ],
           "project_name": "pantsbuild-pants",
@@ -855,25 +855,25 @@
             "typing-extensions==4.15"
           ],
           "requires_python": "==3.11.*",
-          "version": "2.31.0a0"
+          "version": "2.31.0"
         },
         {
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "24520b875ffe8147a486304505b3f78ef21d21ca46945aa339328aa5032a96d9",
-              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.31.0a0/pantsbuild_pants_testutil-2.31.0a0-py3-none-any.whl"
+              "hash": "eec5b5d2212a0401fe8b24f580151f6e613205035a6c25dfd1ec4a77a2087f9f",
+              "url": "https://github.com/pantsbuild/pants/releases/download/release_2.31.0/pantsbuild_pants_testutil-2.31.0-py3-none-any.whl"
             }
           ],
           "project_name": "pantsbuild-pants-testutil",
           "requires_dists": [
-            "pantsbuild.pants==2.31.0a0",
+            "pantsbuild.pants==2.31.0",
             "pytest!=7.1.0,!=7.1.1,<9,>=7",
             "toml==0.10.2",
             "types-toml==0.10.8.20240310"
           ],
           "requires_python": "==3.11.*",
-          "version": "2.31.0a0"
+          "version": "2.31.0"
         },
         {
           "artifacts": [
@@ -1207,13 +1207,13 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "95b30ddfb717250edb492926c92b5221f7ef3fbcc2b07579bcd4a27da21d0173",
-              "url": "https://files.pythonhosted.org/packages/94/b8/f1f62a5e3c0ad2ff1d189590bfa4c46b4f3b6e49cef6f26c6ee4e575394d/setuptools-80.10.2-py3-none-any.whl"
+              "hash": "70b18734b607bd1da571d097d236cfcfacaf01de45717d59e6e04b96877532e0",
+              "url": "https://files.pythonhosted.org/packages/e1/c6/76dc613121b793286a3f91621d7b75a2b493e0390ddca50f11993eadf192/setuptools-82.0.0-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "8b0e9d10c784bf7d262c4e5ec5d4ec94127ce206e8738f29a437945fbc219b70",
-              "url": "https://files.pythonhosted.org/packages/76/95/faf61eb8363f26aa7e1d762267a8d602a1b26d4f3a1e758e92cb3cb8b054/setuptools-80.10.2.tar.gz"
+              "hash": "22e0a2d69474c6ae4feb01951cb69d515ed23728cf96d05513d36e42b62b37cb",
+              "url": "https://files.pythonhosted.org/packages/82/f3/748f4d6f65d1756b9ae577f329c951cda23fb900e4de9f70900ced962085/setuptools-82.0.0.tar.gz"
             }
           ],
           "project_name": "setuptools",
@@ -1235,7 +1235,7 @@
             "jaraco.tidelift>=1.4; extra == \"doc\"",
             "more_itertools; extra == \"core\"",
             "more_itertools>=8.8; extra == \"core\"",
-            "mypy==1.14.*; extra == \"type\"",
+            "mypy==1.18.*; extra == \"type\"",
             "packaging>=24.2; extra == \"core\"",
             "packaging>=24.2; extra == \"test\"",
             "pip>=19.1; extra == \"test\"",
@@ -1255,7 +1255,7 @@
             "pytest-timeout; extra == \"test\"",
             "pytest-xdist>=3; extra == \"test\"",
             "rst.linker>=1.9; extra == \"doc\"",
-            "ruff>=0.8.0; sys_platform != \"cygwin\" and extra == \"check\"",
+            "ruff>=0.13.0; sys_platform != \"cygwin\" and extra == \"check\"",
             "sphinx-favicon; extra == \"doc\"",
             "sphinx-inline-tabs; extra == \"doc\"",
             "sphinx-lint; extra == \"doc\"",
@@ -1271,7 +1271,7 @@
             "wheel>=0.44.0; extra == \"test\""
           ],
           "requires_python": ">=3.9",
-          "version": "80.10.2"
+          "version": "82.0.0"
         },
         {
           "artifacts": [
@@ -1497,8 +1497,8 @@
     "opentelemetry-proto==1.39.1",
     "opentelemetry-sdk==1.39.1",
     "packaging",
-    "pantsbuild.pants.testutil==2.31.0a0",
-    "pantsbuild.pants==2.31.0a0",
+    "pantsbuild.pants.testutil==2.31.0",
+    "pantsbuild.pants==2.31.0",
     "pytest",
     "toml==0.10.2",
     "types-grpcio==1.0.0.20250703"
