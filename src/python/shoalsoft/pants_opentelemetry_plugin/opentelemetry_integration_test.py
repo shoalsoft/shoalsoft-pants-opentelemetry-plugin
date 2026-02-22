@@ -301,11 +301,11 @@ def do_test_of_resource_attributes(
             assert resource_attrs["env"] == "test"
 
 
-@pytest.mark.parametrize("pants_major_minor", ["2.31", "2.30", "2.29", "2.28", "2.27"])
+@pytest.mark.parametrize("pants_major_minor", ["2.32", "2.31", "2.30", "2.29", "2.28", "2.27"])
 def test_opentelemetry_integration(subtests, pants_major_minor: str) -> None:
     # Find the Python interpreter compatible with this version of Pants.
     py_version_for_pants_major_minor = (
-        "3.11" if Version(pants_major_minor) >= Version("2.25") else "3.9"
+        "3.14" if Version(pants_major_minor) >= Version("2.32") else "3.11"
     )
     python_path = python_interpreter_path(py_version_for_pants_major_minor)
     assert (

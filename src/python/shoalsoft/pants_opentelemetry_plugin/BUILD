@@ -14,10 +14,14 @@
 
 PLUGIN_VERSION = "0.5.1.dev0"
 
-PANTS_MAJOR_MINOR_VERSIONS = ["2.31", "2.30", "2.29", "2.28", "2.27"]
+PANTS_MAJOR_MINOR_VERSIONS = ["2.32", "2.31", "2.30", "2.29", "2.28", "2.27"]
 
 python_sources(
     sources=["*.py", "!*_test.py", "!*_integration_test.py"],
+    **parametrize(
+        "pants-2.32",
+        resolve="pants-2.32",
+    ),
     **parametrize(
         "pants-2.31",
         resolve="pants-2.31",
@@ -43,6 +47,10 @@ python_sources(
 python_tests(
     name="tests",
     sources=["*_test.py", "!*_integration_test.py"],
+    **parametrize(
+        "pants-2.32",
+        resolve="pants-2.32",
+    ),
     **parametrize(
         "pants-2.31",
         resolve="pants-2.31",
@@ -85,6 +93,12 @@ pex_binary(
     execution_mode="venv",
     layout="zipapp",
     **parametrize(
+        "pants-2.32",
+        resolve="pants-2.32",
+        dependencies=["3rdparty/python:pants-2.32#pantsbuild.pants"],
+        output_path="pants-2.32.pex",
+    ),
+    **parametrize(
         "pants-2.31",
         resolve="pants-2.31",
         dependencies=["3rdparty/python:pants-2.31#pantsbuild.pants"],
@@ -121,7 +135,6 @@ def declare_pex_artifact(pants_major_minor_version):
     pex_binary(
         name=f"pex-{pants_major_minor_version}",
         output_path=f"shoalsoft-pants-opentelemetry-plugin-pants{pants_major_minor_version}-v{PLUGIN_VERSION}.pex",
-        interpreter_constraints=(f"==3.11.*",),
         dependencies=[
             f"./register.py@parametrize=pants-{pants_major_minor_version}",
             # Exclude Pants and its transitive dependencies since the Pants will supply those
@@ -175,10 +188,10 @@ python_distribution(
         url="https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin",
     ),
     dependencies=[
-        f"./register.py@parametrize=pants-2.30",
+        f"./register.py@parametrize=pants-2.31",
         # Exclude Pants and its transitive dependencies since the Pants will supply those
         # dependencies itself from its own venv. This should also allow the plugin to be used
         # with any Pants version from Pants v2.25 and later.
-        f"!!3rdparty/python:pants-2.30#pantsbuild.pants",
+        f"!!3rdparty/python:pants-2.31#pantsbuild.pants",
     ],
 )
