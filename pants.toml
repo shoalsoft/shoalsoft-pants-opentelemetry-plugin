@@ -25,12 +25,15 @@ default_resolve = "pants-2.31"
 "pants-2.30" = "3rdparty/python/pants-2.30.lock"
 "pants-2.29" = "3rdparty/python/pants-2.29.lock"
 "pants-2.28" = "3rdparty/python/pants-2.28.lock"
-"pants-2.27" = "3rdparty/python/pants-2.27.lock"
 pytest = "3rdparty/python/pytest.lock"
 mypy = "3rdparty/python/mypy.lock"
 
 [python.resolves_to_interpreter_constraints]
 "pants-2.32" = ["==3.14.*"]
+"pants-2.31" = ["==3.11.*"]
+"pants-2.30" = ["==3.11.*"]
+"pants-2.29" = ["==3.11.*"]
+"pants-2.28" = ["==3.11.*"]
 
 [python-bootstrap]
 search_path = ["<PYENV>"]
