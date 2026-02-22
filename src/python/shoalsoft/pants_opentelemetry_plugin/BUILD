@@ -156,7 +156,7 @@ def declare_pex_artifact(pants_minor_version):
         ],
         include_tools=True,
         resolve=f"pants-2.{pants_minor_version}",
-        interpreter_constraints=["==3.11.*" if pants_minor_version < 32 else "==3.14.*"]
+        interpreter_constraints=["==3.11.*" if pants_minor_version < 32 else "==3.14.*"],
     )
 
 
