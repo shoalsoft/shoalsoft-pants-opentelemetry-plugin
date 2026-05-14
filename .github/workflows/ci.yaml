@@ -33,12 +33,10 @@ jobs:
             echo "ERROR: No wheel found in `dist`." 1>&2
             exit 1
           fi
-          for pants_version in 2.30 2.29 2.28 2.27 ; do
-            if [ ! -r dist/shoalsoft-pants-opentelemetry-plugin-pants${pants_version}-*.pex ]; then
-              echo "ERROR: No PEX file found for Pants version ${pants_version}.x found in `dist`." 1>&2
-              exit 1
-            fi
-          done
+          if [ ! -r dist/shoalsoft-pants-opentelemetry-plugin-pants2.32-*.pex ]; then
+            echo "ERROR: No PEX file found for Pants version 2.32.x found in `dist`." 1>&2
+            exit 1
+          fi
       - name: Upload pants.log
         if: always()
         uses: actions/upload-artifact@v4
