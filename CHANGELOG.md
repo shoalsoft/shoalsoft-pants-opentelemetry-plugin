@@ -2,9 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [0.6.0.dev0]
 
-- Add support for Pants 2.32 & Python 3.14. Drop support for prior Pants versions since Pants 2.33 will have the new `pants.backend.observability.opentelemetry` backend bazed on this plugin.
+- Add support for Pants 2.32 & Python 3.14. Drop support for prior Pants versions since Pants 2.33 will have the new `pants.backend.observability.opentelemetry` backend based on this plugin.
 
 ## [0.5.0] - 2025-09-17
 

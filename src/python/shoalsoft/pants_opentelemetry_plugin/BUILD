@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-PLUGIN_VERSION = "0.5.1.dev0"
+PLUGIN_VERSION = "0.6.0.dev0"
 
 python_sources(
     sources=["*.py", "!*_test.py", "!*_integration_test.py"],
@@ -66,6 +66,11 @@ pex_binary(
 # This is a partial copy of the README.md geared more for the PyPI UX.
 LONG_DESCRIPTION = """\
 # Pantsbuild OpenTelemetry Plugin
+
+> [!IMPORTANT]
+> This plugin only supports Pants v2.32 due to Pants switching to Python 3.14 for its internal Python version. Moreover,
+> the new `pants.backend.observability.backend` in Pants v2.33 (based on this plugin) makes this plugin no longer
+> necessary with Pants v2.33 and later versions.
 
 ## Installation
 
