@@ -22,16 +22,10 @@ jobs:
           # cache0 makes it easy to bust the cache if needed
           gha-cache-key: cache0-py3.11
           named-caches-hash: ${{ hashFiles('3rdparty/python/pants-2.27.lock') }}
-        env:
-          HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
       - name: Lint and typecheck the code
         run: "pants lint check ::"
-        env:
-          HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
       - name: Run tests
         run: "pants test ::"
-        env:
-          HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
       - name: Package plugin as PEX for various Pants versions.
         run: |
           pants package src/python/shoalsoft/pants_opentelemetry_plugin::
@@ -39,14 +33,10 @@ jobs:
             echo "ERROR: No wheel found in `dist`." 1>&2
             exit 1
           fi
-          for pants_version in 2.30 2.29 2.28 2.27 ; do
-            if [ ! -r dist/shoalsoft-pants-opentelemetry-plugin-pants${pants_version}-*.pex ]; then
-              echo "ERROR: No PEX file found for Pants version ${pants_version}.x found in `dist`." 1>&2
-              exit 1
-            fi
-          done
-        env:
-          HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
+          if [ ! -r dist/shoalsoft-pants-opentelemetry-plugin-pants2.32-*.pex ]; then
+            echo "ERROR: No PEX file found for Pants version 2.32.x found in `dist`." 1>&2
+            exit 1
+          fi
       - name: Upload pants.log
         if: always()
         uses: actions/upload-artifact@v4

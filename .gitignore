@@ -1,4 +1,5 @@
 /.pants.d
+/.pants.bootstrap
 /.pids
 
 /dist

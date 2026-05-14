@@ -14,66 +14,26 @@
 
 PLUGIN_VERSION = "0.5.1.dev0"
 
-PANTS_MAJOR_MINOR_VERSIONS = ["2.31", "2.30", "2.29", "2.28", "2.27"]
-
 python_sources(
     sources=["*.py", "!*_test.py", "!*_integration_test.py"],
-    **parametrize(
-        "pants-2.31",
-        resolve="pants-2.31",
-    ),
-    **parametrize(
-        "pants-2.30",
-        resolve="pants-2.30",
-    ),
-    **parametrize(
-        "pants-2.29",
-        resolve="pants-2.29",
-    ),
-    **parametrize(
-        "pants-2.28",
-        resolve="pants-2.28",
-    ),
-    **parametrize(
-        "pants-2.27",
-        resolve="pants-2.27",
-    ),
+    resolve="pants-2.32",
+    interpreter_constraints=["==3.14.*"],
 )
 
 python_tests(
     name="tests",
     sources=["*_test.py", "!*_integration_test.py"],
-    **parametrize(
-        "pants-2.31",
-        resolve="pants-2.31",
-    ),
-    **parametrize(
-        "pants-2.30",
-        resolve="pants-2.30",
-    ),
-    **parametrize(
-        "pants-2.29",
-        resolve="pants-2.29",
-    ),
-    **parametrize(
-        "pants-2.28",
-        resolve="pants-2.28",
-    ),
-    **parametrize(
-        "pants-2.27",
-        resolve="pants-2.27",
-    ),
+    resolve="pants-2.32",
+    interpreter_constraints=["==3.14.*"],
 )
 
 python_tests(
     name="integration_tests",
     sources=["*_integration_test.py"],
+    interpreter_constraints=["==3.14.*"],
     runtime_package_dependencies=[
-        *(f":pex-{pants_version}" for pants_version in PANTS_MAJOR_MINOR_VERSIONS),
-        *(
-            f":pants-for-tests@parametrize=pants-{pants_version}"
-            for pants_version in PANTS_MAJOR_MINOR_VERSIONS
-        ),
+        ":pants-for-tests",
+        ":pex-2.32",
     ],
     # Integration tests take forever given how they are run. :(
     timeout=600,
@@ -84,57 +44,24 @@ pex_binary(
     entry_point="pants",
     execution_mode="venv",
     layout="zipapp",
-    **parametrize(
-        "pants-2.31",
-        resolve="pants-2.31",
-        dependencies=["3rdparty/python:pants-2.31#pantsbuild.pants"],
-        output_path="pants-2.31.pex",
-    ),
-    **parametrize(
-        "pants-2.30",
-        resolve="pants-2.30",
-        dependencies=["3rdparty/python:pants-2.30#pantsbuild.pants"],
-        output_path="pants-2.30.pex",
-    ),
-    **parametrize(
-        "pants-2.29",
-        resolve="pants-2.29",
-        dependencies=["3rdparty/python:pants-2.29#pantsbuild.pants"],
-        output_path="pants-2.29.pex",
-    ),
-    **parametrize(
-        "pants-2.28",
-        resolve="pants-2.28",
-        dependencies=["3rdparty/python:pants-2.28#pantsbuild.pants"],
-        output_path="pants-2.28.pex",
-    ),
-    **parametrize(
-        "pants-2.27",
-        resolve="pants-2.27",
-        dependencies=["3rdparty/python:pants-2.27#pantsbuild.pants"],
-        output_path="pants-2.27.pex",
-    ),
+    resolve="pants-2.32",
+    dependencies=["3rdparty/python:pants-2.32#pantsbuild.pants"],
+    output_path="pants-2.32.pex",
 )
 
-
-def declare_pex_artifact(pants_major_minor_version):
-    pex_binary(
-        name=f"pex-{pants_major_minor_version}",
-        output_path=f"shoalsoft-pants-opentelemetry-plugin-pants{pants_major_minor_version}-v{PLUGIN_VERSION}.pex",
-        interpreter_constraints=(f"==3.11.*",),
-        dependencies=[
-            f"./register.py@parametrize=pants-{pants_major_minor_version}",
-            # Exclude Pants and its transitive dependencies since the Pants will supply those
-            # dependencies itself from its own venv.
-            f"!!3rdparty/python:pants-{pants_major_minor_version}#pantsbuild.pants",
-        ],
-        include_tools=True,
-        resolve=f"pants-{pants_major_minor_version}",
-    )
-
-
-for pants_version in PANTS_MAJOR_MINOR_VERSIONS:
-    declare_pex_artifact(pants_version)
+pex_binary(
+    name=f"pex-2.32",
+    output_path=f"shoalsoft-pants-opentelemetry-plugin-pants2.32-v{PLUGIN_VERSION}.pex",
+    dependencies=[
+        f"./register.py",
+        # Exclude Pants and its transitive dependencies since the Pants will supply those
+        # dependencies itself from its own venv.
+        f"!!3rdparty/python:pants-2.32#pantsbuild.pants",
+    ],
+    include_tools=True,
+    resolve=f"pants-2.32",
+    interpreter_constraints=["==3.14.*"],
+)
 
 # This is a partial copy of the README.md geared more for the PyPI UX.
 LONG_DESCRIPTION = """\
@@ -162,23 +89,22 @@ Note: The plugin respects any `TRACEPARENT` environment variable and will link g
 # Add a single wheel which is not specific to any particular Pants version.
 python_distribution(
     name=f"wheel",
-    interpreter_constraints=[f"==3.11.*"],
+    interpreter_constraints=[f"==3.14.*"],
     provides=setup_py(
         name="shoalsoft-pants-opentelemetry-plugin",
         description=f"Pantsbuild OpenTelemetry Plugin from Shoal Software LLC",
         long_description=LONG_DESCRIPTION,
         long_description_content_type="text/markdown",
-        python_requires=f"==3.11.*",
+        python_requires="==3.14.*",
         version=PLUGIN_VERSION,
         author="Tom Dyas",
         author_email="tom@shoalsoftware.com",
         url="https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin",
     ),
     dependencies=[
-        f"./register.py@parametrize=pants-2.30",
+        f"./register.py",
         # Exclude Pants and its transitive dependencies since the Pants will supply those
-        # dependencies itself from its own venv. This should also allow the plugin to be used
-        # with any Pants version from Pants v2.25 and later.
-        f"!!3rdparty/python:pants-2.30#pantsbuild.pants",
+        # dependencies itself from its own venv.
+        f"!!3rdparty/python:pants-2.32#pantsbuild.pants",
     ],
 )
