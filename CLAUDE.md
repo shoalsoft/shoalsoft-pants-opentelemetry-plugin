@@ -14,20 +14,19 @@ This is a Pants plugin that enables OpenTelemetry tracing for Pantsbuild workflo
 - **Run tests**: `pants test ::`  
 - **Run integration tests**: `pants test src/python/shoalsoft/pants_opentelemetry_plugin:integration_tests`
 - **Build wheel**: `pants package src/python/shoalsoft/pants_opentelemetry_plugin:wheel`
-- **Build PEX artifacts**: `pants package src/python/shoalsoft/pants_opentelemetry_plugin:pex-2.27`
+- **Build PEX artifacts**: `pants package src/python/shoalsoft/pants_opentelemetry_plugin:pex-2.32`
 
-## Multi-Version Support
+## Pants Version Support
 
-The plugin supports multiple Pants versions (2.25, 2.26, 2.27) using Pants' parametrize feature. Each version has its own lockfile in `3rdparty/python/pants-*.lock` and separate build targets. These lockfiles are mainly for integration testing. The distribution wheel is agnostic to Pants version.
+The plugin supports Pants 2.32 and newer. The Pants 2.32 lockfile in `3rdparty/python/pants-2.32.lock` is used for local development and integration testing.
 
 ### Updating Pants Versions
 
-To update Pants versions or regenerate lockfiles:
+To update Pants versions or regenerate the lockfile:
 
-1. Update the version constraints in `3rdparty/python/pants-*.txt` files
-2. Regenerate the corresponding lockfiles: `pants generate-lockfiles --resolve=pants-X.XX`
-3. For all resolves: `pants generate-lockfiles`
-4. Update the integration test to include the new version in the parametrize decorator
+1. Update the version constraints in `3rdparty/python/pants-2.32.txt`
+2. Regenerate the lockfile: `pants generate-lockfiles --resolve=pants-2.32`
+3. Update integration tests and package targets if the supported Pants version range changes
 
 ## Architecture
 
@@ -67,12 +66,12 @@ The plugin uses the `shoalsoft-opentelemetry` options scope. Key options:
 
 - Unit tests use pytest and test individual components
 - Integration tests create temporary Pants projects and verify actual OTLP export
-- Tests are parametrized across supported Pants versions
+- Integration tests exercise the supported Pants resolve
 - Manual testing can use Jaeger all-in-one Docker image
 
 ## Code Style
 
-- Python 3.11 interpreter constraints
+- Python 3.14 interpreter constraints
 - Black formatting (100 char line length)
 - isort import sorting  
 - flake8 linting with custom config in `build-support/flake8/.flake8`
