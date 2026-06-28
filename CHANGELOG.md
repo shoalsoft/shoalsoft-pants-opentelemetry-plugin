@@ -2,9 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.6.0.dev0]
+## [0.6.1] - 2026-06-28
 
-- Add support for Pants 2.32 & Python 3.14. Drop support for prior Pants versions since Pants 2.33 will have the new `pants.backend.observability.opentelemetry` backend based on this plugin.
+> [!IMPORTANT]
+> This release is likely the last version since this project is no longer actively maintained because Pants now has a built-in `pants.backend.observability.opentelemetry` backend (based on this plugin) in Pants v2.33 and later versions.
+
+- Upgrade to Pants 2.32.1 and re-lock / upgrade dependencies.
+- Update the README with non-maintained status.
+
+## [0.6.0] - 2026-05-29
+
+- This version of the plugin only supports Pants v2.32.x due to Pants switching from Python 3.11 to Python 3.14 for plugins. Use a prior version of the plugin for earlier Pants versions.
+- This plugin will be available as the new `pants.backend.observability.opentelemetry` backend in Pants v2.33 and later. No more development will occur on this plugin.
+- Add support for Pants v2.32 and drop support for prior Pants versions.
+- Respect `OTEL_RESOURCE_ATTRIBUTES`.
 
 ## [0.5.0] - 2025-09-17
 
@@ -46,7 +57,9 @@ Changes since v0.2.0.dev3:
 - Updated docs to show example Honeycomb configuration.
 - Test the plugin with Pants v2.25.2 and v2.26.1.
 
-[Unreleased]: https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin/compare/v0.4.1...HEAD
+[0.6.1]: https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin/releases/tag/v0.6.1
+[0.6.0]: https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin/releases/tag/v0.6.0
+[0.5.0]: https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin/releases/tag/v0.5.0
 [0.4.1]: https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin/releases/tag/v0.4.1
 [0.4.0]: https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin/releases/tag/v0.4.0
 [0.3.0]: https://github.com/shoalsoft/shoalsoft-pants-opentelemetry-plugin/releases/tag/v0.3.0
