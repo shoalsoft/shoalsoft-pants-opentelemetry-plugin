@@ -1,3 +1,8 @@
+> [!WARNING]
+> **NOT MAINTAINED**
+>
+> This project is no longer actively maintained because Pants now has a built-in `pants.backend.observability.opentelemetry` backend (based on this plugin) in Pants v2.33 and later versions.
+
 # Pantsbuild OpenTelemetry Plugin
 
 ## Overview
