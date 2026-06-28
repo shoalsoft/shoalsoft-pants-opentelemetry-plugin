@@ -67,10 +67,11 @@ pex_binary(
 LONG_DESCRIPTION = """\
 # Pantsbuild OpenTelemetry Plugin
 
-> [!IMPORTANT]
-> This plugin only supports Pants v2.32 due to Pants switching to Python 3.14 for its internal Python version. Moreover,
-> the new `pants.backend.observability.backend` in Pants v2.33 (based on this plugin) makes this plugin no longer
-> necessary with Pants v2.33 and later versions.
+## !!! NOT MAINTAINED !!!
+
+- This project is no longer actively maintained because Pants now has a built-in `pants.backend.observability.opentelemetry` backend (based on this plugin) in Pants v2.33 and later versions.
+
+- This version of the plugin only supports Pants v2.32 due to Pants switching to Python 3.14 for its internal Python version.
 
 ## Installation
 
@@ -88,7 +89,6 @@ From PyPI:
 3. The plugin exposes many other options (which correspond to `OTEL_` environment variables in other systems).  Run `pants help-advanced shoalsoft-opentelemetry` to see all of the plugin's available configuration options.
 
 Note: The plugin respects any `TRACEPARENT` environment variable and will link generated traces to the parent trace and span referenced in the `TRACEPARENT`.
-
 """
 
 # Add a single wheel which is not specific to any particular Pants version.
